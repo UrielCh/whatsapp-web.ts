@@ -22,4 +22,4 @@ class ProductMetadata extends Base {
 
 }
 
-module.exports = ProductMetadata;
+export default ProductMetadata;

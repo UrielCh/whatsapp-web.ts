@@ -10,4 +10,4 @@ class PrivateChat extends Chat {
 
 }
 
-module.exports = PrivateChat;
+export default PrivateChat;

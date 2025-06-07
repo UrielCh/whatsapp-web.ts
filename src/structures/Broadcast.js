@@ -1,7 +1,7 @@
 'use strict';
 
-const Base = require('./Base');
-const Message = require('./Message');
+import Base from './Base.js';
+import Message from './Message.js';
 
 /**
  * Represents a Status/Story on WhatsApp
@@ -66,4 +66,4 @@ class Broadcast extends Base {
 
 }
 
-module.exports = Broadcast;
+export default Broadcast;

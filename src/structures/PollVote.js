@@ -58,4 +58,4 @@ class PollVote extends Base {
     }
 }
 
-module.exports = PollVote;
+export default PollVote;

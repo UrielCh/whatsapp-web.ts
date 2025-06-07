@@ -65,4 +65,4 @@ class Product extends Base {
     }
 }
 
-module.exports = Product;
+export default Product;

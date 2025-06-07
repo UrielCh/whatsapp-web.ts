@@ -3,6 +3,8 @@
 /**
  * Represents a WhatsApp data structure
  */
+import Contact from './Contact.js';
+
 class Base {
     constructor(client) {
         /**
@@ -19,4 +21,4 @@ class Base {
     _patch(data) { return data; }
 }
 
-module.exports = Base;
+export default Base;

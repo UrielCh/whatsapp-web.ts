@@ -49,4 +49,4 @@ class Order extends Base {
 
 }
 
-module.exports = Order;
+export default Order;

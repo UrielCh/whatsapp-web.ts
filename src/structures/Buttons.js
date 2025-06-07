@@ -79,4 +79,4 @@ class Buttons {
     
 }
 
-module.exports = Buttons;
+export default Buttons;

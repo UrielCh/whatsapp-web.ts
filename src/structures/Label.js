@@ -47,4 +47,4 @@ class Label extends Base {
 
 }
 
-module.exports = Label;
+export default Label;

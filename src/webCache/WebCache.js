@@ -8,7 +8,4 @@ class WebCache {
 
 class VersionResolveError extends Error { }
 
-module.exports = {
-    WebCache,
-    VersionResolveError
-};
+export { WebCache, VersionResolveError };

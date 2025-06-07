@@ -1,23 +1,23 @@
 'use strict';
 
-const EventEmitter = require('events');
-const puppeteer = require('puppeteer');
-const moduleRaid = require('@pedroslopez/moduleraid/moduleraid');
+import EventEmitter from 'events';
+import puppeteer from 'puppeteer';
+import moduleRaid from '@pedroslopez/moduleraid/moduleraid';
 
-const Util = require('./util/Util');
-const InterfaceController = require('./util/InterfaceController');
-const { WhatsWebURL, DefaultOptions, Events, WAState } = require('./util/Constants');
-const { ExposeAuthStore } = require('./util/Injected/AuthStore/AuthStore');
-const { ExposeStore } = require('./util/Injected/Store');
-const { ExposeLegacyAuthStore } = require('./util/Injected/AuthStore/LegacyAuthStore');
-const { ExposeLegacyStore } = require('./util/Injected/LegacyStore');
-const { LoadUtils } = require('./util/Injected/Utils');
-const ChatFactory = require('./factories/ChatFactory');
-const ContactFactory = require('./factories/ContactFactory');
-const WebCacheFactory = require('./webCache/WebCacheFactory');
-const { Broadcast, Buttons, Call, ClientInfo, Contact, GroupNotification, Label, List, Location, Message, MessageMedia, Poll, PollVote, Reaction } = require('./structures');
-const NoAuth = require('./authStrategies/NoAuth');
-const {exposeFunctionIfAbsent} = require('./util/Puppeteer');
+import Util from './util/Util.js';
+import InterfaceController from './util/InterfaceController.js';
+import { WhatsWebURL, DefaultOptions, Events, WAState } from './util/Constants.js';
+import { ExposeAuthStore } from './util/Injected/AuthStore/AuthStore.js';
+import { ExposeStore } from './util/Injected/Store.js';
+import { ExposeLegacyAuthStore } from './util/Injected/AuthStore/LegacyAuthStore.js';
+import { ExposeLegacyStore } from './util/Injected/LegacyStore.js';
+import { LoadUtils } from './util/Injected/Utils.js';
+import ChatFactory from './factories/ChatFactory.js';
+import ContactFactory from './factories/ContactFactory.js';
+import WebCacheFactory from './webCache/WebCacheFactory.js';
+import { Broadcast, Buttons, Call, ClientInfo, Contact, GroupNotification, Label, List, Location, Message, MessageMedia, Poll, PollVote, Reaction } from './structures/index.js';
+import NoAuth from './authStrategies/NoAuth.js';
+import { exposeFunctionIfAbsent } from './util/Puppeteer.js';
 
 /**
  * Starting point for interacting with the WhatsApp Web API
@@ -2182,4 +2182,4 @@ class Client extends EventEmitter {
     }
 }
 
-module.exports = Client;
+export default Client;

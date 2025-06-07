@@ -73,4 +73,4 @@ class Call extends Base {
     }
 }
 
-module.exports = Call;
+export default Call;

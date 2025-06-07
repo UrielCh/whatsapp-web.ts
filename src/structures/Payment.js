@@ -76,4 +76,4 @@ class Payment extends Base {
 
 }
 
-module.exports = Payment;
+export default Payment;

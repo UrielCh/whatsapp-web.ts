@@ -41,4 +41,4 @@ class Poll {
     }
 }
 
-module.exports = Poll;
+export default Poll;

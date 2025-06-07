@@ -108,4 +108,4 @@ class MessageMedia {
     }
 }
 
-module.exports = MessageMedia;
+export default MessageMedia;

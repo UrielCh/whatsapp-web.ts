@@ -1,11 +1,13 @@
 'use strict';
 
-const Base = require('./Base');
-const MessageMedia = require('./MessageMedia');
-const Location = require('./Location');
-const Order = require('./Order');
-const Payment = require('./Payment');
-const Reaction = require('./Reaction');
+import Base from './Base.js';
+import MessageMedia from './MessageMedia.js';
+import Location from './Location.js';
+import Order from './Order.js';
+import Payment from './Payment.js';
+import Reaction from './Reaction.js';
+import Contact from './Contact.js';
+import { MessageTypes } from '../util/Constants.js';
 const Contact = require('./Contact');
 const { MessageTypes } = require('../util/Constants');
 
@@ -701,4 +703,4 @@ class Message extends Base {
     }
 }
 
-module.exports = Message;
+export default Message;

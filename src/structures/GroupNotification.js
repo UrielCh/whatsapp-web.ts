@@ -101,4 +101,4 @@ class GroupNotification extends Base {
     
 }
 
-module.exports = GroupNotification;
+export default GroupNotification;

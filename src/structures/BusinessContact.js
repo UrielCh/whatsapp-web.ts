@@ -1,6 +1,6 @@
 'use strict';
 
-const Contact = require('./Contact');
+import Contact from './Contact.js';
 
 /**
  * Represents a Business Contact on WhatsApp
@@ -17,5 +17,7 @@ class BusinessContact extends Contact {
     }
 
 }
+
+export default BusinessContact;
 
 module.exports = BusinessContact;

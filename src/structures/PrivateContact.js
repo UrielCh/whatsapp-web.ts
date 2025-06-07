@@ -10,4 +10,4 @@ class PrivateContact extends Contact {
 
 }
 
-module.exports = PrivateContact;
+export default PrivateContact;

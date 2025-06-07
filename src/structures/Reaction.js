@@ -66,4 +66,4 @@ class Reaction extends Base {
     
 }
 
-module.exports = Reaction;
+export default Reaction;
