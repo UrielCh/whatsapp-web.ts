@@ -1,5 +1,5 @@
-const { expect } = require('chai');
-const helper = require('../helper');
+import { expect } from 'chai';
+import helper from '../helper.js';
 
 const remoteId = helper.remoteId;
 

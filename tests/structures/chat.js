@@ -1,9 +1,9 @@
-const { expect } = require('chai');
+import { expect } from 'chai';
 
-const helper = require('../helper');
-const Message = require('../../src/structures/Message');
-const { MessageTypes } = require('../../src/util/Constants');
-const { Contact } = require('../../src/structures');
+import helper from '../helper.js';
+import Message from '../../src/structures/Message.js';
+import { MessageTypes } from '../../src/util/Constants.js';
+import { Contact } from '../../src/structures/Contact.js';
 
 const remoteId = helper.remoteId;
 

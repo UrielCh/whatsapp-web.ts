@@ -1,8 +1,8 @@
-const { expect } = require('chai');
-const sinon = require('sinon');
+import { expect } from 'chai';
+import sinon from 'sinon';
 
-const helper = require('../helper');
-const { Contact, Chat } = require('../../src/structures');
+import helper from '../helper.js';
+import { Contact, Chat } from '../../src/structures.js';
 
 const remoteId = helper.remoteId;
 
