@@ -1,8 +1,8 @@
 'use strict';
 
-const path = require('path');
-const fs = require('fs');
-const BaseAuthStrategy = require('./BaseAuthStrategy');
+import path from 'node:path';
+import fs from 'node:fs';
+import BaseAuthStrategy from './BaseAuthStrategy.js';
 
 /**
  * Local directory-based authentication

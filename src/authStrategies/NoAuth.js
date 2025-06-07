@@ -1,6 +1,6 @@
 'use strict';
 
-const BaseAuthStrategy = require('./BaseAuthStrategy');
+import BaseAuthStrategy from './BaseAuthStrategy.js';
 
 /**
  * No session restoring functionality

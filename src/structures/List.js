@@ -1,6 +1,6 @@
 'use strict';
 
-const Util = require('../util/Util');
+import Util from '../util/Util.js';
 
 /**
  * Message type List

@@ -3,7 +3,7 @@
 /**
  * Represents a WhatsApp data structure
  */
-import Contact from './Contact.js';
+// import Contact from './Contact.js';
 
 class Base {
     constructor(client) {

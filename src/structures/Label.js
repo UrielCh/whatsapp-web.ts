@@ -1,8 +1,8 @@
 'use strict';
 
-const Base = require('./Base');
+import Base from './Base.js';
 // eslint-disable-next-line no-unused-vars
-const Chat = require('./Chat');
+import Chat from './Chat.js';
 
 /**
  * WhatsApp Business Label information

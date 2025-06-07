@@ -1,8 +1,8 @@
 'use strict';
 
-const PrivateChat = require('../structures/PrivateChat');
-const GroupChat = require('../structures/GroupChat');
-const Channel = require('../structures/Channel');
+import PrivateChat from '../structures/PrivateChat.js';
+import GroupChat from '../structures/GroupChat.js';
+import Channel from '../structures/Channel.js';
 
 class ChatFactory {
     static create(client, data) {
