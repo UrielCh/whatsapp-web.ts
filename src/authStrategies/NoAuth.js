@@ -9,4 +9,4 @@ const BaseAuthStrategy = require('./BaseAuthStrategy');
 class NoAuth extends BaseAuthStrategy { }
 
 
-module.exports = NoAuth;
+export default NoAuth;

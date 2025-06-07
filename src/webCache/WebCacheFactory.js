@@ -15,6 +15,8 @@ const createWebCache = (type, options) => {
     }
 };
 
-module.exports = {
+export {
     createWebCache,
 };
+
+export default { createWebCache };

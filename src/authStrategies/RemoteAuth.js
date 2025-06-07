@@ -207,4 +207,4 @@ class RemoteAuth extends BaseAuthStrategy {
     }
 }
 
-module.exports = RemoteAuth;
+export default RemoteAuth;

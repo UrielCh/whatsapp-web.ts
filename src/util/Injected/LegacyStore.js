@@ -3,7 +3,7 @@
 //TODO: To be removed by version 2.3000.x hard release
 
 // Exposes the internal Store to the WhatsApp Web client
-exports.ExposeLegacyStore = () => {
+export function ExposeLegacyStore() {
     window.Store = Object.assign({}, window.mR.findModule(m => m.default && m.default.Chat)[0].default);
     window.Store.AppState = window.mR.findModule('Socket')[0].Socket;
     window.Store.Conn = window.mR.findModule('Conn')[0].Conn;

@@ -55,4 +55,4 @@ class LocalAuth extends BaseAuthStrategy {
 
 }
 
-module.exports = LocalAuth;
+export default LocalAuth;

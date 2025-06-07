@@ -13,4 +13,4 @@ class ContactFactory {
     }
 }
 
-module.exports = ContactFactory;
+export default ContactFactory;

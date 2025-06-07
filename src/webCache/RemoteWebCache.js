@@ -37,4 +37,4 @@ class RemoteWebCache extends WebCache {
     }
 }
 
-module.exports = RemoteWebCache;
+export default RemoteWebCache;

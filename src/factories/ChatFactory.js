@@ -18,4 +18,4 @@ class ChatFactory {
     }
 }
 
-module.exports = ChatFactory;
+export default ChatFactory;
