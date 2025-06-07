@@ -1,20 +1,26 @@
-'use strict';
-
-const Base = require('./Base');
-const ProductMetadata = require('./ProductMetadata');
+import Base from './Base.ts';
+import ProductMetadata from './ProductMetadata.ts';
 
 /**
  * Represents a Product on WhatsAppBusiness
  * @extends {Base}
  */
 class Product extends Base {
-    constructor(client, data) {
+    id?: string;
+    price?: string;
+    thumbnailUrl?: string;
+    currency?: string;
+    name?: string;
+    quantity?: number;
+    data?: ProductMetadata | null;
+
+    constructor(client: any, data: any) {
         super(client);
 
         if (data) this._patch(data);
     }
 
-    _patch(data) {
+    override _patch(data: any) {
         /**
          * Product ID
          * @type {string}
@@ -65,4 +71,4 @@ class Product extends Base {
     }
 }
 
-module.exports = Product;
+export default Product;

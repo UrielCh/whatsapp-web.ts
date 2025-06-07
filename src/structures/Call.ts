@@ -1,19 +1,27 @@
-'use strict';
-
-const Base = require('./Base');
+import Base from './Base.ts';
 
 /**
  * Represents a Call on WhatsApp
  * @extends {Base}
  */
 class Call extends Base {
-    constructor(client, data) {
+    id?: string;
+    from?: string;
+    timestamp?: number;
+    isVideo?: boolean;
+    isGroup?: boolean;
+    fromMe?: boolean;
+    canHandleLocally?: boolean;
+    webClientShouldHandle?: boolean;
+    participants?: object;
+
+    constructor(client: any, data: any) {
         super(client);
 
         if (data) this._patch(data);
     }
 
-    _patch(data) {
+    override _patch(data: any) {
         /**
          * Call ID
          * @type {string}
@@ -73,4 +81,4 @@ class Call extends Base {
     }
 }
 
-module.exports = Call;
+export default Call;

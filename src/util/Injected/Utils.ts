@@ -3,7 +3,7 @@
 exports.LoadUtils = () => {
     window.WWebJS = {};
 
-    window.WWebJS.forwardMessage = async (chatId, msgId) => {
+    window.WWebJS.forwardMessage = async (chatId: string, msgId: string) => {
         const msg = window.Store.Msg.get(msgId) || (await window.Store.Msg.getMessagesById([msgId]))?.messages?.[0];
         const chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
 
@@ -14,7 +14,7 @@ exports.LoadUtils = () => {
         }
     };
 
-    window.WWebJS.sendSeen = async (chatId) => {
+    window.WWebJS.sendSeen = async (chatId: string) => {
         const chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
         if (chat) {
             await window.Store.SendSeen.sendSeen(chat);
@@ -23,7 +23,7 @@ exports.LoadUtils = () => {
         return false;
     };
 
-    window.WWebJS.sendMessage = async (chat, content, options = {}) => {
+    window.WWebJS.sendMessage = async (chat: string, content: string, options = {}) => {
         const isChannel = window.Store.ChatGetters.getIsNewsletter(chat);
 
         let mediaOptions = {};

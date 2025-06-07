@@ -1,19 +1,26 @@
-'use strict';
-
-const Base = require('./Base');
+import MessageMedia from "./MessageMedia.ts";
+import Base from './Base.ts';
 
 /**
  * Represents a GroupNotification on WhatsApp
  * @extends {Base}
  */
 class GroupNotification extends Base {
-    constructor(client, data) {
+    id?: any;
+    body?: string;
+    type?: string;
+    timestamp?: number;
+    chatId?: string;
+    author?: string;
+    recipientIds?: string[];
+    
+    constructor(client: any, data: any) {
         super(client);
 
         if(data) this._patch(data);
     }
 
-    _patch(data) {
+    override _patch(data: any) {
         /**
          * ID that represents the groupNotification
          * @type {object}
@@ -95,10 +102,10 @@ class GroupNotification extends Base {
      * @param {object} options
      * @returns {Promise<Message>}
      */
-    async reply(content, options={}) {
+    async reply(content: string | MessageMedia | Location, options={}) {
         return this.client.sendMessage(this.chatId, content, options);
     }
     
 }
 
-module.exports = GroupNotification;
+export default GroupNotification;

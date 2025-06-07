@@ -1,26 +1,30 @@
-'use strict';
-
-const Base = require('./Base');
-const Product = require('./Product');
+import Base from './Base.ts';
+import Product from './Product.ts';
 
 /**
  * Represents a Order on WhatsApp
  * @extends {Base}
  */
 class Order extends Base {
-    constructor(client, data) {
+    products?: any;
+    subtotal?: string;
+    total?: string;
+    currency?: string;
+    createdAt?: number;
+    
+    constructor(client: any, data: any) {
         super(client);
 
         if (data) this._patch(data);
     }
 
-    _patch(data) {
+    override _patch(data: any) {
         /**
          * List of products
          * @type {Array<Product>}
          */
         if (data.products) {
-            this.products = data.products.map(product => new Product(this.client, product));
+            this.products = data.products.map((product: any) => new Product(this.client, product));
         }
         /**
          * Order Subtotal
@@ -46,7 +50,6 @@ class Order extends Base {
         return super._patch(data);
     }
 
-
 }
 
-module.exports = Order;
+export default Order;

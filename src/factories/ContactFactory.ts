@@ -1,10 +1,10 @@
 'use strict';
 
-const PrivateContact = require('../structures/PrivateContact');
-const BusinessContact = require('../structures/BusinessContact');
+import PrivateContact from '../structures/PrivateContact.ts';
+import BusinessContact from '../structures/BusinessContact.ts';
 
 class ContactFactory {
-    static create(client, data) {
+    static create(client: any, data: any) {
         if(data.isBusiness) {
             return new BusinessContact(client, data);
         }
@@ -13,4 +13,4 @@ class ContactFactory {
     }
 }
 
-module.exports = ContactFactory;
+export default ContactFactory;

@@ -1,10 +1,8 @@
-'use strict';
-
-const fs = require('fs');
-const path = require('path');
-const mime = require('mime');
-const fetch = require('node-fetch');
-const { URL } = require('url');
+import fs from 'node:fs';
+import path from 'node:path';
+import mime from 'mime';
+// import fetch from 'node-fetch';
+import { URL } from 'node:url';
 
 /**
  * Media attached to a message
@@ -13,8 +11,13 @@ const { URL } = require('url');
  * @param {?string} filename Document file name. Value can be null
  * @param {?number} filesize Document file size in bytes. Value can be null
  */
-class MessageMedia {
-    constructor(mimetype, data, filename, filesize) {
+export class MessageMedia {
+    mimetype: string;
+    data: string;
+    filename: string;
+    filesize?: number;
+    
+    constructor(mimetype: string, data: string, filename: string, filesize?: number) {
         /**
          * MIME type of the attachment
          * @type {string}
@@ -45,11 +48,11 @@ class MessageMedia {
      * @param {string} filePath 
      * @returns {MessageMedia}
      */
-    static fromFilePath(filePath) {
+    static fromFilePath(filePath: string) {
         const b64data = fs.readFileSync(filePath, {encoding: 'base64'});
-        const mimetype = mime.getType(filePath); 
+        const mimetype = mime.getType(filePath) || 'application/octet-stream';
         const filename = path.basename(filePath);
-
+        
         return new MessageMedia(mimetype, b64data, filename);
     }
 
@@ -64,14 +67,14 @@ class MessageMedia {
      * @param {number} [options.reqOptions.size=0]
      * @returns {Promise<MessageMedia>}
      */
-    static async fromUrl(url, options = {}) {
+    static async fromUrl(url: string, options: any = {}) {
         const pUrl = new URL(url);
         let mimetype = mime.getType(pUrl.pathname);
 
         if (!mimetype && !options.unsafeMime)
             throw new Error('Unable to determine MIME type using URL. Set unsafeMime to true to download it anyway.');
 
-        async function fetchData (url, options) {
+        async function fetchData (url: string, options: any) {
             const reqOptions = Object.assign({ headers: { accept: 'image/* video/* text/* audio/*' } }, options);
             const response = await fetch(url, reqOptions);
             const mime = response.headers.get('Content-Type');
@@ -102,10 +105,10 @@ class MessageMedia {
             (res.name ? res.name[0] : (pUrl.pathname.split('/').pop() || 'file'));
         
         if (!mimetype)
-            mimetype = res.mime;
+            mimetype = res.mime || 'application/octet-stream';
 
-        return new MessageMedia(mimetype, res.data, filename, res.size || null);
+        return new MessageMedia(mimetype!, res.data, filename, res.size || null);
     }
 }
 
-module.exports = MessageMedia;
+export default MessageMedia;

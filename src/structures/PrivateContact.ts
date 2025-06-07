@@ -1,6 +1,6 @@
 'use strict';
 
-const Contact = require('./Contact');
+import Contact from './Contact.ts';
 
 /**
  * Represents a Private Contact on WhatsApp
@@ -10,4 +10,4 @@ class PrivateContact extends Contact {
 
 }
 
-module.exports = PrivateContact;
+export default PrivateContact;

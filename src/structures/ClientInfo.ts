@@ -1,19 +1,23 @@
-'use strict';
-
-const Base = require('./Base');
+import Base from './Base.ts';
 
 /**
  * Current connection information
  * @extends {Base}
  */
 class ClientInfo extends Base {
-    constructor(client, data) {
+    pushname?: string;
+    wid?: string;
+    me?: string;
+    phone?: object;
+    platform?: string;
+    
+    constructor(client: any, data: any) {
         super(client);
 
         if (data) this._patch(data);
     }
 
-    _patch(data) {
+    override _patch(data: any) {
         /**
          * Name configured to be shown in push notifications
          * @type {string}
@@ -68,4 +72,4 @@ class ClientInfo extends Base {
     }
 }
 
-module.exports = ClientInfo;
+export default ClientInfo;

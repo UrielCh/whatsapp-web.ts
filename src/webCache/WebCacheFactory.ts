@@ -1,8 +1,8 @@
-const RemoteWebCache = require('./RemoteWebCache');
-const LocalWebCache = require('./LocalWebCache');
-const { WebCache } = require('./WebCache');
+import RemoteWebCache from './RemoteWebCache.ts';
+import LocalWebCache from './LocalWebCache.ts';
+import { WebCache } from './WebCache.ts';
 
-const createWebCache = (type, options) => {
+export const createWebCache = (type: string, options: any) => {
     switch (type) {
     case 'remote':
         return new RemoteWebCache(options);
@@ -15,6 +15,4 @@ const createWebCache = (type, options) => {
     }
 };
 
-module.exports = {
-    createWebCache,
-};
+export default createWebCache

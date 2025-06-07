@@ -2,7 +2,7 @@
 
 //TODO: To be removed by version 2.3000.x hard release
 
-exports.ExposeLegacyAuthStore = (moduleRaidStr) => {
+export const ExposeLegacyAuthStore = (moduleRaidStr: string) => {
     eval('var moduleRaid = ' + moduleRaidStr);
     // eslint-disable-next-line no-undef
     window.mR = moduleRaid();

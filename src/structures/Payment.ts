@@ -1,13 +1,22 @@
-const Base = require('./Base');
+import Base from './Base.ts';
 
 class Payment extends Base {
-    constructor(client, data) {
+    id?: any;
+    paymentCurrency?: string;
+    paymentAmount1000?: number;
+    paymentMessageReceiverJid?: any;
+    paymentTransactionTimestamp?: number;
+    paymentStatus?: number;
+    paymentTxnStatus?: number;
+    paymentNote?: string;
+
+    constructor(client: any, data: any) {
         super(client);
 
         if (data) this._patch(data);
     }
 
-    _patch(data) {
+    override _patch(data: any) {
         /**
          * The payment Id
          * @type {object}
@@ -76,4 +85,4 @@ class Payment extends Base {
 
 }
 
-module.exports = Payment;
+export default Payment;

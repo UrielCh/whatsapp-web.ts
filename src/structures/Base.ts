@@ -1,10 +1,8 @@
-'use strict';
-
 /**
  * Represents a WhatsApp data structure
  */
 class Base {
-    constructor(client) {
+    constructor(client: any) {
         /**
          * The client that instantiated this
          * @readonly
@@ -16,7 +14,7 @@ class Base {
         return Object.assign(Object.create(this), this);
     }
     
-    _patch(data) { return data; }
+    _patch(data: any) { return data; }
 }
 
-module.exports = Base;
+export default Base;

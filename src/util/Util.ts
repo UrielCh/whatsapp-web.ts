@@ -1,4 +1,6 @@
-'use strict';
+import Buffer from "node:buffer";
+
+import MessageMedia from "../structures/MessageMedia.ts";
 
 const path = require('path');
 const Crypto = require('crypto');
@@ -6,7 +8,26 @@ const { tmpdir } = require('os');
 const ffmpeg = require('fluent-ffmpeg');
 const webp = require('node-webpmux');
 const fs = require('fs').promises;
-const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+const has = (o: any, k: any) => Object.prototype.hasOwnProperty.call(o, k);
+
+/**
+ * Sticker metadata.
+ */
+export interface StickerMetadata {
+    /**
+     * Sticker name
+     */
+    name?: string;
+    /**
+     * Sticker author
+     */
+    author?: string;
+    /**
+     * Sticker categories
+     */
+    categories?: string[];
+}
+
 
 /**
  * Utility methods
@@ -16,7 +37,7 @@ class Util {
         throw new Error(`The ${this.constructor.name} class may not be instantiated.`);
     }
 
-    static generateHash(length) {
+    static generateHash(length: number) {
         var result = '';
         var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         var charactersLength = characters.length;
@@ -33,7 +54,7 @@ class Util {
      * @returns {Object}
      * @private
      */
-    static mergeDefault(def, given) {
+    static mergeDefault(def: any, given:any) {
         if (!given) return def;
         for (const key in def) {
             if (!has(given, key) || given[key] === undefined) {
@@ -52,7 +73,7 @@ class Util {
      * 
      * @returns {Promise<MessageMedia>} media in webp format
      */
-    static async formatImageToWebpSticker(media, pupPage) {
+    static async formatImageToWebpSticker(media: MessageMedia, pupPage: any) {
         if (!media.mimetype.includes('image'))
             throw new Error('media is not a image');
 
@@ -60,7 +81,7 @@ class Util {
             return media;
         }
 
-        return pupPage.evaluate((media) => {
+        return pupPage.evaluate((media: MessageMedia) => {
             return window.WWebJS.toStickerData(media);
         }, media);
     }
@@ -71,7 +92,7 @@ class Util {
      * 
      * @returns {Promise<MessageMedia>} media in webp format
      */
-    static async formatVideoToWebpSticker(media) {
+    static async formatVideoToWebpSticker(media: MessageMedia) {
         if (!media.mimetype.includes('video'))
             throw new Error('media is not a video');
 
@@ -128,15 +149,6 @@ class Util {
             filename: media.filename,
         };
     }
-
-    /**
-     * Sticker metadata.
-     * @typedef {Object} StickerMetadata
-     * @property {string} [name] 
-     * @property {string} [author] 
-     * @property {string[]} [categories]
-     */
-
     /**
      * Formats a media to webp
      * @param {MessageMedia} media
@@ -144,7 +156,7 @@ class Util {
      * 
      * @returns {Promise<MessageMedia>} media in webp format
      */
-    static async formatToWebpSticker(media, metadata, pupPage) {
+    static async formatToWebpSticker(media: MessageMedia, metadata: StickerMetadata, pupPage) {
         let webpMedia;
 
         if (media.mimetype.includes('image'))

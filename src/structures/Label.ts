@@ -1,24 +1,26 @@
-'use strict';
-
-const Base = require('./Base');
+import Base from './Base.ts';
 // eslint-disable-next-line no-unused-vars
-const Chat = require('./Chat');
+import Chat from './Chat.ts';
 
 /**
  * WhatsApp Business Label information
  */
 class Label extends Base {
+    id?: string;
+    name?: string;
+    hexColor?: string;
+    
     /**
      * @param {Base} client
      * @param {object} labelData
      */
-    constructor(client, labelData){
+    constructor(client: Base, labelData: any){
         super(client);
 
         if(labelData) this._patch(labelData);
     }
 
-    _patch(labelData){
+    override _patch(labelData: any){
         /**
          * Label ID
          * @type {string}
@@ -41,10 +43,10 @@ class Label extends Base {
      * Get all chats that have been assigned this Label
      * @returns {Promise<Array<Chat>>}
      */
-    async getChats(){
+    async getChats(): Promise<Array<Chat>> {
         return this.client.getChatsByLabelId(this.id);
     }
 
 }
 
-module.exports = Label;
+export default Label;

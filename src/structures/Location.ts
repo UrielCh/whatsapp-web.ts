@@ -12,13 +12,19 @@
 /**
  * Location information
  */
-class Location {
+export default class Location {
+    latitude: number;
+    longitude: number;
+    name?: string;
+    address?: string;
+    url?: string;
+    description?: string;
     /**
      * @param {number} latitude
      * @param {number} longitude
      * @param {LocationSendOptions} [options] Location send options
      */
-    constructor(latitude, longitude, options = {}) {
+    constructor(latitude: number, longitude: number, options: any = {}) {
         /**
          * Location latitude
          * @type {number}
@@ -59,4 +65,4 @@ class Location {
     }
 }
 
-module.exports = Location;
+// module.exports = Location;

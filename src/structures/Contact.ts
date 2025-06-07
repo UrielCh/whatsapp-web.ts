@@ -1,6 +1,4 @@
-'use strict';
-
-const Base = require('./Base');
+import Base from './Base.ts';
 
 /**
  * ID that represents a contact
@@ -15,13 +13,33 @@ const Base = require('./Base');
  * @extends {Base}
  */
 class Contact extends Base {
-    constructor(client, data) {
+    id?: any;
+    number?: string;
+    isBusiness?: boolean;
+    isEnterprise?: boolean;
+    labels?: any[];
+    name?: string;
+    pushname?: string;
+    sectionHeader?: string;
+    shortName?: string;
+    statusMute?: boolean;
+    type?: string;
+    verifiedLevel?: string;
+    verifiedName?: string;
+    isMe?: boolean;
+    isUser?: boolean;
+    isGroup?: boolean;
+    isWAContact?: boolean;
+    isMyContact?: boolean;
+    isBlocked?: boolean;
+
+    constructor(client: any, data: any) {
         super(client);
 
         if(data) this._patch(data);
     }
 
-    _patch(data) {
+    override _patch(data: any) {
         /**
          * ID that represents the contact
          * @type {ContactId}
@@ -205,4 +223,4 @@ class Contact extends Base {
     
 }
 
-module.exports = Contact;
+export default Contact;

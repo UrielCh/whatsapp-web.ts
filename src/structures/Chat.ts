@@ -1,20 +1,30 @@
-'use strict';
-
-const Base = require('./Base');
-const Message = require('./Message');
+import Base from './Base.ts';
+import Message from './Message.ts';
 
 /**
  * Represents a Chat on WhatsApp
  * @extends {Base}
  */
-class Chat extends Base {
-    constructor(client, data) {
+export default class Chat extends Base {
+    id?: any;
+    name?: string;
+    isGroup?: boolean;
+    isReadOnly?: boolean;
+    unreadCount?: number;
+    timestamp?: number;
+    archived?: boolean;
+    pinned?: boolean;
+    isMuted?: boolean;
+    muteExpiration?: number;
+    lastMessage?: Message;
+    
+    constructor(client: any, data: any) {
         super(client);
 
         if (data) this._patch(data);
     }
 
-    _patch(data) {
+    override _patch(data: any) {
         /**
          * ID that represents the chat
          * @type {object}

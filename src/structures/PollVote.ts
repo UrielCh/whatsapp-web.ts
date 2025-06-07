@@ -1,7 +1,6 @@
-'use strict';
-
-const Message = require('./Message');
-const Base = require('./Base');
+import Message from './Message.ts';
+import Base from './Base.ts';
+import { SelectedPollOption } from "..";
 
 /**
  * Selected poll option structure
@@ -15,13 +14,18 @@ const Base = require('./Base');
  * @extends {Base}
  */
 class PollVote extends Base {
-    constructor(client, data) {
+    voter?: string;
+    selectedOptions?: SelectedPollOption[];
+    interractedAtTs?: number;
+    parentMessage?: Message;
+    
+    constructor(client: any, data: any) {
         super(client);
 
         if (data) this._patch(data);
     }
 
-    _patch(data) {
+    override _patch(data: any) {
         /**
          * The person who voted
          * @type {string}
@@ -58,4 +62,4 @@ class PollVote extends Base {
     }
 }
 
-module.exports = PollVote;
+export default PollVote;

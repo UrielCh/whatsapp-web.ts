@@ -1,13 +1,18 @@
-const Base = require('./Base');
+import Base from './Base.ts';
 
-class ProductMetadata extends Base {
-    constructor(client, data) {
+export default class ProductMetadata extends Base {
+    id?: string;
+    retailer_id?: string;
+    name?: string;
+    description?: string;
+
+    constructor(client: any, data: any) {
         super(client);
 
         if (data) this._patch(data);
     }
 
-    _patch(data) {
+    override _patch(data: any) {
         /** Product ID */
         this.id = data.id;
         /** Retailer ID */
@@ -21,5 +26,3 @@ class ProductMetadata extends Base {
     }
 
 }
-
-module.exports = ProductMetadata;

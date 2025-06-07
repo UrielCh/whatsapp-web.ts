@@ -1,7 +1,7 @@
 'use strict';
 
-const Base = require('./Base');
-const Message = require('./Message');
+import Base from './Base.ts';
+import Message from './Message.ts';
 
 /**
  * Channel ID structure
@@ -15,14 +15,27 @@ const Message = require('./Message');
  * Represents a Channel on WhatsApp
  * @extends {Base}
  */
-class Channel extends Base {
-    constructor(client, data) {
+export default class Channel extends Base {
+    channelMetadata?: any;
+    id?: any;
+    name?: string;
+    description?: string;
+    isChannel?: boolean;
+    isGroup?: boolean;
+    isReadOnly?: boolean;
+    unreadCount?: number;
+    timestamp?: number;
+    isMuted?: boolean;
+    muteExpiration?: number;
+    lastMessage?: Message;
+
+    constructor(client: any, data: any) {
         super(client);
 
         if (data) this._patch(data);
     }
 
-    _patch(data) {
+    override _patch(data: any) {
         this.channelMetadata = data.channelMetadata;
 
         /**
@@ -99,7 +112,7 @@ class Channel extends Base {
      * @param {?number} limit Optional parameter to specify the limit of subscribers to retrieve
      * @returns {Promise<{contact: Contact, role: string}[]>} Returns an array of objects that handle the subscribed contacts and their roles in the channel
      */
-    async getSubscribers(limit) {
+    async getSubscribers(limit?: number) {
         return await this.client.pupPage.evaluate(async (channelId, limit) => {
             const channel = await window.WWebJS.getChat(channelId, { getAsModel: false });
             if (!channel) return [];
@@ -364,7 +377,7 @@ class Channel extends Base {
      * @param {string} action The action: 'MUTE' or 'UNMUTE'
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
-    async _muteUnmuteChannel(action) {
+    async _muteUnmuteChannel(action: string) {
         return await this.client.pupPage.evaluate(async (channelId, action) => {
             try {
                 action === 'MUTE'

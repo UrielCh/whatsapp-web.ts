@@ -1,8 +1,6 @@
-'use strict';
+export const WhatsWebURL = 'https://web.whatsapp.com/';
 
-exports.WhatsWebURL = 'https://web.whatsapp.com/';
-
-exports.DefaultOptions = {
+export const DefaultOptions = {
     puppeteer: {
         headless: true,
         defaultViewport: null
@@ -19,25 +17,25 @@ exports.DefaultOptions = {
     ffmpegPath: 'ffmpeg',
     bypassCSP: false,
     proxyAuthentication: undefined
-};
+} as const;
 
 /**
  * Client status
  * @readonly
  * @enum {number}
  */
-exports.Status = {
+export const Status = {
     INITIALIZING: 0,
     AUTHENTICATING: 1,
     READY: 3
-};
+} as const;
 
 /**
  * Events that can be emitted by the client
  * @readonly
  * @enum {string}
  */
-exports.Events = {
+export const Events = {
     AUTHENTICATED: 'authenticated',
     AUTHENTICATION_FAILURE: 'auth_failure',
     READY: 'ready',
@@ -74,7 +72,7 @@ exports.Events = {
  * @readonly
  * @enum {string}
  */
-exports.MessageTypes = {
+export const MessageTypes = {
     TEXT: 'chat',
     AUDIO: 'audio',
     VOICE: 'ptt',
@@ -111,14 +109,14 @@ exports.MessageTypes = {
     REACTION: 'reaction',
     TEMPLATE_BUTTON_REPLY: 'template_button_reply',
     POLL_CREATION: 'poll_creation',
-};
+} as const;
 
 /**
  * Group notification types
  * @readonly
  * @enum {string}
  */
-exports.GroupNotificationTypes = {
+export const GroupNotificationTypes = {
     ADD: 'add',
     INVITE: 'invite',
     REMOVE: 'remove',
@@ -128,25 +126,25 @@ exports.GroupNotificationTypes = {
     PICTURE: 'picture',
     ANNOUNCE: 'announce',
     RESTRICT: 'restrict',
-};
+} as const;
 
 /**
  * Chat types
  * @readonly
  * @enum {string}
  */
-exports.ChatTypes = {
+export const ChatTypes = {
     SOLO: 'solo',
     GROUP: 'group',
     UNKNOWN: 'unknown'
-};
+} as const;
 
 /**
  * WhatsApp state
  * @readonly
  * @enum {string}
  */
-exports.WAState = {
+export const WAState = {
     CONFLICT: 'CONFLICT',
     CONNECTED: 'CONNECTED',
     DEPRECATED_VERSION: 'DEPRECATED_VERSION',
@@ -159,18 +157,18 @@ exports.WAState = {
     UNLAUNCHED: 'UNLAUNCHED',
     UNPAIRED: 'UNPAIRED',
     UNPAIRED_IDLE: 'UNPAIRED_IDLE'
-};
+} as const;
 
 /**
  * Message ACK
  * @readonly
  * @enum {number}
  */
-exports.MessageAck = {
+export const MessageAck = {
     ACK_ERROR: -1,
     ACK_PENDING: 0,
     ACK_SERVER: 1,
     ACK_DEVICE: 2,
     ACK_READ: 3,
     ACK_PLAYED: 4,
-};
+} as const;

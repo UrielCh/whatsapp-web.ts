@@ -1,5 +1,7 @@
 'use strict';
 
+import { PollSendOptions } from "../types.ts";
+
 /**
  * Poll send options
  * @typedef {Object} PollSendOptions
@@ -9,12 +11,16 @@
 
 /** Represents a Poll on WhatsApp */
 class Poll {
+    pollName?: string;
+    pollOptions?: Array<{name: string, localId: number}>;
+    options?: PollSendOptions;
+    
     /**
      * @param {string} pollName
      * @param {Array<string>} pollOptions
      * @param {PollSendOptions} options
      */
-    constructor(pollName, pollOptions, options = {}) {
+    constructor(pollName: string, pollOptions: string[], options: PollSendOptions = {}) {
         /**
          * The name of the poll
          * @type {string}
@@ -41,4 +47,4 @@ class Poll {
     }
 }
 
-module.exports = Poll;
+export default Poll;

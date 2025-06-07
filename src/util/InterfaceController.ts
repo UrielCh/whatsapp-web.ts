@@ -1,11 +1,12 @@
-'use strict';
+import { type Page } from "puppeteer";
 
 /**
  * Interface Controller
  */
 class InterfaceController {
+    private pupPage: Page;
 
-    constructor(props) {
+    constructor(props: {pupPage: Page}) {
         this.pupPage = props.pupPage;
     }
 
@@ -13,7 +14,7 @@ class InterfaceController {
      * Opens the Chat Window
      * @param {string} chatId ID of the chat window that will be opened
      */
-    async openChatWindow(chatId) {
+    async openChatWindow(chatId: string) {
         await this.pupPage.evaluate(async (chatId) => {
             const chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
             await window.Store.Cmd.openChatBottom(chat);
@@ -24,7 +25,7 @@ class InterfaceController {
      * Opens the Chat Drawer
      * @param {string} chatId ID of the chat drawer that will be opened
      */
-    async openChatDrawer(chatId) {
+    async openChatDrawer(chatId: string) {
         await this.pupPage.evaluate(async chatId => {
             let chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
             await window.Store.Cmd.openDrawerMid(chat);
@@ -35,7 +36,7 @@ class InterfaceController {
      * Opens the Chat Search
      * @param {string} chatId ID of the chat search that will be opened
      */
-    async openChatSearch(chatId) {
+    async openChatSearch(chatId: string) {
         await this.pupPage.evaluate(async chatId => {
             let chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
             await window.Store.Cmd.chatSearch(chat);
@@ -46,7 +47,7 @@ class InterfaceController {
      * Opens or Scrolls the Chat Window to the position of the message
      * @param {string} msgId ID of the message that will be scrolled to
      */
-    async openChatWindowAt(msgId) {
+    async openChatWindowAt(msgId: string) {
         await this.pupPage.evaluate(async (msgId) => {
             const msg = window.Store.Msg.get(msgId) || (await window.Store.Msg.getMessagesById([msgId]))?.messages?.[0];
             const chat = window.Store.Chat.get(msg.id.remote) ?? await window.Store.Chat.find(msg.id.remote);
@@ -59,7 +60,7 @@ class InterfaceController {
      * Opens the Message Drawer
      * @param {string} msgId ID of the message drawer that will be opened
      */
-    async openMessageDrawer(msgId) {
+    async openMessageDrawer(msgId: string) {
         await this.pupPage.evaluate(async msgId => {
             const msg = window.Store.Msg.get(msgId) || (await window.Store.Msg.getMessagesById([msgId]))?.messages?.[0];
             await window.Store.Cmd.msgInfoDrawer(msg);
@@ -89,7 +90,7 @@ class InterfaceController {
      * Check if Feature is enabled
      * @param {string} feature status to check
      */
-    async checkFeatureStatus(feature) {
+    async checkFeatureStatus(feature: string) {
         return await this.pupPage.evaluate((feature) => {
             if(!window.Store.Features) throw new Error('This version of Whatsapp Web does not support features');
             return window.Store.Features.supportsFeature(feature);
@@ -100,7 +101,7 @@ class InterfaceController {
      * Enable Features
      * @param {string[]} features to be enabled
      */
-    async enableFeatures(features) {
+    async enableFeatures(features: string[]) {
         await this.pupPage.evaluate((features) => {
             if(!window.Store.Features) throw new Error('This version of Whatsapp Web does not support features');
             for (const feature in features) {
@@ -113,7 +114,7 @@ class InterfaceController {
      * Disable Features
      * @param {string[]} features to be disabled
      */
-    async disableFeatures(features) {
+    async disableFeatures(features: string[]) {
         await this.pupPage.evaluate((features) => {
             if(!window.Store.Features) throw new Error('This version of Whatsapp Web does not support features');
             for (const feature in features) {
@@ -123,4 +124,4 @@ class InterfaceController {
     }
 }
 
-module.exports = InterfaceController;
+export default InterfaceController;

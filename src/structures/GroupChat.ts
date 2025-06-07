@@ -1,6 +1,4 @@
-'use strict';
-
-const Chat = require('./Chat');
+import Chat from './Chat.ts';
 
 /**
  * Group participant information
@@ -15,7 +13,9 @@ const Chat = require('./Chat');
  * @extends {Chat}
  */
 class GroupChat extends Chat {
-    _patch(data) {
+    groupMetadata?: any;
+    
+    override _patch(data: any) {
         this.groupMetadata = data.groupMetadata;
 
         return super._patch(data);
@@ -75,7 +75,7 @@ class GroupChat extends Chat {
      * @param {AddParticipnatsOptions} options An object thay handles options for adding participants
      * @returns {Promise<Object.<string, AddParticipantsResult>|string>} Returns an object with the resulting data or an error message as a string
      */
-    async addParticipants(participantIds, options = {}) {
+    async addParticipants(participantIds: string | string[], options: AddParticipnatsOptions = {}) {
         return await this.client.pupPage.evaluate(async (groupId, participantIds, options) => {
             const { sleep = [250, 500], autoSendInviteV4 = true, comment = '' } = options;
             const participantData = {};
@@ -189,8 +189,8 @@ class GroupChat extends Chat {
      * @param {Array<string>} participantIds 
      * @returns {Promise<{ status: number }>}
      */
-    async removeParticipants(participantIds) {
-        return await this.client.pupPage.evaluate(async (chatId, participantIds) => {
+    async removeParticipants(participantIds: string[]) {
+        return await this.client.pupPage.evaluate(async (chatId: string, participantIds) => {
             const chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
             const participants = participantIds.map(p => {
                 return chat.groupMetadata.participants.get(p);
@@ -205,7 +205,7 @@ class GroupChat extends Chat {
      * @param {Array<string>} participantIds 
      * @returns {Promise<{ status: number }>} Object with status code indicating if the operation was successful
      */
-    async promoteParticipants(participantIds) {
+    async promoteParticipants(participantIds: string[]) {
         return await this.client.pupPage.evaluate(async (chatId, participantIds) => {
             const chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
             const participants = participantIds.map(p => {
@@ -221,7 +221,7 @@ class GroupChat extends Chat {
      * @param {Array<string>} participantIds 
      * @returns {Promise<{ status: number }>} Object with status code indicating if the operation was successful
      */
-    async demoteParticipants(participantIds) {
+    async demoteParticipants(participantIds: string[]) {
         return await this.client.pupPage.evaluate(async (chatId, participantIds) => {
             const chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
             const participants = participantIds.map(p => {
@@ -237,7 +237,7 @@ class GroupChat extends Chat {
      * @param {string} subject 
      * @returns {Promise<boolean>} Returns true if the subject was properly updated. This can return false if the user does not have the necessary permissions.
      */
-    async setSubject(subject) {
+    async setSubject(subject: string) {
         const success = await this.client.pupPage.evaluate(async (chatId, subject) => {
             const chatWid = window.Store.WidFactory.createWid(chatId);
             try {
@@ -259,7 +259,7 @@ class GroupChat extends Chat {
      * @param {string} description 
      * @returns {Promise<boolean>} Returns true if the description was properly updated. This can return false if the user does not have the necessary permissions.
      */
-    async setDescription(description) {
+    async setDescription(description: string) {
         const success = await this.client.pupPage.evaluate(async (chatId, description) => {
             const chatWid = window.Store.WidFactory.createWid(chatId);
             let descId = window.Store.GroupMetadata.get(chatWid).descId;
@@ -283,7 +283,7 @@ class GroupChat extends Chat {
      * @param {boolean} [adminsOnly=true] Enable or disable this option 
      * @returns {Promise<boolean>} Returns true if the setting was properly updated. This can return false if the user does not have the necessary permissions.
      */
-    async setAddMembersAdminsOnly(adminsOnly=true) {
+    async setAddMembersAdminsOnly(adminsOnly: boolean=true) {
         const success = await this.client.pupPage.evaluate(async (groupId, adminsOnly) => {
             const chatWid = window.Store.WidFactory.createWid(groupId);
             try {
@@ -304,7 +304,7 @@ class GroupChat extends Chat {
      * @param {boolean} [adminsOnly=true] Enable or disable this option 
      * @returns {Promise<boolean>} Returns true if the setting was properly updated. This can return false if the user does not have the necessary permissions.
      */
-    async setMessagesAdminsOnly(adminsOnly=true) {
+    async setMessagesAdminsOnly(adminsOnly: boolean=true) {
         const success = await this.client.pupPage.evaluate(async (chatId, adminsOnly) => {
             const chatWid = window.Store.WidFactory.createWid(chatId);
             try {
@@ -327,7 +327,7 @@ class GroupChat extends Chat {
      * @param {boolean} [adminsOnly=true] Enable or disable this option 
      * @returns {Promise<boolean>} Returns true if the setting was properly updated. This can return false if the user does not have the necessary permissions.
      */
-    async setInfoAdminsOnly(adminsOnly=true) {
+    async setInfoAdminsOnly(adminsOnly: boolean=true) {
         const success = await this.client.pupPage.evaluate(async (chatId, adminsOnly) => {
             const chatWid = window.Store.WidFactory.createWid(chatId);
             try {
@@ -470,4 +470,4 @@ class GroupChat extends Chat {
 
 }
 
-module.exports = GroupChat;
+export default GroupChat;

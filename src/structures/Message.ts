@@ -1,26 +1,74 @@
 'use strict';
 
-const Base = require('./Base');
-const MessageMedia = require('./MessageMedia');
-const Location = require('./Location');
-const Order = require('./Order');
-const Payment = require('./Payment');
-const Reaction = require('./Reaction');
-const Contact = require('./Contact');
-const { MessageTypes } = require('../util/Constants');
+import Base from './Base.ts';
+import MessageMedia from './MessageMedia.ts';
+import Location from './Location.ts';
+import Order from './Order.ts';
+import Payment from './Payment.ts';
+import Reaction from './Reaction.ts';
+import Contact from './Contact.ts';
+import { MessageTypes } from '../util/Constants.ts';
+import { MessageEditOptions } from "..";
 
 /**
  * Represents a Message on WhatsApp
  * @extends {Base}
  */
-class Message extends Base {
-    constructor(client, data) {
+export default class Message extends Base {
+    _data?: any;
+    mediaKey?: string;
+    id?: any;
+    ack?: any;
+    hasMedia?: boolean;
+    body?: string;
+    type?: typeof MessageTypes[keyof typeof MessageTypes];
+    timestamp?: number;
+    from?: string;
+    to?: string;
+    author?: string;
+    deviceType?: string;
+    isForwarded?: boolean;
+    forwardingScore?: number;
+    isStatus?: boolean;
+    isStarred?: boolean;
+    broadcast?: boolean;
+    fromMe?: boolean;
+    hasQuotedMsg?: boolean;
+    hasReaction?: boolean;
+    duration?: string;
+    location?: Location;
+    vCards?: string[];
+    inviteV4?: any;
+    mentionedIds?: string[];
+    groupMentions?: any[];
+    orderId?: string;
+    token?: string;
+    isGif?: boolean;
+    isEphemeral?: boolean;
+    title?: string;
+    description?: string;
+    businessOwnerJid?: string;
+    productId?: string;
+    latestEditSenderTimestampMs?: number;
+    latestEditMsgKey?: any;
+    links?: any[];
+    dynamicReplyButtons?: any[];
+    selectedButtonId?: string;
+    selectedRowId?: string;
+    pollName?: string;
+    pollOptions?: string[];
+    pollSelectableOptionsCount?: number;
+    pollInvalidated?: boolean;
+    isSentCagPollCreation?: boolean;
+    messageSecret?: any;
+    
+    constructor(client: any, data: any) {
         super(client);
 
         if (data) this._patch(data);
     }
 
-    _patch(data) {
+    override _patch(data: any) {
         this._data = data;
         
         /**
@@ -541,7 +589,7 @@ class Message extends Base {
      * @param {number} duration The duration in seconds the message will be pinned in a chat
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
-    async pin(duration) {
+    async pin(duration: number) {
         return await this.client.pupPage.evaluate(async (msgId, duration) => {
             return await window.WWebJS.pinUnpinMsgAction(msgId, 1, duration);
         }, this.id._serialized, duration);
@@ -662,7 +710,7 @@ class Message extends Base {
      * @param {MessageEditOptions} [options] - Options used when editing the message
      * @returns {Promise<?Message>}
      */
-    async edit(content, options = {}) {
+    async edit(content: string, options: MessageEditOptions = {}) {
         if (options.mentions) {
             !Array.isArray(options.mentions) && (options.mentions = [options.mentions]);
             if (options.mentions.some((possiblyContact) => possiblyContact instanceof Contact)) {
@@ -700,5 +748,3 @@ class Message extends Base {
         return null;
     }
 }
-
-module.exports = Message;

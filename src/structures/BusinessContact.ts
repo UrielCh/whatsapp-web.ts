@@ -1,13 +1,12 @@
-'use strict';
-
-const Contact = require('./Contact');
+import Contact from './Contact.ts';
 
 /**
  * Represents a Business Contact on WhatsApp
  * @extends {Contact}
  */
 class BusinessContact extends Contact {
-    _patch(data) {
+    businessProfile?: any;
+    override _patch(data: any) {
         /**
          * The contact's business profile
          */
@@ -18,4 +17,4 @@ class BusinessContact extends Contact {
 
 }
 
-module.exports = BusinessContact;
+export default BusinessContact;

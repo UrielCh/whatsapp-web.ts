@@ -1,14 +1,14 @@
 /**
  * Default implementation of a web version cache that does nothing.
  */
-class WebCache {
-    async resolve() { return null; }
-    async persist() { }
+export class WebCache {
+    resolve(_version: string):Promise<string | null> { return Promise.resolve(null); }
+    persist(_indexHtml: string, _version: string): Promise<void> { return Promise.resolve(); }
 }
 
-class VersionResolveError extends Error { }
+export class VersionResolveError extends Error { }
 
-module.exports = {
-    WebCache,
-    VersionResolveError
-};
+//export default {
+//    WebCache,
+//    VersionResolveError
+//};

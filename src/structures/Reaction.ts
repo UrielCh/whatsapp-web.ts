@@ -1,19 +1,27 @@
-'use strict';
-
-const Base = require('./Base');
+import Base from './Base.ts';
 
 /**
  * Represents a Reaction on WhatsApp
  * @extends {Base}
  */
 class Reaction extends Base {
-    constructor(client, data) {
+    id?: any;
+    orphan?: any;
+    orphanReason?: any;
+    timestamp?: any;
+    reaction?: any;
+    read?: any;
+    msgId?: any;
+    senderId?: any;
+    ack?: any;
+    
+    constructor(client: any, data: any) {
         super(client);
 
         if (data) this._patch(data);
     }
 
-    _patch(data) {
+    override _patch(data: any) {
         /**
          * Reaction ID
          * @type {object}
@@ -66,4 +74,4 @@ class Reaction extends Base {
     
 }
 
-module.exports = Reaction;
+export default Reaction;
