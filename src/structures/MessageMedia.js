@@ -1,10 +1,10 @@
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
-const mime = require('mime');
-const fetch = require('node-fetch');
-const { URL } = require('url');
+import fs from 'node:fs';
+import path from 'node:path';
+import mime from 'mime';
+import fetch from 'node-fetch';
+import { URL } from 'node:url';
 
 /**
  * Media attached to a message

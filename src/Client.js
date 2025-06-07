@@ -2,7 +2,7 @@
 
 import EventEmitter from 'events';
 import puppeteer from 'puppeteer';
-import moduleRaid from '@pedroslopez/moduleraid/moduleraid';
+import { moduleRaid } from './util/moduleraid.js';
 
 import Util from './util/Util.js';
 import InterfaceController from './util/InterfaceController.js';

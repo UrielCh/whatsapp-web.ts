@@ -1,6 +1,6 @@
 'use strict';
 
-exports.LoadUtils = () => {
+export const LoadUtils = () => {
     window.WWebJS = {};
 
     window.WWebJS.forwardMessage = async (chatId, msgId) => {

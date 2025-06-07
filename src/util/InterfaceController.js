@@ -123,4 +123,4 @@ class InterfaceController {
     }
 }
 
-module.exports = InterfaceController;
+export default InterfaceController;

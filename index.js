@@ -1,6 +1,6 @@
 import * as Constants from './src/util/Constants.js';
 import Client from './src/Client.js';
-import pkg from './package.json' assert { type: 'json' };
+import pkg from './package.json' with { type: 'json' };
 import Chat from './src/structures/Chat.js';
 import PrivateChat from './src/structures/PrivateChat.js';
 import GroupChat from './src/structures/GroupChat.js';

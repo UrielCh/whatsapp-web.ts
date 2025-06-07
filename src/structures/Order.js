@@ -1,7 +1,7 @@
 'use strict';
 
-const Base = require('./Base');
-const Product = require('./Product');
+import Base from './Base.js';
+import Product from './Product.js';
 
 /**
  * Represents a Order on WhatsApp

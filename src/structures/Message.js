@@ -8,8 +8,6 @@ import Payment from './Payment.js';
 import Reaction from './Reaction.js';
 import Contact from './Contact.js';
 import { MessageTypes } from '../util/Constants.js';
-const Contact = require('./Contact');
-const { MessageTypes } = require('../util/Constants');
 
 /**
  * Represents a Message on WhatsApp

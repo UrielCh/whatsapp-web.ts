@@ -1,6 +1,6 @@
 'use strict';
 
-const Base = require('./Base');
+import Base from './Base.js';
 
 /**
  * Represents a GroupNotification on WhatsApp

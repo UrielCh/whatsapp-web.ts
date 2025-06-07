@@ -288,4 +288,4 @@ class Chat extends Base {
     }
 }
 
-module.exports = Chat;
+export default Chat;
