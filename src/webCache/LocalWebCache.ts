@@ -37,4 +37,4 @@ class LocalWebCache extends WebCache {
     }
 }
 
-module.exports = LocalWebCache;
+export default LocalWebCache;
