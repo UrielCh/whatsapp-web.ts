@@ -1,5 +1,3 @@
-'use strict';
-
 import MessageMedia from './MessageMedia.js';
 import Util from '../util/Util.js';
 

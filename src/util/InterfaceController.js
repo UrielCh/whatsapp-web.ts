@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * Interface Controller
  */

@@ -1,7 +1,7 @@
-const path = require('path');
-const { Client, LegacySessionAuth, LocalAuth } = require('..');
+import path from 'path';
+import { Client, LocalAuth } from '../index.js';
 
-require('dotenv').config();
+import('dotenv').then(dotenv => dotenv.config());
 
 const remoteId = process.env.WWEBJS_TEST_REMOTE_ID;
 if(!remoteId) throw new Error('The WWEBJS_TEST_REMOTE_ID environment variable has not been set.');
@@ -16,7 +16,7 @@ function isMD() {
 
 if(isUsingLegacySession() && isMD()) throw 'Cannot use legacy sessions with WWEBJS_TEST_MD=true';
 
-function getSessionFromEnv() {
+async function getSessionFromEnv() {
     if (!isUsingLegacySession()) return null;
 
     const envSession = process.env.WWEBJS_TEST_SESSION;
@@ -25,26 +25,19 @@ function getSessionFromEnv() {
     const envSessionPath = process.env.WWEBJS_TEST_SESSION_PATH;
     if(envSessionPath) {
         const absPath = path.resolve(process.cwd(), envSessionPath);
-        return require(absPath);
+        return (await import(absPath)).default;
     }
 }
 
-function createClient({authenticated, options: additionalOpts}={}) {
+async function createClient({authenticated, options: additionalOpts}={}) {
     const options = {};
 
     if(authenticated) {
-        const legacySession = getSessionFromEnv();
-        if(legacySession) {
-            options.authStrategy = new LegacySessionAuth({
-                session: legacySession
-            });
-        } else {
-            const clientId = process.env.WWEBJS_TEST_CLIENT_ID;
-            if(!clientId) throw new Error('No session found in environment.');
-            options.authStrategy = new LocalAuth({
-                clientId
-            });
-        }
+        const clientId = process.env.WWEBJS_TEST_CLIENT_ID;
+        if(!clientId) throw new Error('No session found in environment.');
+        options.authStrategy = new LocalAuth({
+            clientId
+        });
     }
 
     const allOpts = {...options, ...(additionalOpts || {})};
@@ -55,10 +48,6 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-module.exports = {
-    sleep, 
-    createClient,
-    isUsingLegacySession,
-    isMD,
-    remoteId,
-};
+export { sleep, createClient, isUsingLegacySession, isMD, remoteId };
+
+export default { sleep, createClient, isUsingLegacySession, isMD, remoteId };

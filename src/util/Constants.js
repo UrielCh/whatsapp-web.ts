@@ -1,5 +1,3 @@
-'use strict';
-
 export const WhatsWebURL = 'https://web.whatsapp.com/';
 
 export const DefaultOptions = {

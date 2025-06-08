@@ -1,5 +1,3 @@
-'use strict';
-
 //TODO: To be removed by version 2.3000.x hard release
 
 // Exposes the internal Store to the WhatsApp Web client

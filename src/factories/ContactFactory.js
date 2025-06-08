@@ -1,5 +1,3 @@
-'use strict';
-
 import PrivateContact from '../structures/PrivateContact.js';
 import BusinessContact from '../structures/BusinessContact.js';
 

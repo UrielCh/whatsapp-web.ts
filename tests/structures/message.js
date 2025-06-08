@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import helper from '../helper.js';
-import { Contact, Chat } from '../../src/structures.js';
+import { Contact, Chat } from '../../src/structures/index.js';
 
 const remoteId = helper.remoteId;
 

@@ -1,5 +1,3 @@
-'use strict';
-
 import Base from './Base.js';
 import ProductMetadata from './ProductMetadata.js';
 

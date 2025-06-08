@@ -1,5 +1,3 @@
-'use strict';
-
 export const ExposeAuthStore = () => {
     window.AuthStore = {};
     window.AuthStore.AppState = window.require('WAWebSocketModel').Socket;

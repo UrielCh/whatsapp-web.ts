@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * Poll send options
  * @typedef {Object} PollSendOptions

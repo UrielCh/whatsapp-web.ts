@@ -1,5 +1,3 @@
-'use strict';
-
 import Base from './Base.js';
 // eslint-disable-next-line no-unused-vars
 import Chat from './Chat.js';

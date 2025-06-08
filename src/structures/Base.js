@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * Represents a WhatsApp data structure
  */

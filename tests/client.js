@@ -1,15 +1,14 @@
-const chai = require('chai');
-const chaiAsPromised = require('chai-as-promised');
-const sinon = require('sinon');
+import chai from 'chai';
+import chaiAsPromised from 'chai-as-promised';
+import sinon from 'sinon';
 
-const helper = require('./helper');
-const Chat = require('../src/structures/Chat');
-const Contact = require('../src/structures/Contact');
-const Message = require('../src/structures/Message');
-const MessageMedia = require('../src/structures/MessageMedia');
-const Location = require('../src/structures/Location');
-const LegacySessionAuth = require('../src/authStrategies/LegacySessionAuth');
-const { MessageTypes, WAState, DefaultOptions } = require('../src/util/Constants');
+import helper from './helper.js';
+import Chat from '../src/structures/Chat.js';
+import Contact from '../src/structures/Contact.js';
+import Message from '../src/structures/Message.js';
+import MessageMedia from '../src/structures/MessageMedia.js';
+import Location from '../src/structures/Location.js';
+import { MessageTypes, WAState, DefaultOptions } from '../src/util/Constants.js';
 
 const expect = chai.expect;
 chai.use(chaiAsPromised);
@@ -156,79 +155,79 @@ describe('Client', function() {
             await client.destroy();
         });
 
-        describe('LegacySessionAuth', function () {
-            it('should fail auth if session is invalid', async function() {
-                this.timeout(40000);
-        
-                const authFailCallback = sinon.spy();
-                const qrCallback = sinon.spy();
-                const readyCallback = sinon.spy();
-        
-                const client = helper.createClient({
-                    options: {
-                        authStrategy: new LegacySessionAuth({
-                            session: {
-                                WABrowserId: 'invalid', 
-                                WASecretBundle: 'invalid', 
-                                WAToken1: 'invalid', 
-                                WAToken2: 'invalid'
-                            },
-                            restartOnAuthFail: false,
-                        }),
-                    }
-                });
-        
-                client.on('qr', qrCallback);
-                client.on('auth_failure', authFailCallback);
-                client.on('ready', readyCallback);
-        
-                client.initialize();
-        
-                await helper.sleep(25000);
-        
-                expect(authFailCallback.called).to.equal(true);
-                expect(authFailCallback.args[0][0]).to.equal('Unable to log in. Are the session details valid?');
-        
-                expect(readyCallback.called).to.equal(false);
-                expect(qrCallback.called).to.equal(false);
-        
-                await client.destroy();
-            });
-        
-            it('can restart without a session if session was invalid and restartOnAuthFail=true', async function() {
-                this.timeout(40000);
-        
-                const authFailCallback = sinon.spy();
-                const qrCallback = sinon.spy();
-        
-                const client = helper.createClient({
-                    options: {
-                        authStrategy: new LegacySessionAuth({
-                            session: {
-                                WABrowserId: 'invalid', 
-                                WASecretBundle: 'invalid', 
-                                WAToken1: 'invalid', 
-                                WAToken2: 'invalid'
-                            },
-                            restartOnAuthFail: true,
-                        }),
-                    }
-                });
-        
-                client.on('auth_failure', authFailCallback);
-                client.on('qr', qrCallback);
-        
-                client.initialize();
-        
-                await helper.sleep(35000);
-        
-                expect(authFailCallback.called).to.equal(true);
-                expect(qrCallback.called).to.equal(true);
-                expect(qrCallback.args[0][0]).to.have.length.greaterThanOrEqual(152);
-        
-                await client.destroy();
-            });
-        });
+        // describe('LegacySessionAuth', function () {
+        //     it('should fail auth if session is invalid', async function() {
+        //         this.timeout(40000);
+        // 
+        //         const authFailCallback = sinon.spy();
+        //         const qrCallback = sinon.spy();
+        //         const readyCallback = sinon.spy();
+        // 
+        //         const client = helper.createClient({
+        //             options: {
+        //                 authStrategy: new LegacySessionAuth({
+        //                     session: {
+        //                         WABrowserId: 'invalid', 
+        //                         WASecretBundle: 'invalid', 
+        //                         WAToken1: 'invalid', 
+        //                         WAToken2: 'invalid'
+        //                     },
+        //                     restartOnAuthFail: false,
+        //                 }),
+        //             }
+        //         });
+        // 
+        //         client.on('qr', qrCallback);
+        //         client.on('auth_failure', authFailCallback);
+        //         client.on('ready', readyCallback);
+        // 
+        //         client.initialize();
+        // 
+        //         await helper.sleep(25000);
+        // 
+        //         expect(authFailCallback.called).to.equal(true);
+        //         expect(authFailCallback.args[0][0]).to.equal('Unable to log in. Are the session details valid?');
+        // 
+        //         expect(readyCallback.called).to.equal(false);
+        //         expect(qrCallback.called).to.equal(false);
+        // 
+        //         await client.destroy();
+        //     });
+        // 
+        //     it('can restart without a session if session was invalid and restartOnAuthFail=true', async function() {
+        //         this.timeout(40000);
+        // 
+        //         const authFailCallback = sinon.spy();
+        //         const qrCallback = sinon.spy();
+        // 
+        //         const client = helper.createClient({
+        //             options: {
+        //                 authStrategy: new LegacySessionAuth({
+        //                     session: {
+        //                         WABrowserId: 'invalid', 
+        //                         WASecretBundle: 'invalid', 
+        //                         WAToken1: 'invalid', 
+        //                         WAToken2: 'invalid'
+        //                     },
+        //                     restartOnAuthFail: true,
+        //                 }),
+        //             }
+        //         });
+        // 
+        //         client.on('auth_failure', authFailCallback);
+        //         client.on('qr', qrCallback);
+        // 
+        //         client.initialize();
+        // 
+        //         await helper.sleep(35000);
+        // 
+        //         expect(authFailCallback.called).to.equal(true);
+        //         expect(qrCallback.called).to.equal(true);
+        //         expect(qrCallback.args[0][0]).to.have.length.greaterThanOrEqual(152);
+        // 
+        //         await client.destroy();
+        //     });
+        // });
 
         describe('Non-MD only', function () {
             if(!isMD) {

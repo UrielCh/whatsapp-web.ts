@@ -1,5 +1,3 @@
-'use strict';
-
 import PrivateChat from '../structures/PrivateChat.js';
 import GroupChat from '../structures/GroupChat.js';
 import Channel from '../structures/Channel.js';

@@ -1,5 +1,3 @@
-'use strict';
-
 import EventEmitter from 'events';
 import puppeteer from 'puppeteer';
 import { moduleRaid } from './util/moduleraid.js';

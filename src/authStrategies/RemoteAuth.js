@@ -1,5 +1,3 @@
-'use strict';
-
 /* Require Optional Dependencies */
 import fs from 'fs-extra';
 import unzipper from 'unzipper';

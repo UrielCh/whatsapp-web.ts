@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * Location send options
  * @typedef {Object} LocationSendOptions

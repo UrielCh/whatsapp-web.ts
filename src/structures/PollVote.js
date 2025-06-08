@@ -1,5 +1,3 @@
-'use strict';
-
 import Message from './Message.js';
 import Base from './Base.js';
 

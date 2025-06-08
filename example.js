@@ -13,7 +13,7 @@ const client = new Client({
 client.initialize();
 
 client.on('loading_screen', (percent, message) => {
-    console.log('LOADING SCREEN', percent, message);
+    console.log(`LOADING SCREEN ${percent}% message:${message}`);
 });
 
 // Pairing code only needs to be requested once
@@ -32,7 +32,7 @@ client.on('qr', async (qr) => {
 });
 
 client.on('authenticated', () => {
-    console.log('AUTHENTICATED');
+    console.log('Whatsapp client emit "authenticated"');
 });
 
 client.on('auth_failure', msg => {
@@ -41,7 +41,7 @@ client.on('auth_failure', msg => {
 });
 
 client.on('ready', async () => {
-    console.log('READY');
+    console.log('Whatsapp client emit "ready"');
     const debugWWebVersion = await client.getWWebVersion();
     console.log(`WWebVersion = ${debugWWebVersion}`);
 

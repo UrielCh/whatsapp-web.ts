@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * Base class which all authentication strategies extend
  */

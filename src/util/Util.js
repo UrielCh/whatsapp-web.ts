@@ -1,5 +1,3 @@
-'use strict';
-
 import path from 'path';
 import Crypto from 'crypto';
 import { tmpdir } from 'os';

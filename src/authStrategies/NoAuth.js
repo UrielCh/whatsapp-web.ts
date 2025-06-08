@@ -1,5 +1,3 @@
-'use strict';
-
 import BaseAuthStrategy from './BaseAuthStrategy.js';
 
 /**

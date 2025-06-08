@@ -1,5 +1,3 @@
-'use strict';
-
 import path from 'node:path';
 import fs from 'node:fs';
 import BaseAuthStrategy from './BaseAuthStrategy.js';

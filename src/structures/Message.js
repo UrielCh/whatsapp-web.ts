@@ -1,5 +1,3 @@
-'use strict';
-
 import Base from './Base.js';
 import MessageMedia from './MessageMedia.js';
 import Location from './Location.js';

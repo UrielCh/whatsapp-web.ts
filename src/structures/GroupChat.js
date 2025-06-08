@@ -1,5 +1,3 @@
-'use strict';
-
 import Chat from './Chat.js';
 
 /**
