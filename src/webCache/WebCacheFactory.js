@@ -1,6 +1,6 @@
-const RemoteWebCache = require('./RemoteWebCache');
-const LocalWebCache = require('./LocalWebCache');
-const { WebCache } = require('./WebCache');
+import RemoteWebCache from './RemoteWebCache.js';
+import LocalWebCache from './LocalWebCache.js';
+import { WebCache } from './WebCache.js';
 
 const createWebCache = (type, options) => {
     switch (type) {

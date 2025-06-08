@@ -6,7 +6,8 @@
     "source": {
         "include": ["src", "package.json", "README.md"],
         "includePattern": ".js$",
-        "excludePattern": "(node_modules/|docs)"
+        "excludePattern": "(node_modules/|docs)",
+        "sourceType": "module"
     },
     "plugins": [
         "plugins/markdown"

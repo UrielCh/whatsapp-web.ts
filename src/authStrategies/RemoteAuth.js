@@ -1,19 +1,13 @@
 'use strict';
 
 /* Require Optional Dependencies */
-try {
-    var fs = require('fs-extra');
-    var unzipper = require('unzipper');
-    var archiver = require('archiver');
-} catch {
-    fs = undefined;
-    unzipper = undefined;
-    archiver = undefined;
-}
+import fs from 'fs-extra';
+import unzipper from 'unzipper';
+import archiver from 'archiver';
 
-const path = require('path');
-const { Events } = require('./../util/Constants');
-const BaseAuthStrategy = require('./BaseAuthStrategy');
+import path from 'path';
+import { Events } from './../util/Constants.js';
+import BaseAuthStrategy from './BaseAuthStrategy.js';
 
 /**
  * Remote-based authentication
@@ -26,8 +20,8 @@ const BaseAuthStrategy = require('./BaseAuthStrategy');
  */
 class RemoteAuth extends BaseAuthStrategy {
     constructor({ clientId, dataPath, store, backupSyncIntervalMs, rmMaxRetries } = {}) {
-        if (!fs && !unzipper && !archiver) throw new Error('Optional Dependencies [fs-extra, unzipper, archiver] are required to use RemoteAuth. Make sure to run npm install correctly and remove the --no-optional flag');
         super();
+        if (!fs && !unzipper && !archiver) throw new Error('Optional Dependencies [fs-extra, unzipper, archiver] are required to use RemoteAuth. Make sure to run npm install correctly and remove the --no-optional flag');
 
         const idRegex = /^[-_\w]+$/i;
         if (clientId && !idRegex.test(clientId)) {

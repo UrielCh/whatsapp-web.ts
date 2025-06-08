@@ -66,8 +66,14 @@ export const moduleRaid = function () {
     }
 }
   
+export default moduleRaid;
+
+// Kept for backwards compatibility if loaded in a CommonJS environment directly.
 if (typeof module === 'object' && module.exports) {
   module.exports = moduleRaid;
-} else {
+}
+
+// Ensure window.mR is set for browser environments, regardless of module system.
+if (typeof window !== 'undefined') {
   window.mR = moduleRaid();
 }

@@ -1,6 +1,6 @@
 'use strict';
 
-const Contact = require('./Contact');
+import Contact from './Contact.js';
 
 /**
  * Represents a Private Contact on WhatsApp
