@@ -1,7 +1,7 @@
 'use strict';
 
-const MessageMedia = require('./MessageMedia');
-const Util = require('../util/Util');
+import MessageMedia from './MessageMedia.js';
+import Util from '../util/Util.js';
 
 /**
  * Button spec used in Buttons constructor

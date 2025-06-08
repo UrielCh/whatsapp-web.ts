@@ -1,4 +1,4 @@
-const Base = require('./Base');
+import Base from './Base.js';
 
 class ProductMetadata extends Base {
     constructor(client, data) {

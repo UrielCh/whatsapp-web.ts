@@ -1,7 +1,7 @@
 'use strict';
 
-const Message = require('./Message');
-const Base = require('./Base');
+import Message from './Message.js';
+import Base from './Base.js';
 
 /**
  * Selected poll option structure
