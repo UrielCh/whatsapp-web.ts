@@ -1,6 +1,6 @@
 import EventEmitter from 'node:events';
 import puppeteer from 'puppeteer';
-import { moduleRaid } from './util/moduleraid.js';
+import { ModuleRaid } from './util/moduleraid.js';
 
 import Util from './util/Util.js';
 import InterfaceController from './util/InterfaceController.js';
@@ -408,7 +408,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
         if (isCometOrAbove) {
             await this.pupPage.evaluate(ExposeAuthStore);
         } else {
-            await this.pupPage.evaluate(ExposeLegacyAuthStore, moduleRaid.toString());
+            await this.pupPage.evaluate(ExposeLegacyAuthStore, ModuleRaid.toString());
         }
 
         const needAuthentication = await this.pupPage.evaluate(async () => {
