@@ -170,7 +170,9 @@ class Client extends EventEmitter {
                 window.AuthStore.Conn.on('change:ref', (_, ref) => { window.onQRChangedEvent(getQR(ref)); }); // future QR changes
             });
         }
-
+        /**
+         * @param {"OPENING" | "UNPAIRED_IDLE" | string} state WAState
+         */
         await exposeFunctionIfAbsent(this.pupPage, 'onAuthAppStateChangedEvent', async (state) => {
             if (state == 'UNPAIRED_IDLE') {
                 // refresh qr code

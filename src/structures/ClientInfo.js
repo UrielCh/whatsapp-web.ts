@@ -10,7 +10,15 @@ class ClientInfo extends Base {
 
         if (data) this._patch(data);
     }
-
+    /**
+     * @param {object} data
+     * @param {string} data.id
+     * @param {string} data.platform
+     * @param {string} data.pushname
+     * @param {string} data.ref
+     * @param {number} data.refTTL
+     * @param {number} data.smbTos
+     */
     _patch(data) {
         /**
          * Name configured to be shown in push notifications

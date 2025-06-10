@@ -20,7 +20,13 @@ declare global {
       };
       Cmd?: { refreshQR: () => void };
       Conn?: { ref?: string, serialize?: () => any };
-      User?: { getMeUser?: () => any };
+      User?: {
+        getMeUser?: () => {
+          server: "c.us",
+          user: string; // phonenumber
+          _serialized: string; // "${phonenumber}@c.us"
+        }
+      };
       Msg?: { on?: Function, get?: Function, getMessagesById?: Function };
       AppState?: { state?: string, on?: Function, off?: Function, takeover?: Function };
       GroupParticipants?: { removeParticipants?: Function, demoteParticipants?: Function };
@@ -73,6 +79,99 @@ declare global {
         saveContactAction?: (phoneNumber: string, arg2: any, firstName: string, lastName: string, syncToAddressbook: boolean) => Promise<any>;
       };
       // ...add more as needed
+      AdCollection?: any;
+      Blocklist?: any;
+      OptOutList?: any;
+      BotProfile?: any;
+      BusinessCategoryResult?: any;
+      BusinessProfile?: any;
+      Catalog?: any;
+      ChatAssignment?: any;
+      ChatPreference?: any;
+      Contact?: any;
+      ConversionTuple?: any;
+      DailyAggregatedStats?: any;
+      EmojiVariant?: any;
+      FavoriteCollection?: any;
+      GroupMetadata?: any;
+      Label?: any;
+      MsgInfo?: any;
+      Mute?: any;
+      Order?: any;
+      Presence?: any;
+      ProfilePicThumb?: any;
+      QuickReply?: any;
+      RecentEmoji?: any;
+      RecentSticker?: any;
+      StarredMsg?: any;
+      TextStatus?: any;
+      Status?: any;
+      Sticker?: any;
+      StickerSearch?: any;
+      RecentStickerMD?: any;
+      StickerPackCollectionMD?: any;
+      FavoriteSticker?: any;
+      RecentReactions?: any;
+      UnjoinedSubgroupMetadataCollection?: any;
+      AgentCollection?: any;
+      SubscriptionCollection?: any;
+      UnattributedMessageCollection?: any;
+      CommunityActivityCollection?: any;
+      CommentCollection?: any;
+      PinInChat?: any;
+      NewsletterCollection?: any;
+      NewsletterMetadataCollection?: any;
+      PremiumMessageCollection?: any;
+      FlattenedReactionsCollection?: any;
+      UserDisclosureCollection?: any;
+      EventResponseCollection?: any;
+      DownloadManager?: any;
+      MediaUpload?: any;
+      MsgKey?: any;
+      OpaqueData?: any;
+      QueryProduct?: any;
+      QueryOrder?: any;
+      SendClear?: any;
+      SendDelete?: any;
+      SendMessage?: any;
+      EditMessage?: any;
+      SendSeen?: any;
+      UserConstructor?: any;
+      Validators?: any;
+      ProfilePic?: any;
+      PresenceUtils?: any;
+      ChatState?: any;
+      findCommonGroups?: any;
+      ConversationMsgs?: any;
+      sendReactionToMsg?: any;
+      createOrUpdateReactionsModule?: any;
+      EphemeralFields?: any;
+      MsgActionChecks?: any;
+      LinkPreview?: any;
+      Socket?: any;
+      SocketWap?: any;
+      SearchContext?: any;
+      DrawerManager?: any;
+      LidUtils?: any;
+      getMsgInfo?: any;
+      pinUnpinMsg?: any;
+      QueryExist?: any;
+      ReplyUtils?: any;
+      BotSecret?: any;
+      BotProfiles?: any;
+      ContactCollection?: any;
+      DeviceList?: any;
+      NumberInfo?: any;
+      ForwardUtils?: any;
+      VCard?: any;
+      StickerTools?: any;
+      GroupUtils?: any;
+      GroupInvite?: any;
+      GroupInviteV4?: any;
+      ChannelUtils?: any;
+      SendChannelMessage?: any;
+      ChannelSubscribers?: any;
+
       MediaPrep?: {
         prepRawMedia: (opaqueData: any, mediaParams: any) => { waitForPrep: () => Promise<any> };
       };
@@ -82,8 +181,8 @@ declare global {
       MediaTypes?: {
         msgToMediaType: (opts: { type: string; isGif?: boolean; isNewsletter?: boolean }) => any;
       };
-
     };
+
     /**
      * Injected by src/util/Injected/Utils.js
      */
@@ -145,7 +244,32 @@ declare global {
     AuthStore?: {
       AppState?: { state?: string, on?: Function, off?: Function };
       Cmd?: { on?: Function };
-      Conn?: { ref?: string, on?: Function };
+      Conn?: {
+        serialize?: () => {
+          clientToken: undefined,
+          connected: undefined,
+          id: "1",
+          is24h: undefined,
+          isResponse: undefined,
+          lc: undefined,
+          lg: undefined,
+          locales: undefined,
+          phone: undefined,
+          platform: "android",
+          protoVersion: undefined,
+          pushname: string; // "Whatsapp name"
+          ref: string; // base-64 string (len: 102)
+          refId: undefined,
+          refTTL: 60000,
+          secret: undefined,
+          serverToken: undefined,
+          smbTos: 0,
+          tos: undefined,
+          wid: undefined
+        },
+        ref?: string,
+        on?: Function,
+      };
       OfflineMessageHandler?: { getOfflineDeliveryProgress?: () => any };
       PairingCodeLinkUtils?: { setPairingType?: Function, initializeAltDeviceLinking?: Function, startAltLinkingFlow?: Function };
       Base64Tools?: { encodeB64?: Function };
