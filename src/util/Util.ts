@@ -6,8 +6,10 @@ import { Readable } from 'node:stream';
 
 import ffmpeg from 'fluent-ffmpeg';
 import webp from 'node-webpmux';
+import { MessageMedia } from '../structures';
+import puppeteer from 'puppeteer';
 
-const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+const has = (o: object, k: string) => Object.prototype.hasOwnProperty.call(o, k);
 
 /**
  * Utility methods
@@ -17,7 +19,7 @@ class Util {
         throw new Error(`The ${this.constructor.name} class may not be instantiated.`);
     }
 
-    static generateHash(length) {
+    static generateHash(length: number) {
         var result = '';
         var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         var charactersLength = characters.length;
@@ -34,7 +36,7 @@ class Util {
      * @returns {Object}
      * @private
      */
-    static mergeDefault(def, given) {
+    static mergeDefault(def: object, given: object) {
         if (!given) return def;
         for (const key in def) {
             if (!has(given, key) || given[key] === undefined) {
@@ -53,7 +55,7 @@ class Util {
      * 
      * @returns {Promise<MessageMedia>} media in webp format
      */
-    static async formatImageToWebpSticker(media, pupPage) {
+    static async formatImageToWebpSticker(media: MessageMedia, pupPage: puppeteer.Page) {
         if (!media.mimetype.includes('image'))
             throw new Error('media is not a image');
 

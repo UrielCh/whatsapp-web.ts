@@ -401,14 +401,33 @@ class Client extends EventEmitter implements ClientEventsInterface {
      * Evaluate a function in the page context
      * Private function
      */
+    /**
+     * Serializes a function and its arguments into a string suitable for page.evaluate
+     */
+    private serializeFunctionWithArgs<Func extends (...args: any[]) => any>(fn: Func | string, args: any[]): string {
+        let fnStr = typeof fn === 'string' ? fn : fn.toString();
+        // Prepend debugger; to the function body
+        if (typeof fn !== 'string') {
+            fnStr = fnStr.replace('{', '{\n    debugger;');
+        } else if (!fnStr.trim().startsWith('debugger;')) {
+            fnStr = 'debugger;\n' + fnStr;
+        }
+        // Serialize arguments as JSON
+        const argsStr = args.map(arg => JSON.stringify(arg)).join(', ');
+        return `(${fnStr})(${argsStr})`;
+    }
+
     private async evaluate<Params extends unknown[], Func extends EvaluateFunc<Params> = EvaluateFunc<Params>>(pageFunction: Func | string, ...args: Params): Promise<Awaited<ReturnType<Func>>> {
+        const asStr = this.serializeFunctionWithArgs(pageFunction, args);
         try {
+            // check evaluateOnNewDocument
             const p = this.pupPage;
-            const result = await p.evaluate(pageFunction, ...args);
-            return result;
+            const result = await p.evaluate(asStr);
+            console.log("--" + asStr.substring(0, 200));
+            return result as any;
         } catch (error) {
             debugger;
-            throw new Error(`Failed to evaluate function: ${pageFunction.toString().substring(0, 100)}...\n ERROR: ${error}`);
+            throw new Error(`Failed to evaluate function: ${asStr.substring(0, 100)}...\n ERROR: ${error}`);
         }
     }
 
@@ -563,7 +582,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
             this.authStrategy.afterAuthReady();
         });
         let lastPercent = null;
-        await exposeFunctionIfAbsent(this.pupPage, 'onOfflineProgressUpdateEvent', async (percent) => {
+        await exposeFunctionIfAbsent(this.pupPage, 'onOfflineProgressUpdateEvent', async (percent: number) => {
             if (lastPercent !== percent) {
                 lastPercent = percent;
                 this.emit(Events.LOADING_SCREEN, percent, 'WhatsApp'); // Message is hardcoded as "WhatsApp" for now

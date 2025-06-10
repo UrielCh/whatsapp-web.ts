@@ -1,5 +1,5 @@
 import path from 'node:path';
-import fs from 'node:fs';
+import fs from 'node:fs/promises';
 import BaseAuthStrategy from './BaseAuthStrategy.js';
 
 /**
@@ -41,7 +41,7 @@ class LocalAuth extends BaseAuthStrategy {
             throw new Error('LocalAuth is not compatible with a user-supplied userDataDir.');
         }
 
-        fs.mkdirSync(dirPath, { recursive: true });
+        await fs.mkdir(dirPath, { recursive: true });
         
         this.client.options.puppeteer = {
             ...puppeteerOpts,
@@ -53,7 +53,7 @@ class LocalAuth extends BaseAuthStrategy {
 
     async logout() {
         if (this.userDataDir) {
-            await fs.promises.rm(this.userDataDir, { recursive: true, force: true, maxRetries: this.rmMaxRetries })
+            await fs.rm(this.userDataDir, { recursive: true, force: true, maxRetries: this.rmMaxRetries })
                 .catch((e) => {
                     throw new Error(e);
                 });
