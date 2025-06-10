@@ -1,5 +1,5 @@
 /* moduleRaid v5
- * https://github.com/@pedroslopez/moduleRaid
+ * https://github.com/pixeldesu/moduleRaid
  *
  * Copyright pixeldesu, pedroslopez and other contributors
  * Licensed under the MIT License
@@ -13,7 +13,7 @@ export const moduleRaid = function () {
     fillModuleArray = function() {
       (window.webpackChunkbuild || window.webpackChunkwhatsapp_web_client).push([
         [moduleRaid.mID], {}, function(e) {
-          Object.keys(e.m).forEach(function(mod) {
+          Object.keys(e.m).forEach((mod) => {
             moduleRaid.mObj[mod] = e(mod);
           })
         }
@@ -27,21 +27,21 @@ export const moduleRaid = function () {
     }
   
     findModule = function findModule (query) {
-      results = [];
-      modules = Object.keys(moduleRaid.mObj);
+      const results = [];
+      const modules = Object.keys(moduleRaid.mObj);
   
-      modules.forEach(function(mKey) {
-        mod = moduleRaid.mObj[mKey];
+      modules.forEach((mKey) => {
+        const mod = moduleRaid.mObj[mKey];
   
         if (typeof mod !== 'undefined') {
           if (typeof query === 'string') {
             if (typeof mod.default === 'object') {
-              for (key in mod.default) {
+              for (const key in mod.default) {
                 if (key == query) results.push(mod);
               }
             }
   
-            for (key in mod) {
+            for (const key in mod) {
               if (key == query) results.push(mod);
             }
           } else if (typeof query === 'function') { 

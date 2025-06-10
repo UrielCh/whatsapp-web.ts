@@ -1,5 +1,5 @@
 
-import { EventEmitter } from 'events'
+import { EventEmitter } from 'node:events'
 import { RequestInit } from 'node-fetch'
 import * as puppeteer from 'puppeteer'
 import InterfaceController from './src/util/InterfaceController'

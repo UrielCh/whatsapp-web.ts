@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 import { Client, LocalAuth } from '../index.js';
 
 import('dotenv').then(dotenv => dotenv.config());
