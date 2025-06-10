@@ -78,3 +78,6 @@ typings/
 # IDE's
 .idea
 .vscode
+pnpm-lock.yaml
+dist
+pnpm-lock.yaml

@@ -1,5 +1,5 @@
 export const LoadUtils = () => {
-    window.WWebJS = {};
+    window.WWebJS = {} as any;
 
     window.WWebJS.forwardMessage = async (chatId, msgId) => {
         const msg = window.Store.Msg.get(msgId) || (await window.Store.Msg.getMessagesById([msgId]))?.messages?.[0];
@@ -24,7 +24,7 @@ export const LoadUtils = () => {
     window.WWebJS.sendMessage = async (chat, content, options = {}) => {
         const isChannel = window.Store.ChatGetters.getIsNewsletter(chat);
 
-        let mediaOptions = {};
+        let mediaOptions: any = {};
         if (options.media) {
             mediaOptions = await window.WWebJS.processMediaData(
                 options.media, {
@@ -187,7 +187,7 @@ export const LoadUtils = () => {
             delete options.buttons;
         }
 
-        let listOptions = {};
+        let listOptions: any = {};
         if (options.list) {
             if (window.Store.Conn.platform === 'smba' || window.Store.Conn.platform === 'smbi') {
                 throw '[LT01] Whatsapp business can\'t send this yet';
@@ -205,7 +205,7 @@ export const LoadUtils = () => {
             delete listOptions.list.footer;
         }
 
-        const botOptions = {};
+        const botOptions: any = {};
         if (options.invokedBotWid) {
             botOptions.messageSecret = window.crypto.getRandomValues(new Uint8Array(32));
             botOptions.botMessageSecret = await window.Store.BotSecret.genBotMsgSecretFromMsgSecret(botOptions.messageSecret);
@@ -247,7 +247,7 @@ export const LoadUtils = () => {
             to: chat.id,
             local: true,
             self: 'out',
-            t: parseInt(new Date().getTime() / 1000),
+            t: (new Date().getTime() / 1000),
             isNewMsg: true,
             type: 'chat',
             ...ephemeralFields,
@@ -346,7 +346,7 @@ export const LoadUtils = () => {
         return window.Store.Msg.get(msg.id._serialized);
     };
 
-    window.WWebJS.toStickerData = async (mediaInfo) => {
+    window.WWebJS.toStickerData = async (mediaInfo: { data: string; mimetype: string; filename: string }) => {
         if (mediaInfo.mimetype == 'image/webp') return mediaInfo;
 
         const file = window.WWebJS.mediaInfoToFile(mediaInfo);
@@ -360,10 +360,10 @@ export const LoadUtils = () => {
         };
     };
 
-    window.WWebJS.processMediaData = async (mediaInfo, { forceSticker, forceGif, forceVoice, forceDocument, forceMediaHd, sendToChannel }) => {
+    window.WWebJS.processMediaData = async (mediaInfo: { data: string; mimetype: string; filename: string }, { forceSticker, forceGif, forceVoice, forceDocument, forceMediaHd, sendToChannel }) => {
         const file = window.WWebJS.mediaInfoToFile(mediaInfo);
         const opaqueData = await window.Store.OpaqueData.createFromData(file, file.type);
-        const mediaParams = {
+        const mediaParams: any = {
             asSticker: forceSticker,
             asGif: forceGif,
             isPtt: forceVoice,
@@ -656,7 +656,7 @@ export const LoadUtils = () => {
             });
             const fileReader = new FileReader();
             fileReader.onload = () => {
-                const [, data] = fileReader.result.split(',');
+                const [, data] = (fileReader.result as string).split(',');
                 resolve(data);
             };
             fileReader.onerror = (e) => reject(e);
@@ -812,7 +812,7 @@ export const LoadUtils = () => {
 
         options = Object.assign({ size: 640, mimetype: media.mimetype, quality: .75, asDataUrl: false }, options);
 
-        const img = await new Promise ((resolve, reject) => {
+        const img = await new Promise<HTMLImageElement>((resolve, reject) => {
             const img = new Image();
             img.onload = () => resolve(img);
             img.onerror = reject;

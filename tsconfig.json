@@ -4,13 +4,17 @@
 
     /* Language and Environment */
     "target": "ES2020",
-    "module": "ES2020",
-    "types": ["mocha", "chai", "node"],
+    "module": "esnext",
+    "types": ["mocha", "chai"],
     "moduleResolution": "node",
 
     "noEmitHelpers": true, // needed for puppeter;
     "importHelpers": false, // needed for puppeter;
-    "removeComments": true, // improve puppeter code readability
+    "removeComments": false, // improve puppeter code readability
+    "sourceMap": true,
+    "inlineSources": true,
+    "inlineSourceMap": false,
+
     "lib": ["ESNext", "DOM"],
 
     "allowSyntheticDefaultImports": true, /* Allow 'import x from y' when a module doesn't have a default export. */

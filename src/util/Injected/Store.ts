@@ -6,7 +6,7 @@ export function ExposeStore() {
      * @param {string} rOperand The right operand for the WWeb version string to compare with
      * @returns {boolean} Boolean value that indicates the result of the comparison
      */
-    window.compareWwebVersions = (lOperand, operator, rOperand) => {
+    window.compareWwebVersions = (lOperand: string, operator: string, rOperand: string) => {
         if (!['>', '>=', '<', '<=', '='].includes(operator)) {
             throw new class _ extends Error {
                 constructor(m) { super(m); this.name = 'CompareWwebVersionsError'; }
@@ -28,15 +28,15 @@ export function ExposeStore() {
                 : lOperand = lOperand.concat('0');
         }
 
-        lOperand = Number(lOperand.replace(/\./g, ''));
-        rOperand = Number(rOperand.replace(/\./g, ''));
+        const lOperandNum = Number(lOperand.replace(/\./g, ''));
+        const rOperandNum = Number(rOperand.replace(/\./g, ''));
 
         return (
-            operator === '>' ? lOperand > rOperand :
-                operator === '>=' ? lOperand >= rOperand :
-                    operator === '<' ? lOperand < rOperand :
-                        operator === '<=' ? lOperand <= rOperand :
-                            operator === '=' ? lOperand === rOperand :
+            operator === '>' ? lOperandNum > rOperandNum :
+                operator === '>=' ? lOperandNum >= rOperandNum :
+                    operator === '<' ? lOperandNum < rOperandNum :
+                        operator === '<=' ? lOperandNum <= rOperandNum :
+                            operator === '=' ? lOperandNum === rOperandNum :
                                 false
         );
     };

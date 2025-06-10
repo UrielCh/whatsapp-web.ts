@@ -5,6 +5,7 @@ import Poll from "./structures/Poll.js";
 import Contact from "./structures/Contact.js";
 import List from "./structures/List.js";
 import Buttons from "./structures/Buttons.js";
+import Location from "./structures/Location.js";
 
 /**
  * Base class which all authentication strategies extend

@@ -2,7 +2,7 @@
 
 export const ExposeLegacyAuthStore = (moduleRaidStr) => {
     eval('var moduleRaid = ' + moduleRaidStr);
-    // eslint-disable-next-line no-undef
+    // @ts-ignore
     window.mR = moduleRaid();
     window.AuthStore = {};
     window.AuthStore.AppState = window.mR.findModule('Socket')[0].Socket;

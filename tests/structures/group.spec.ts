@@ -17,6 +17,7 @@ describe.skip('Group', function() {
         await client.initialize();
 
         const createRes = await client.createGroup('My Awesome Group', [remoteId]);
+        if (typeof createRes === 'string') throw new Error(createRes);
         expect(createRes.gid).to.exist;
         await helper.sleep(500);
         group = await client.getChatById(createRes.gid._serialized);

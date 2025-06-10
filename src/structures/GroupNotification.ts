@@ -3,6 +3,7 @@ import { GroupNotificationTypes } from '../util/Constants.js';
 import Base from './Base.js';
 import Chat from './Chat.js';
 import Contact from './Contact.js';
+import Location from './Location.js';
 import Message from './Message.js';
 import MessageMedia from './MessageMedia.js';
 

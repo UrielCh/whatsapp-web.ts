@@ -1,11 +1,22 @@
 // global.d.ts or src/types/whatsapp.d.ts
 declare global {
   interface Window {
+    mR?: {
+      findModule: any;
+      modules: any;
+    },
+    injectToFunction: (target: { module: string; index?: number; function: string }, callback: (originalFunction: Function, ...args: any[]) => any) => void;
     onReaction: (reactions: any[]) => void;
     /**
      * Injected by src/util/Injected/Store.js
      */
     Store: {
+      UploadUtils?: any;
+      MDBackend?: any;
+      CryptoLib?: any;
+      ChatGetters: {
+        getIsNewsletter: (chat: any) => boolean;
+      },
       Features: {
         F: any;
         setFeature: (feature: string, enabled: boolean) => void;
@@ -13,6 +24,7 @@ declare global {
       };
 
       WidFactory: {
+        toUserWid: (wid: any) => any;
         createWid: (chatId: string) => any;
         createUserWid: (chatId: string) => any;
       };
@@ -48,6 +60,7 @@ declare global {
         sendDeleteMsgs: (chat: any, msgs: any, clearMedia: boolean) => Promise<any>;
        };
       Conn?: {
+        wid?: string;
         platform?: string;
         on?: Function;
         ref?: string;
@@ -57,6 +70,8 @@ declare global {
         plugged?: boolean;
       };
       User?: {
+        getMaybeMeLidUser?: () => any;
+        getMaybeMeUser?: () => any;
         getMeUser?: () => {
           server: "c.us",
           user: string; // phonenumber
@@ -67,6 +82,7 @@ declare global {
         on?: Function;
         get?: Function;
         getMessagesById?: Function;
+        modelClass?: new (message: any) => any;
         search?: (query: string, page: number, count: number, remote: string) => Promise<any>;
       };
       AppState?: {
@@ -78,12 +94,15 @@ declare global {
         reconnect?: Function;
       };
       GroupParticipants?: {
+        sendAddParticipantsRPC?: Function;
         removeParticipants?: Function;
         promoteParticipants?: Function;
         demoteParticipants?: Function;
       };
       Call?: { on?: Function };
       Chat?: {
+        _find?: Function;
+        findImpl?: Function;
         on?: Function;
         get?: (wid: any) => any;
         find?: (wid: any) => Promise<any> | any;
@@ -246,6 +265,9 @@ declare global {
      * Injected by src/util/Injected/Utils.js
      */
     WWebJS: {
+      mediaInfoToFile?: (mediaInfo: { data: string; mimetype: string; filename: string }) => File;
+      getProfilePicThumbToBase64?: (chatId: string) => Promise<unknown>;
+      getStatusModel?: (status: any) => any;
       getAllStatuses?: () => Promise<any[]>;
       getContacts?: () => Promise<Contact[]>;
       getContact?: (id: string) => Promise<Contact>;

@@ -10,6 +10,7 @@ import Message from '../src/structures/Message.js';
 import MessageMedia from '../src/structures/MessageMedia.js';
 import Location from '../src/structures/Location.js';
 import { MessageTypes, WAState, DefaultOptions } from '../src/util/Constants.js';
+import Client from "../src/Client.js";
 
 const expect = chai.expect;
 chai.use(chaiAsPromised);
@@ -37,8 +38,8 @@ it('TSX environment', async function () {
 
 // for debug
 describe('Client', function() {
-    describe('User Agent', function () {
-        it.skip('should set user agent on browser', async function () {
+    describe.skip('User Agent', function () {
+        it('should set user agent on browser', async function () {
             this.timeout(SUPER_TIMEOUT);
 
             const client = await helper.createClient({
@@ -61,7 +62,7 @@ describe('Client', function() {
             }
         });
 
-        it.skip('should set custom user agent on browser', async function () {
+        it('should set custom user agent on browser', async function () {
             this.timeout(SUPER_TIMEOUT);
             const customUA = DefaultOptions.userAgent.replace(/Chrome\/.* /, 'Chrome/99.9.9999.999 ');
 
@@ -71,21 +72,22 @@ describe('Client', function() {
                     puppeteer: {...PUPPETER_HEADLESS}
                 }
             });
-
-            await client.initialize();
-            await helper.sleep(LONG_WAIT);
-
-            const browserUA = await client.pupBrowser.userAgent();
-            expect(browserUA).to.equal(customUA);
-            expect(browserUA.includes('Chrome/99.9.9999.999')).to.equal(true);
-
-            const pageUA = await client.pupPage.evaluate(() => window.navigator.userAgent);
-            expect(pageUA).to.equal(customUA);
-
-            await client.destroy();
+            try {
+                await client.initialize();
+                await helper.sleep(LONG_WAIT);
+    
+                const browserUA = await client.pupBrowser.userAgent();
+                expect(browserUA).to.equal(customUA);
+                expect(browserUA.includes('Chrome/99.9.9999.999')).to.equal(true);
+    
+                const pageUA = await client.pupPage.evaluate(() => window.navigator.userAgent);
+                expect(pageUA).to.equal(customUA);    
+            } finally {
+                await client.destroy();
+            }
         });
 
-        it.skip('should respect an existing user agent arg', async function () {
+        it('should respect an existing user agent arg', async function () {
             this.timeout(SUPER_TIMEOUT);
 
             const customUA = DefaultOptions.userAgent.replace(/Chrome\/.* /, 'Chrome/99.9.9999.999 ');
@@ -99,17 +101,19 @@ describe('Client', function() {
                 }
             });
 
-            await client.initialize();
-            await helper.sleep(LONG_WAIT);
-
-            const browserUA = await client.pupBrowser.userAgent();
-            expect(browserUA).to.equal(customUA);
-            expect(browserUA.includes('Chrome/99.9.9999.999')).to.equal(true);
-
-            const pageUA = await client.pupPage.evaluate(() => window.navigator.userAgent);
-            expect(pageUA).to.equal(DefaultOptions.userAgent);
-
-            await client.destroy();
+            try {
+                await client.initialize();
+                await helper.sleep(LONG_WAIT);
+    
+                const browserUA = await client.pupBrowser.userAgent();
+                expect(browserUA).to.equal(customUA);
+                expect(browserUA.includes('Chrome/99.9.9999.999')).to.equal(true);
+    
+                const pageUA = await client.pupPage.evaluate(() => window.navigator.userAgent);
+                expect(pageUA).to.equal(DefaultOptions.userAgent);
+            } finally {
+                await client.destroy();
+            }
         });
     });
 
@@ -124,77 +128,81 @@ describe('Client', function() {
                 }
             });
             client.on('qr', callback);
-            await client.initialize();
+            try {
+                await client.initialize();
 
-            await helper.sleep(LONG_WAIT);
-
-            expect(callback.called).to.equal(true);
-            expect(callback.args[0][0]).to.have.length.greaterThanOrEqual(152);
-
-            await client.destroy();
+                await helper.sleep(LONG_WAIT);
+    
+                expect(callback.called).to.equal(true);
+                expect(callback.args[0][0]).to.have.length.greaterThanOrEqual(152);    
+            } finally {
+                await client.destroy();
+            }
         });
 
-        /** 
-         * TODO replace helper.sleep(60000) by a promise.
-         */
-        it.skip('should disconnect after reaching max qr retries', async function () {
+        it('should disconnect after reaching max qr retries', async function () {
             this.timeout(SUPER_TIMEOUT);
 
             let nbQrCode = 0;
-            const getQrCode = (_qrCode) => nbQrCode++;
+            const getQrCode = (_qrCode: string) => nbQrCode++;
+    
+            let disconectHandler: () => void = () => {};
+            const disconectPromise = new Promise<void>((resolve) => {
+                disconectHandler = resolve;
+            });
             let disconnectedReason = "";
-            const disconnectedCallback = (deco_reason) => disconnectedReason = deco_reason;
+            const disconnectedCallback = (deco_reason: string) => {disconnectedReason = deco_reason; disconectHandler()};
 
             const client = await helper.createClient({options: {qrMaxRetries: 1, puppeteer: {...PUPPETER_HEADLESS} } });
             client.on('qr', getQrCode);
             client.on('disconnected', disconnectedCallback);
 
-            await client.initialize();
-
-            await helper.sleep(60000); // give time to whatsapp to expire the qr code
-            
-            expect(nbQrCode).to.be.greaterThanOrEqual(2);
-            expect(disconnectedReason).to.eql('Max qrcode retries reached');
+            try {
+                await client.initialize();
+                await Promise.race([
+                    disconectPromise,
+                    helper.sleep(60000)
+                ]);
+                expect(nbQrCode).to.be.greaterThanOrEqual(2);
+                expect(disconnectedReason).to.eql('Max qrcode retries reached');                    
+            } finally {
+                await client.destroy();
+            }
         });
 
         // get stuck with a QRcode.
-        it.skip('should authenticate with existing session', async function() {
-            this.timeout(SUPER_TIMEOUT);
-            const authenticatedCallback = sinon.spy();
-            const client = await helper.createClient({
-                authenticated: true,
-                options: {puppeteer: {...PUPPETER_HEADLESS} }
-            });
-
-            let nbQrCode = 0;
-            const getQrCode = (_qrCode) => nbQrCode++;
-
-            let nbReady = 0;
-            const getReady = () => nbReady++;
-
-            client.on('qr', getQrCode);
-            client.on('authenticated', authenticatedCallback);
-            client.on('ready', getReady);
-
-            await client.initialize();
-
-            expect(authenticatedCallback.called).to.equal(true);
-
-            if(helper.isUsingLegacySession()) {
-                const newSession = authenticatedCallback.args[0][0];
-                expect(newSession).to.have.key([
-                    'WABrowserId', 
-                    'WASecretBundle', 
-                    'WAToken1', 
-                    'WAToken2'
-                ] as any as string); // bypasse bad mocha typing
-            }
-            
-            expect(nbReady).to.equal(1);
-            expect(nbQrCode).to.equal(0);
-
-            await client.destroy();
-        });
+        // it('should authenticate with existing session', async function() {
+        //     this.timeout(SUPER_TIMEOUT);
+        //     const authenticatedCallback = sinon.spy();
+        //     const client = await helper.createClient({
+        //         authenticated: true,
+        //         options: {puppeteer: {...PUPPETER_HEADLESS} }
+        //     });
+        //     try {
+        //         let nbQrCode = 0;
+        //         const getQrCode = (_qrCode: string) => nbQrCode++;
+        //         let nbReady = 0;
+        //         const getReady = () => nbReady++;
+        //         client.on('qr', getQrCode);
+        //         client.on('authenticated', authenticatedCallback);
+        //         client.on('ready', getReady);
+        //         await client.initialize();
+        //         expect(authenticatedCallback.called).to.equal(true);
+        //         if(helper.isUsingLegacySession()) {
+        //             const newSession = authenticatedCallback.args[0][0];
+        //             expect(newSession).to.have.key([
+        //                 'WABrowserId', 
+        //                 'WASecretBundle', 
+        //                 'WAToken1', 
+        //                 'WAToken2'
+        //             ] as any as string); // bypasse bad mocha typing
+        //         }
+        //         expect(nbReady).to.equal(1);
+        //         expect(nbQrCode).to.equal(0);                    
+        //     } finally {
+        //         await client.destroy();
+        //     }
+        // });
 
         // describe('LegacySessionAuth', function () {
         //     it('should fail auth if session is invalid', async function() {
@@ -314,9 +322,9 @@ describe('Client', function() {
         }); 
     });
 
-    describe.skip('Authenticated', function() {
+    describe('Authenticated', function() {
         // this.timeout(SUPER_TIMEOUT);
-        let client;
+        let client: Client;
 
         before(async function() {
             this.timeout(AUTH_TIMEOUT);
@@ -339,10 +347,11 @@ describe('Client', function() {
             console.log(`WA Version: ${version}`);
         });
 
-        describe('Expose Store', function() {
+        describe.skip('Expose Store', function() {
             it('exposes the store', async function() {
+                const loops = 5000;
                 const exposed = await client.pupPage.evaluate(async () => {
-                    for (let i=0; i< 50; i++) {
+                    for (let i=0; i< loops; i++) {
                         if (window.Store) {
                             return i + 1;
                         }
@@ -350,10 +359,10 @@ describe('Client', function() {
                     }
                     return -1;
                 });
-                expect(exposed).to.be.greaterThanOrEqual(1);
+                expect(exposed).to.be.greaterThanOrEqual(1, `Store not exposed, Ou shoult authenticate the current Session you have ${(loops / 10)} seconds to do so.`);
             });
     
-            it.skip('exposes all required WhatsApp Web internal models 1/3', async function() {
+            it('exposes all required WhatsApp Web internal models 1/3', async function() {
                 const expectedModules = [
                     'AppState',
                     'BlockContact',
@@ -386,8 +395,11 @@ describe('Client', function() {
             });
 
 
-            it.skip('exposes all required WhatsApp Web internal models 2/3', async function() {
+            it('exposes all required WhatsApp Web internal models 2/3', async function() {
                 const expectedModules = [
+                    'Call',
+                    'QueryOrder',
+                    'SendClear',
                     'PresenceUtils',
                     'ProfilePic',
                     'QueryExist',
@@ -419,14 +431,11 @@ describe('Client', function() {
 
             it('exposes all required WhatsApp Web internal models 3/3', async function() {
                 const expectedModules = [
-                    'Call',
                     'Features',
                     'Invite',
                     'InviteInfo',
                     'JoinInviteV4',
                     'MessageInfo',
-                    'QueryOrder',
-                    'SendClear',
                     'UploadUtils',
                 ];
               
@@ -442,8 +451,6 @@ describe('Client', function() {
                 }
                 expect(loadedModules).to.have.members(expectedModules, `Missing modules: ${missingModules.join(', ')}`);
             });
-
-
         });
     
         describe('Send Messages', function () {    

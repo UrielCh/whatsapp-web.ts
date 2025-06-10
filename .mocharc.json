@@ -1,0 +1,11 @@
+{
+    "extension": [
+        "ts"
+    ],
+    "reporter": "spec",
+    "loaderAlt": "ts-node/esm",
+    "requireOld": "tsx/esm",
+    "spec": [
+        "dist/tests/**/*.js"
+    ]
+}

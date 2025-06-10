@@ -8,7 +8,10 @@ import { WebCache, VersionResolveError } from './WebCache.js';
  * @param {boolean} options.strict - If true, will throw an error if the requested version can't be fetched. If false, will resolve to the latest version. Defaults to false.
  */
 class RemoteWebCache extends WebCache {
-    constructor(options = {}) {
+    remotePath: string;
+    strict: boolean;
+
+    constructor(options: {remotePath?: string, strict?: boolean} = {}) {
         super();
 
         if (!options.remotePath) throw new Error('webVersionCache.remotePath is required when using the remote cache');

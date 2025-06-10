@@ -56,10 +56,10 @@ export function ExposeLegacyStore() {
     window.Store.getMsgInfo = (window.mR.findModule('sendQueryMsgInfo')[0] || {}).sendQueryMsgInfo || window.mR.findModule('queryMsgInfo')[0].queryMsgInfo;
     window.Store.pinUnpinMsg = window.mR.findModule('sendPinInChatMsg')[0].sendPinInChatMsg;
     
-    /* eslint-disable no-undef, no-cond-assign */
+    // @ts-ignore
     window.Store.QueryExist = ((m = window.mR.findModule('queryExists')[0]) ? m.queryExists : window.mR.findModule('queryExist')[0].queryWidExists);
+    // @ts-ignore
     window.Store.ReplyUtils = (m = window.mR.findModule('canReplyMsg')).length > 0 && m[0];
-    /* eslint-enable no-undef, no-cond-assign */
 
     window.Store.Settings = {
         ...window.mR.findModule('ChatlistPanelState')[0],
@@ -101,7 +101,7 @@ export function ExposeLegacyStore() {
         };
     }
     
-    // eslint-disable-next-line no-undef
+    // @ts-ignore
     if ((m = window.mR.findModule('ChatCollection')[0]) && m.ChatCollection && typeof m.ChatCollection.findImpl === 'undefined' && typeof m.ChatCollection._find !== 'undefined') m.ChatCollection.findImpl = m.ChatCollection._find;
 
     const _isMDBackend = window.mR.findModule('isMDBackend');
