@@ -1,3 +1,5 @@
+import Client from '../Client.js';
+import { MessageId } from '../types.js';
 import Base from './Base.js';
 
 /**
@@ -5,13 +7,23 @@ import Base from './Base.js';
  * @extends {Base}
  */
 class Reaction extends Base {
-    constructor(client, data) {
+    id: MessageId;
+    orphan: number;
+    orphanReason?: string;
+    timestamp: number;
+    reaction: string;
+    read: boolean;
+    msgId: MessageId;
+    senderId: string;
+    ack?: number;
+
+    constructor(client: Client, data: any) {
         super(client);
 
         if (data) this._patch(data);
     }
 
-    _patch(data) {
+    _patch(data: any) {
         /**
          * Reaction ID
          * @type {object}

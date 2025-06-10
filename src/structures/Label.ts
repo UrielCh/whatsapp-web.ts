@@ -1,22 +1,25 @@
+import Client from '../Client.js';
 import Base from './Base.js';
-// eslint-disable-next-line no-unused-vars
-import Chat from './Chat.js';
+import type Chat from './Chat.js';
 
 /**
  * WhatsApp Business Label information
  */
 class Label extends Base {
-    /**
-     * @param {Base} client
-     * @param {object} labelData
-     */
-    constructor(client, labelData){
+    /** Label name */
+    name: string;
+    /** Label ID */
+    id: string;
+    /** Color assigned to the label */
+    hexColor: string;
+    
+    constructor(client: Client, labelData: {id: string, name: string, hexColor: string}){
         super(client);
 
         if(labelData) this._patch(labelData);
     }
 
-    _patch(labelData){
+    _patch(labelData: {id: string, name: string, hexColor: string}){
         /**
          * Label ID
          * @type {string}
@@ -39,7 +42,7 @@ class Label extends Base {
      * Get all chats that have been assigned this Label
      * @returns {Promise<Array<Chat>>}
      */
-    async getChats(){
+    async getChats(): Promise<Chat[]>{
         return this.client.getChatsByLabelId(this.id);
     }
 

@@ -1,17 +1,49 @@
+import Client from '../Client.js';
 import Base from './Base.js';
 
 /**
  * Represents a Call on WhatsApp
  * @extends {Base}
+ * @example
+ * Call {
+ * id: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+ * from: '5511999999@c.us',
+ * timestamp: 1625003709,
+ * isVideo: false,
+ * isGroup: false,
+ * fromMe: false,
+ * canHandleLocally: false,
+ * webClientShouldHandle: false,
+ * participants: []
+ * }
  */
 class Call extends Base {
-    constructor(client, data) {
+    /** Call Id */
+    id: string;
+    /** from */
+    from?: string;
+    /** Unix timestamp for when the call was created*/
+    timestamp: number;
+    /** Is video */
+    isVideo: boolean;
+    /** Is Group */
+    isGroup: boolean;
+    /** Indicates if the call was sent by the current user */
+    fromMe: boolean;
+    /** indicates if the call can be handled in waweb */
+    canHandleLocally: boolean;
+    /** indicates if the call should be handled in waweb */
+    webClientShouldHandle: boolean;
+    /** Object with participants */
+    participants: object;
+
+    constructor(client: Client, data: any) {
         super(client);
 
         if (data) this._patch(data);
     }
 
-    _patch(data) {
+    _patch(data: any) {
         /**
          * Call ID
          * @type {string}
@@ -64,7 +96,7 @@ class Call extends Base {
     /**
      * Reject the call
     */
-    async reject() {
+    async reject(): Promise<void> {
         return this.client.pupPage.evaluate((peerJid, id) => {
             return window.WWebJS.rejectCall(peerJid, id);
         }, this.from, this.id);

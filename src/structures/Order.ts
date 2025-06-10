@@ -1,18 +1,49 @@
 import Base from './Base.js';
 import Product from './Product.js';
+import Client from '../Client.js';
 
 /**
  * Represents a Order on WhatsApp
- * @extends {Base}
+ *
+ * @example
+ * {
+ * "products": [
+ * {
+ * "id": "123456789",
+ * "price": "150000",
+ * "thumbnailId": "123456789",
+ * "thumbnailUrl": "https://mmg.whatsapp.net",
+ * "currency": "GTQ",
+ * "name": "Store Name",
+ * "quantity": 1
+ * }
+ * ],
+ * "subtotal": "150000",
+ * "total": "150000",
+ * "currency": "GTQ",
+ * "createdAt": 1610136796,
+ * "sellerJid": "55555555@s.whatsapp.net"
+ * }
  */
+
 class Order extends Base {
-    constructor(client, data) {
+    /** List of products*/
+    products: Array<Product>;
+    /** Order Subtotal */
+    subtotal: string;
+    /** Order Total */
+    total: string;
+    /** Order Currency */
+    currency: string;
+    /** Order Created At*/
+    createdAt: number;
+    constructor(client: Client, data: any) {
         super(client);
 
         if (data) this._patch(data);
     }
 
-    _patch(data) {
+    _patch(data: any) {
         /**
          * List of products
          * @type {Array<Product>}

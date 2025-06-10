@@ -1,9 +1,13 @@
+import type { Page } from 'puppeteer';
+
 /**
  * Interface Controller
  */
 class InterfaceController {
 
-    constructor(props) {
+    private pupPage: Page;
+
+    constructor(props: { pupPage: Page }) {
         this.pupPage = props.pupPage;
     }
 
@@ -11,7 +15,7 @@ class InterfaceController {
      * Opens the Chat Window
      * @param {string} chatId ID of the chat window that will be opened
      */
-    async openChatWindow(chatId) {
+    async openChatWindow(chatId: string) {
         await this.pupPage.evaluate(async (chatId) => {
             const chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
             await window.Store.Cmd.openChatBottom(chat);
@@ -22,7 +26,7 @@ class InterfaceController {
      * Opens the Chat Drawer
      * @param {string} chatId ID of the chat drawer that will be opened
      */
-    async openChatDrawer(chatId) {
+    async openChatDrawer(chatId: string) {
         await this.pupPage.evaluate(async chatId => {
             let chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
             await window.Store.Cmd.openDrawerMid(chat);
@@ -33,7 +37,7 @@ class InterfaceController {
      * Opens the Chat Search
      * @param {string} chatId ID of the chat search that will be opened
      */
-    async openChatSearch(chatId) {
+    async openChatSearch(chatId: string) {
         await this.pupPage.evaluate(async chatId => {
             let chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
             await window.Store.Cmd.chatSearch(chat);
@@ -44,8 +48,8 @@ class InterfaceController {
      * Opens or Scrolls the Chat Window to the position of the message
      * @param {string} msgId ID of the message that will be scrolled to
      */
-    async openChatWindowAt(msgId) {
-        await this.pupPage.evaluate(async (msgId) => {
+    async openChatWindowAt(msgId: string) {
+        await this.pupPage.evaluate(async (msgId: string) => {
             const msg = window.Store.Msg.get(msgId) || (await window.Store.Msg.getMessagesById([msgId]))?.messages?.[0];
             const chat = window.Store.Chat.get(msg.id.remote) ?? await window.Store.Chat.find(msg.id.remote);
             const searchContext = await window.Store.SearchContext.getSearchContext(chat, msg.id);
@@ -57,7 +61,7 @@ class InterfaceController {
      * Opens the Message Drawer
      * @param {string} msgId ID of the message drawer that will be opened
      */
-    async openMessageDrawer(msgId) {
+    async openMessageDrawer(msgId: string) {
         await this.pupPage.evaluate(async msgId => {
             const msg = window.Store.Msg.get(msgId) || (await window.Store.Msg.getMessagesById([msgId]))?.messages?.[0];
             await window.Store.Cmd.msgInfoDrawer(msg);

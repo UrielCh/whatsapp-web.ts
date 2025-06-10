@@ -33,7 +33,7 @@
     "noPropertyAccessFromIndexSignature": false, /* Enforces using indexed accessors for keys declared using an indexed type. */
     "allowUnusedLabels": false, /* Disable error reporting for unused labels. */
     "allowUnreachableCode": false, /* Disable error reporting for unreachable code. */
-
+    "resolveJsonModule": true,
     /* Completeness */
     "skipLibCheck": true /* Skip type checking all .d.ts files. */
   }

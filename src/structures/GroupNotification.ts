@@ -1,10 +1,32 @@
+import { MessageSendOptions } from '../types.js';
+import { GroupNotificationTypes } from '../util/Constants.js';
 import Base from './Base.js';
+import Chat from './Chat.js';
+import Contact from './Contact.js';
+import Message from './Message.js';
+import MessageMedia from './MessageMedia.js';
 
 /**
  * Represents a GroupNotification on WhatsApp
  * @extends {Base}
  */
 class GroupNotification extends Base {
+    /** ContactId for the user that produced the GroupNotification */
+    author: string;
+    /** Extra content */
+    body: string;
+    /** ID for the Chat that this groupNotification was sent for */
+    chatId: string;
+    /** ID that represents the groupNotification 
+     *  @todo create a more specific type for the id object */
+    id: object;
+    /** Contact IDs for the users that were affected by this GroupNotification */
+    recipientIds: string[];
+    /** Unix timestamp for when the groupNotification was created */
+    timestamp: number;
+    /** GroupNotification type */
+    type: typeof GroupNotificationTypes[keyof typeof GroupNotificationTypes];
+
     constructor(client, data) {
         super(client);
 
@@ -66,7 +88,7 @@ class GroupNotification extends Base {
      * Returns the Chat this groupNotification was sent in
      * @returns {Promise<Chat>}
      */
-    getChat() {
+    getChat(): Promise<Chat> {
         return this.client.getChatById(this.chatId);
     }
 
@@ -74,7 +96,7 @@ class GroupNotification extends Base {
      * Returns the Contact this GroupNotification was produced by
      * @returns {Promise<Contact>}
      */
-    getContact() {
+    getContact(): Promise<Contact> {
         return this.client.getContactById(this.author);
     }
 
@@ -82,7 +104,7 @@ class GroupNotification extends Base {
      * Returns the Contacts affected by this GroupNotification.
      * @returns {Promise<Array<Contact>>}
      */
-    async getRecipients() {
+    async getRecipients(): Promise<Contact[]> {
         return await Promise.all(this.recipientIds.map(async m => await this.client.getContactById(m)));
     }
 
@@ -93,7 +115,7 @@ class GroupNotification extends Base {
      * @param {object} options
      * @returns {Promise<Message>}
      */
-    async reply(content, options={}) {
+    async reply(content: string | MessageMedia | Location, options: MessageSendOptions={}): Promise<Message> {
         return this.client.sendMessage(this.chatId, content, options);
     }
     

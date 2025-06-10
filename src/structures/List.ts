@@ -4,14 +4,19 @@ import Util from '../util/Util.js';
  * Message type List
  */
 class List {
-    /**
+    description: string; // or body ?
+    buttonText: string;
+    sections: Array<any>;
+    title?: string | null;
+    footer?: string | null;
+/**
      * @param {string} body
      * @param {string} buttonText
      * @param {Array<any>} sections
      * @param {string?} title
      * @param {string?} footer
      */
-    constructor(body, buttonText, sections, title, footer) {
+    constructor(body:string, buttonText: string, sections: Array<any>, title?: string | null, footer?: string | null) {
         /**
          * Message body
          * @type {string}
@@ -42,7 +47,6 @@ class List {
          * @type {Array<any>}
          */
         this.sections = this._format(sections);
-        
     }
     
     /**

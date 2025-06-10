@@ -7,6 +7,16 @@ import path from 'node:path';
 import { Events } from './../util/Constants.js';
 import BaseAuthStrategy from './BaseAuthStrategy.js';
 
+/** 
+ * Remote store interface
+ */
+export interface Store {
+    sessionExists: (options: { session: string }) => Promise<boolean> | boolean,
+    delete: (options: { session: string }) => Promise<any> | any,
+    save: (options: { session: string }) => Promise<any> | any,
+    extract: (options: { session: string, path: string }) => Promise<any> | any,
+}
+
 /**
  * Remote-based authentication
  * @param {object} options - options
@@ -17,10 +27,25 @@ import BaseAuthStrategy from './BaseAuthStrategy.js';
  * @param {number} options.rmMaxRetries - Sets the maximum number of retries for removing the session directory
  */
 class RemoteAuth extends BaseAuthStrategy {
-    constructor({ clientId, dataPath, store, backupSyncIntervalMs, rmMaxRetries } = {}) {
+    public clientId?: string;
+    public dataPath?: string;
+    public store: Store;
+    public backupSyncIntervalMs: number;
+    public rmMaxRetries?: number;
+    public userDataDir?: string;
+    public sessionName?: string;
+    public tempDir?: string;
+    public requiredDirs?: string[];
+    public backupSync?: NodeJS.Timeout;
+
+    constructor({ clientId, dataPath, store, backupSyncIntervalMs, rmMaxRetries }: {
+        store: Store,
+        clientId?: string,
+        dataPath?: string,
+        backupSyncIntervalMs: number,
+        rmMaxRetries?: number
+    }) {
         super();
-
-
         if (!fs && !unzipper && !archiver) throw new Error('Optional Dependencies [fs-extra, unzipper, archiver] are required to use RemoteAuth. Make sure to run npm install correctly and remove the --no-optional flag');
 
         const idRegex = /^[-_\w]+$/i;
@@ -95,7 +120,7 @@ class RemoteAuth extends BaseAuthStrategy {
         }, this.backupSyncIntervalMs);
     }
 
-    async storeRemoteSession(options) {
+    async storeRemoteSession(options?: { emit?: boolean }) {
         /* Compress & Store Session */
         const pathExists = await this.isValidPath(this.userDataDir);
         if (pathExists) {
@@ -141,7 +166,7 @@ class RemoteAuth extends BaseAuthStrategy {
 
         await fs.copy(this.userDataDir, this.tempDir).catch(() => {});
         await this.deleteMetadata();
-        return new Promise((resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
             archive
                 .directory(this.tempDir, false)
                 .on('error', err => reject(err))
@@ -154,7 +179,7 @@ class RemoteAuth extends BaseAuthStrategy {
 
     async unCompressSession(compressedSessionPath) {
         var stream = fs.createReadStream(compressedSessionPath);
-        await new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
             stream.pipe(unzipper.Extract({
                 path: this.userDataDir
             }))
@@ -196,8 +221,8 @@ class RemoteAuth extends BaseAuthStrategy {
         }
     }
 
-    async delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+    async delay(ms: number): Promise<void> {
+        return new Promise<void>((resolve) => setTimeout(resolve, ms));
     }
 }
 

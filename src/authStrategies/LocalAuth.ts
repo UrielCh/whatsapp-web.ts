@@ -10,7 +10,16 @@ import BaseAuthStrategy from './BaseAuthStrategy.js';
  * @param {number} options.rmMaxRetries - Sets the maximum number of retries for removing the session directory
 */
 class LocalAuth extends BaseAuthStrategy {
-    constructor({ clientId, dataPath, rmMaxRetries }={}) {
+    public clientId?: string;
+    public dataPath?: string;
+    public rmMaxRetries?: number;
+    public userDataDir?: string;
+
+    constructor({ clientId, dataPath, rmMaxRetries }: {
+        clientId?: string,
+        dataPath?: string,
+        rmMaxRetries?: number
+    }={}) {
         super();
 
         const idRegex = /^[-_\w]+$/i;

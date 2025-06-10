@@ -1,13 +1,25 @@
+import Client from '../Client.js';
 import Base from './Base.js';
 
+/**
+ * Represents the metadata associated with a given product
+ */
 class ProductMetadata extends Base {
-    constructor(client, data) {
+    /** Product Id */
+    id: string;
+    /** Product Name */
+    name: string;
+    /** Product Description */
+    description: string;
+    /** Retailer ID */
+    retailer_id?: string;
+    
+    constructor(client: Client, data: {id: string, retailer_id?: string, name: string, description: string}) {
         super(client);
-
         if (data) this._patch(data);
     }
 
-    _patch(data) {
+    _patch(data: {id: string, retailer_id?: string, name: string, description: string}) {
         /** Product ID */
         this.id = data.id;
         /** Retailer ID */

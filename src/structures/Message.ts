@@ -4,21 +4,199 @@ import Location from './Location.js';
 import Order from './Order.js';
 import Payment from './Payment.js';
 import Reaction from './Reaction.js';
-import Contact from './Contact.js';
-import { MessageTypes } from '../util/Constants.js';
+import Contact, { ContactId } from './Contact.js';
+import { MessageAck, MessageTypes } from '../util/Constants.js';
+import Client from '../Client.js';
+import { MessageContent, MessageId, MessageSendOptions } from '../types.js';
+import Chat from './Chat.js';
+import GroupChat from './GroupChat.js';
+
+export type MessageInfo = {
+    delivery: Array<{id: ContactId, t: number}>,
+    deliveryRemaining: number,
+    played: Array<{id: ContactId, t: number}>,
+    playedRemaining: number,
+    read: Array<{id: ContactId, t: number}>,
+    readRemaining: number
+}
+
+export type InviteV4Data = {
+    inviteCode: string,
+    inviteCodeExp: number,
+    groupId: string,
+    groupName?: string,
+    fromId: string,
+    toId: string
+}
+
+export type ReactionList = {
+    /**
+     * Original emoji
+     */
+    id: string,
+    /**
+     * Aggregate emoji
+     */
+    aggregateEmoji: string,
+    /**
+     * Flag who sent the reaction
+     */
+    hasReactionByMe: boolean,
+    /**
+     * Reaction senders, to this message
+     */
+    senders: Array<Reaction>
+}
+
+/** Options for editing a message */
+export interface MessageEditOptions {
+    /** Show links preview. Has no effect on multi-device accounts. */
+    linkPreview?: boolean;
+    /** Contacts that are being mentioned in the message */
+    mentions?: Array<Contact|string>;
+    /** Extra options */
+    extra?: any;
+    groupMentions?: any | any[];
+}
 
 /**
  * Represents a Message on WhatsApp
  * @extends {Base}
+ * @example
+ * {
+ *   mediaKey: undefined,
+ *   id: {
+ *     fromMe: false,
+ *     remote: `554199999999@c.us`,
+ *     id: '1234567890ABCDEFGHIJ',
+ *     _serialized: `false_554199999999@c.us_1234567890ABCDEFGHIJ`
+ *   },
+ *   ack: -1,
+ *   hasMedia: false,
+ *   body: 'Hello!',
+ *   type: 'chat',
+ *   timestamp: 1591482682,
+ *   from: `554199999999@c.us`,
+ *   to: `554188888888@c.us`,
+ *   author: undefined,
+ *   isForwarded: false,
+ *   broadcast: false,
+ *   fromMe: false,
+ *   hasQuotedMsg: false,
+ *   hasReaction: false,
+ *   location: undefined,
+ *   mentionedIds: []
+ * }
  */
 class Message extends Base {
-    constructor(client, data) {
+    /** ACK status for the message */
+    ack: typeof MessageAck[keyof typeof MessageAck];
+    /** If the message was sent to a group, this field will contain the user that sent the message. */
+    author?: string;
+    /** String that represents from which device type the message was sent */
+    deviceType: string;
+    /** Message content */
+    body: string;
+    /** Indicates if the message was a broadcast */
+    broadcast: boolean;
+    /** Indicates if the message was a status update */
+    isStatus: boolean;
+    /** Indicates if the message is a Gif */
+    isGif: boolean;
+    /** Indicates if the message will disappear after it expires */
+    isEphemeral: boolean;
+    /** ID for the Chat that this message was sent to, except if the message was sent by the current user */
+    from: string;
+    /** Indicates if the message was sent by the current user */
+    fromMe: boolean;
+    /** Indicates if the message has media available for download */
+    hasMedia: boolean;
+    /** Indicates if the message was sent as a reply to another message */
+    hasQuotedMsg: boolean;
+    /** Indicates whether there are reactions to the message */
+    hasReaction: boolean;
+    /** Indicates the duration of the message in seconds */
+    duration: string;
+    /** ID that represents the message */
+    id: MessageId;
+    /** Indicates if the message was forwarded */
+    isForwarded: boolean;
+    /**
+     * Indicates how many times the message was forwarded.
+     * The maximum value is 127.
+     */
+    forwardingScore: number;
+    /** Indicates if the message was starred */
+    isStarred: boolean;
+    /** Location information contained in the message, if the message is type "location" */
+    location: Location;
+    /** List of vCards contained in the message */
+    vCards: string[];
+    /** Invite v4 info */
+    inviteV4?: InviteV4Data;
+    /** MediaKey that represents the sticker 'ID' */
+    mediaKey?: string;
+    /** Indicates the mentions in the message body. */
+    mentionedIds: string[];
+    /** Indicates whether there are group mentions in the message body */
+    groupMentions: {
+        groupSubject: string;
+        groupJid: {_serialized: string};
+    }[];
+    /** Unix timestamp for when the message was created */
+    timestamp: number;
+    /**
+     * ID for who this message is for.
+     * If the message is sent by the current user, it will be the Chat to which the message is being sent.
+     * If the message is sent by another user, it will be the ID for the current user.
+     */
+    to: string;
+    /** Message type */
+    type: typeof MessageTypes[keyof typeof MessageTypes];
+    /** Links included in the message. */
+    links: Array<{
+        link: string;
+        isSuspicious: boolean;
+    }>;
+    /** Order ID */
+    orderId: string;
+    /** title */
+    title?: string;
+    /** description*/
+    description?: string;
+    /** Business Owner JID */
+    businessOwnerJid?: string;
+    /** Product JID */
+    productId?: string;
+    /** Last edit time */
+    latestEditSenderTimestampMs?: number;
+    /** Last edit message author */
+    latestEditMsgKey?: MessageId;
+    /** Message buttons */
+    dynamicReplyButtons?: object;
+    /** Selected button ID */
+    selectedButtonId?: string;
+    /** Selected list row ID */
+    selectedRowId?: string;
+    pollName: string;
+    /** Avaiaible poll voting options */
+    pollOptions: string[];
+    /** False for a single choice poll, true for a multiple choice poll */
+    allowMultipleAnswers: boolean;
+    _data: any;
+
+    pollInvalidated: any;
+    isSentCagPollCreation: any;
+    messageSecret: any;
+    token?: string;
+
+    constructor(client: Client, data: any) {
         super(client);
 
         if (data) this._patch(data);
     }
 
-    _patch(data) {
+    _patch(data: any) {
         this._data = data;
         
         /**
@@ -302,7 +480,7 @@ class Message extends Base {
      * Note that the Message must still be in the web app cache for this to work, otherwise will return null.
      * @returns {Promise<Message>}
      */
-    async reload() {
+    async reload(): Promise<Message | null> {
         const newData = await this.client.pupPage.evaluate(async (msgId) => {
             const msg = window.Store.Msg.get(msgId) || (await window.Store.Msg.getMessagesById([msgId]))?.messages?.[0];
             if (!msg) return null;
@@ -327,7 +505,7 @@ class Message extends Base {
      * Returns the Chat this message was sent in
      * @returns {Promise<Chat>}
      */
-    getChat() {
+    getChat(): Promise<Chat> {
         return this.client.getChatById(this._getChatId());
     }
 
@@ -335,7 +513,7 @@ class Message extends Base {
      * Returns the Contact this message was sent from
      * @returns {Promise<Contact>}
      */
-    getContact() {
+    getContact(): Promise<Contact> {
         return this.client.getContactById(this.author || this.from);
     }
 
@@ -343,15 +521,15 @@ class Message extends Base {
      * Returns the Contacts mentioned in this message
      * @returns {Promise<Array<Contact>>}
      */
-    async getMentions() {
+    async getMentions(): Promise<Contact[]> {
         return await Promise.all(this.mentionedIds.map(async m => await this.client.getContactById(m)));
     }
     
     /**
      * Returns groups mentioned in this message
-     * @returns {Promise<GroupChat[]|[]>}
+     * @returns {Promise<GroupChat[]>}
      */
-    async getGroupMentions() {
+    async getGroupMentions(): Promise<Chat[]> {
         return await Promise.all(this.groupMentions.map(async (m) => await this.client.getChatById(m.groupJid._serialized)));
     }
 
@@ -359,7 +537,7 @@ class Message extends Base {
      * Returns the quoted message, if any
      * @returns {Promise<Message>}
      */
-    async getQuotedMessage() {
+    async getQuotedMessage(): Promise<Message | undefined> {
         if (!this.hasQuotedMsg) return undefined;
 
         const quotedMsg = await this.client.pupPage.evaluate(async (msgId) => {
@@ -376,12 +554,12 @@ class Message extends Base {
      * through the specified Chat. If not, it will send the message
      * in the same Chat as the original message was sent.
      *
-     * @param {string|MessageMedia|Location} content
+     * @param {MessageContent} content
      * @param {string} [chatId]
      * @param {MessageSendOptions} [options]
      * @returns {Promise<Message>}
      */
-    async reply(content, chatId, options = {}) {
+    async reply(content: MessageContent, chatId?: string, options?: MessageSendOptions): Promise<Message> {
         if (!chatId) {
             chatId = this._getChatId();
         }
@@ -399,7 +577,7 @@ class Message extends Base {
      * @param {string} reaction - Emoji to react with. Send an empty string to remove the reaction.
      * @return {Promise}
      */
-    async react(reaction){
+    async react(reaction: string): Promise<void> {
         await this.client.pupPage.evaluate(async (messageId, reaction) => {
             if (!messageId) return null;
             const msg =
@@ -410,10 +588,10 @@ class Message extends Base {
     }
 
     /**
-     * Accept Group V4 Invite
+     * Accept the Group V4 Invite in message
      * @returns {Promise<Object>}
      */
-    async acceptGroupV4Invite() {
+    async acceptGroupV4Invite(): Promise<{status: number}> {
         return await this.client.acceptGroupV4Invite(this.inviteV4);
     }
 
@@ -423,7 +601,7 @@ class Message extends Base {
      * @param {string|Chat} chat Chat model or chat ID to which the message will be forwarded
      * @returns {Promise}
      */
-    async forward(chat) {
+    async forward(chat: string | Chat): Promise<void> {
         const chatId = typeof chat === 'string' ? chat : chat.id._serialized;
 
         await this.client.pupPage.evaluate(async (msgId, chatId) => {
@@ -435,7 +613,7 @@ class Message extends Base {
      * Downloads and returns the attatched message media
      * @returns {Promise<MessageMedia>}
      */
-    async downloadMedia() {
+    async downloadMedia(): Promise<MessageMedia | undefined> {
         if (!this.hasMedia) {
             return undefined;
         }
@@ -492,7 +670,7 @@ class Message extends Base {
      * @param {?boolean} everyone If true and the message is sent by the current user or the user is an admin, will delete it for everyone in the chat.
      * @param {?boolean} [clearMedia = true] If true, any associated media will also be deleted from a device.
      */
-    async delete(everyone, clearMedia = true) {
+    async delete(everyone?: boolean, clearMedia: boolean = true): Promise<void> {
         await this.client.pupPage.evaluate(async (msgId, everyone, clearMedia) => {
             const msg = window.Store.Msg.get(msgId) || (await window.Store.Msg.getMessagesById([msgId]))?.messages?.[0];
             const chat = window.Store.Chat.get(msg.id.remote) || (await window.Store.Chat.find(msg.id.remote));
@@ -515,7 +693,7 @@ class Message extends Base {
     /**
      * Stars this message
      */
-    async star() {
+    async star(): Promise<void> {
         await this.client.pupPage.evaluate(async (msgId) => {
             const msg = window.Store.Msg.get(msgId) || (await window.Store.Msg.getMessagesById([msgId]))?.messages?.[0];
             if (window.Store.MsgActionChecks.canStarMsg(msg)) {
@@ -528,7 +706,7 @@ class Message extends Base {
     /**
      * Unstars this message
      */
-    async unstar() {
+    async unstar(): Promise<void> {
         await this.client.pupPage.evaluate(async (msgId) => {
             const msg = window.Store.Msg.get(msgId) || (await window.Store.Msg.getMessagesById([msgId]))?.messages?.[0];
             if (window.Store.MsgActionChecks.canStarMsg(msg)) {
@@ -543,7 +721,7 @@ class Message extends Base {
      * @param {number} duration The duration in seconds the message will be pinned in a chat
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
-    async pin(duration) {
+    async pin(duration: number): Promise<boolean> {
         return await this.client.pupPage.evaluate(async (msgId, duration) => {
             return await window.WWebJS.pinUnpinMsgAction(msgId, 1, duration);
         }, this.id._serialized, duration);
@@ -553,7 +731,7 @@ class Message extends Base {
      * Unpins the message (group admins can unpin messages of all group members)
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
-    async unpin() {
+    async unpin(): Promise<boolean> {
         return await this.client.pupPage.evaluate(async (msgId) => {
             return await window.WWebJS.pinUnpinMsgAction(msgId, 2);
         }, this.id._serialized);
@@ -575,7 +753,7 @@ class Message extends Base {
      * May return null if the message does not exist or is not sent by you.
      * @returns {Promise<?MessageInfo>}
      */
-    async getInfo() {
+    async getInfo(): Promise<MessageInfo | null> {
         const info = await this.client.pupPage.evaluate(async (msgId) => {
             const msg = window.Store.Msg.get(msgId) || (await window.Store.Msg.getMessagesById([msgId]))?.messages?.[0];
             if (!msg || !msg.id.fromMe) return null;
@@ -587,14 +765,14 @@ class Message extends Base {
             });
         }, this.id._serialized);
 
-        return info;
+        return info as MessageInfo;
     }
 
     /**
      * Gets the order associated with a given message
      * @return {Promise<Order>}
      */
-    async getOrder() {
+    async getOrder(): Promise<Order> {
         if (this.type === MessageTypes.ORDER) {
             const result = await this.client.pupPage.evaluate((orderId, token, chatId) => {
                 return window.WWebJS.getOrderDetail(orderId, token, chatId);
@@ -608,7 +786,7 @@ class Message extends Base {
      * Gets the payment details associated with a given message
      * @return {Promise<Payment>}
      */
-    async getPayment() {
+    async getPayment(): Promise<Payment> {
         if (this.type === MessageTypes.PAYMENT) {
             const msg = await this.client.pupPage.evaluate(async (msgId) => {
                 const msg = window.Store.Msg.get(msgId) || (await window.Store.Msg.getMessagesById([msgId]))?.messages?.[0];
@@ -622,19 +800,10 @@ class Message extends Base {
 
 
     /**
-     * Reaction List
-     * @typedef {Object} ReactionList
-     * @property {string} id Original emoji
-     * @property {string} aggregateEmoji aggregate emoji
-     * @property {boolean} hasReactionByMe Flag who sent the reaction
-     * @property {Array<Reaction>} senders Reaction senders, to this message
-     */
-
-    /**
      * Gets the reactions associated with the given message
      * @return {Promise<ReactionList[]>}
      */
-    async getReactions() {
+    async getReactions(): Promise<ReactionList[] | undefined> {
         if (!this.hasReaction) {
             return undefined;
         }
@@ -664,12 +833,12 @@ class Message extends Base {
      * @param {MessageEditOptions} [options] - Options used when editing the message
      * @returns {Promise<?Message>}
      */
-    async edit(content, options = {}) {
+    async edit(content: string, options: MessageEditOptions = {}): Promise<Message | null> {
         if (options.mentions) {
             !Array.isArray(options.mentions) && (options.mentions = [options.mentions]);
             if (options.mentions.some((possiblyContact) => possiblyContact instanceof Contact)) {
                 console.warn('Mentions with an array of Contact are now deprecated. See more at https://github.com/pedroslopez/whatsapp-web.js/pull/2166.');
-                options.mentions = options.mentions.map((a) => a.id._serialized);
+                options.mentions = options.mentions.map((a: Contact) => a.id._serialized);
             }
         }
 

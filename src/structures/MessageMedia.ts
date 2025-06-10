@@ -14,9 +14,10 @@ import { URL } from 'node:url';
 class MessageMedia {
     mimetype: string;
     data: string;
-    filename?: string;
-    filesize?: number;
-    constructor(mimetype: string, data: string, filename?: string, filesize?: number) {
+    filename?: string | null;
+    filesize?: number | null;
+
+    constructor(mimetype: string, data: string, filename?: string | null, filesize?: number | null) {
         /**
          * MIME type of the attachment
          * @type {string}

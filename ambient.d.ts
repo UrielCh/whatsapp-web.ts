@@ -1,14 +1,25 @@
 // global.d.ts or src/types/whatsapp.d.ts
 declare global {
   interface Window {
+    onReaction: (reactions: any[]) => void;
     /**
      * Injected by src/util/Injected/Store.js
      */
     Store: {
+      Features: {
+        F: any;
+        setFeature: (feature: string, enabled: boolean) => void;
+        supportsFeature: (feature: string) => boolean;
+      };
+
       WidFactory: {
         createWid: (chatId: string) => any;
+        createUserWid: (chatId: string) => any;
       };
       Settings: {
+        setGlobalOfflineNotifications: (flag: boolean) => Promise<void> | void;
+        getGlobalOfflineNotifications: () => boolean;
+        setPushname: (pushname: string) => Promise<void> | void;
         getAutoDownloadDocuments: () => boolean;
         setAutoDownloadDocuments: (flag: boolean) => Promise<void> | void;
         getAutoDownloadAudio?: () => boolean;
@@ -18,8 +29,33 @@ declare global {
         getAutoDownloadVideos?: () => boolean;
         setAutoDownloadVideos?: (flag: boolean) => Promise<void> | void;
       };
-      Cmd?: { refreshQR: () => void };
-      Conn?: { ref?: string, serialize?: () => any };
+      Cmd?: {
+        openChatBottom: (chat: any) => Promise<any>;
+        openDrawerMid: (chat: any) => Promise<any>;
+        chatSearch: (chat: any) => Promise<any>;
+        openChatAt: (chat: any) => Promise<any>;
+        msgInfoDrawer: (msg: any) => Promise<any>;
+        closeDrawerRight: () => Promise<any>;
+        archiveChat: (chat: any, archive: boolean) => Promise<any>;
+        pinChat: (chat: any, pin: boolean) => Promise<any>;
+        markChatUnread: (chat: any, unread: boolean) => Promise<any>;
+
+
+        refreshQR: () => void;
+        sendStarMsgs: (chat: any, msgs: any, clearMedia: boolean) => Promise<any>;
+        sendUnstarMsgs: (chat: any, msgs: any, clearMedia: boolean) => Promise<any>;
+        sendRevokeMsgs: Function; // (chat: any, msgs: any, clearMedia: boolean) => Promise<any>;
+        sendDeleteMsgs: (chat: any, msgs: any, clearMedia: boolean) => Promise<any>;
+       };
+      Conn?: {
+        platform?: string;
+        on?: Function;
+        ref?: string;
+        serialize?: () => any;
+        canSetMyPushname?: () => boolean;
+        battery?: number;
+        plugged?: boolean;
+      };
       User?: {
         getMeUser?: () => {
           server: "c.us",
@@ -27,20 +63,41 @@ declare global {
           _serialized: string; // "${phonenumber}@c.us"
         }
       };
-      Msg?: { on?: Function, get?: Function, getMessagesById?: Function };
-      AppState?: { state?: string, on?: Function, off?: Function, takeover?: Function };
-      GroupParticipants?: { removeParticipants?: Function, demoteParticipants?: Function };
+      Msg?: {
+        on?: Function;
+        get?: Function;
+        getMessagesById?: Function;
+        search?: (query: string, page: number, count: number, remote: string) => Promise<any>;
+      };
+      AppState?: {
+        state?: string;
+        on?: Function;
+        off?: Function;
+        takeover?: Function;
+        logout?: Function;
+        reconnect?: Function;
+      };
+      GroupParticipants?: {
+        removeParticipants?: Function;
+        promoteParticipants?: Function;
+        demoteParticipants?: Function;
+      };
       Call?: { on?: Function };
       Chat?: {
         on?: Function;
         get?: (wid: any) => any;
         find?: (wid: any) => Promise<any> | any;
+        getModelsArray?: () => any;
+        filter?: (fn: (chat: any) => boolean) => any;
       };
       PollVote?: { on?: Function };
       Reactions?: { find?: Function };
       QuotedMsg?: { getQuotedMsgObj?: Function };
       BlockContact?: { blockContact?: Function, unblockContact?: Function };
-      StatusUtils?: { getStatus?: Function };
+      StatusUtils?: {
+        getStatus?: Function;
+        setMyStatus?: Function;
+      };
       AddonReactionTable?: any;
       ContactMethods?: {
         getIsMe: (contact: any) => boolean;
@@ -60,6 +117,7 @@ declare global {
 
       MembershipRequestUtils?: {
         sendMembershipRequestsActionRPC: (args: any) => Promise<any> | any;
+        getMembershipApprovalRequests: (groupWid: any) => Promise<any> | any;
       };
       WidToJid?: {
         widToUserJid: (wid: any) => string;
@@ -67,6 +125,7 @@ declare global {
       };
       JidToWid?: {
         userJidToUserWid: (jid: string) => { _serialized: string };
+        newsletterJidToWid: (jid: string) => { _serialized: string };
       };
       GroupQueryAndUpdate?: (args: { id: string }) => Promise<any> | any;
 
@@ -187,6 +246,16 @@ declare global {
      * Injected by src/util/Injected/Utils.js
      */
     WWebJS: {
+      getAllStatuses?: () => Promise<any[]>;
+      getContacts?: () => Promise<Contact[]>;
+      getContact?: (id: string) => Promise<Contact>;
+      subscribeToUnsubscribeFromChannel?: (channelId: string, action: 'Subscribe' | 'Unsubscribe', options?: UnsubscribeOptions) => Promise<boolean>;
+      pinUnpinMsgAction?: (msgId: string, action: number, duration?: number) => Promise<boolean>;
+      getProfilePicThumbToBase64?: (chatId: string) => Promise<string>;
+      getAddParticipantsRpcResult?: (groupMetadata: any, groupWid: any, pWid: any) => Promise<any>;
+      deletePicture?: (chatId: string) => Promise<boolean>;
+      setPicture?: (chatId: string, media: MessageMedia) => Promise<boolean>;
+      sendSeen: (chatId: string) => Promise<boolean>;
       membershipRequestAction: (
         groupId: string,
         action: 'Approve' | 'Reject',
@@ -215,7 +284,7 @@ declare global {
       
       getMessageModel?: (msg: any) => any;
       getPollVoteModel?: (vote: any) => any;
-      getChatModel?: (chat: any) => any;
+      getChatModel?: (chat: any, opts?: { isChannel?: boolean }) => any;
       getContactModel?: (contact: any) => any;
       getChat?: (chatId: string, opts?: { getAsModel?: boolean }) => Promise<any>;
       getChannelMetadata?: (inviteCode: string) => Promise<any>;

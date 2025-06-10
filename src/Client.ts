@@ -4,7 +4,7 @@ import { moduleRaid } from './util/moduleraid.js';
 
 import Util from './util/Util.js';
 import InterfaceController from './util/InterfaceController.js';
-import { WhatsWebURL, DefaultOptions, Events, WAState } from './util/Constants.js';
+import { WhatsWebURL, DefaultOptions, Events, WAState, MessageAck } from './util/Constants.js';
 import { ExposeAuthStore } from './util/Injected/AuthStore/AuthStore.js';
 import { ExposeStore } from './util/Injected/Store.js';
 import { ExposeLegacyAuthStore } from './util/Injected/AuthStore/LegacyAuthStore.js';
@@ -13,9 +13,305 @@ import { LoadUtils } from './util/Injected/Utils.js';
 import ChatFactory from './factories/ChatFactory.js';
 import ContactFactory from './factories/ContactFactory.js';
 import WebCacheFactory from './webCache/WebCacheFactory.js';
-import { Broadcast, Buttons, Call, ClientInfo, Contact, GroupNotification, Label, List, Location, Message, MessageMedia, Poll, PollVote, Reaction } from './structures/index.js';
+import { Broadcast, Buttons, Call, Channel, Chat, ClientInfo, Contact, GroupNotification, Label, List, Location, Message, MessageMedia, Poll, PollVote, Reaction } from './structures/index.js';
 import NoAuth from './authStrategies/NoAuth.js';
 import { exposeFunctionIfAbsent } from './util/Puppeteer.js';
+import { ClientSession, MessageContent, type ClientOptions } from './types.js';
+import { type AuthStrategy } from './types.js';
+import { type MessageSendOptions } from './types.js';
+import { ChatId } from './structures/Chat.js';
+import { GroupMembershipRequest, MembershipRequestActionOptions, MembershipRequestActionResult } from './structures/GroupChat.js';
+import { InviteV4Data } from './structures/Message.js';
+import { ContactId } from './structures/Contact.js';
+import { TransferChannelOwnershipOptions } from './structures/Channel.js';
+import { BatteryInfo } from './structures/ClientInfo.js';
+
+
+/** An object that handles the result for createGroup method */
+export interface CreateChannelResult {
+    /** A channel title */
+    title: string,
+    /** An object that handles the newly created channel ID */
+    nid: ChatId,
+    /** The channel invite link, starts with 'https://whatsapp.com/channel/' */
+    inviteLink: string,
+    /** The timestamp the channel was created at */
+    createdAtTs: number
+}
+
+
+/** An object that handles options for channel creation */
+export interface CreateChannelOptions {
+    /** The channel description */
+    description?: string,
+    /** The channel profile picture */
+    picture?: MessageMedia
+}
+
+/** Options for unsubscribe from a channel */
+export interface UnsubscribeOptions {
+    /**
+     * If true, after an unsubscription, it will completely remove a channel from the channel collection
+     * making it seem like the current user have never interacted with it.
+     * Otherwise it will only remove a channel from the list of channels the current user is subscribed to
+     * and will set the membership type for that channel to GUEST
+     */
+    deleteLocalModels?: boolean
+}
+
+/** Options for searching for channels */
+export interface SearchChannelsOptions {
+    searchText?: string;
+    countryCodes?: string[];
+    categories?: string[];
+    skipSubscribedNewsletters?: boolean;
+    view?: number;
+    limit?: number;
+    cursorToken?: string;
+}
+
+/** An object that handles options for group creation */
+export interface CreateGroupOptions {
+    /**
+     * The number of seconds for the messages to disappear in the group,
+     * won't take an effect if the group is been creating with myself only
+     * @default 0
+     */
+    messageTimer?: number
+    /**
+     * The ID of a parent community group to link the newly created group with,
+     * won't take an effect if the group is been creating with myself only
+     */
+    parentGroupId?: string
+    /** If true, the inviteV4 will be sent to those participants
+     * who have restricted others from being automatically added to groups,
+     * otherwise the inviteV4 won't be sent
+     * @default true
+     */
+    autoSendInviteV4?: boolean,
+    /**
+     * The comment to be added to an inviteV4 (empty string by default)
+     * @default ''
+     */
+    comment?: string
+}
+
+
+/** An object that handles the result for createGroup method */
+export interface CreateGroupResult {
+    /** A group title */
+    title: string;
+    /** An object that handles the newly created group ID */
+    gid: ChatId;
+    /** An object that handles the result value for each added to the group participant */
+    participants: {
+        [participantId: string]: {
+            statusCode: number,
+            message: string,
+            isGroupCreator: boolean,
+            isInviteV4Sent: boolean
+        };
+    };
+}
+
+
+
+interface ClientEventsInterface {
+    /** Generic event */
+    on(event: string, listener: (...args: any) => void): this
+
+    /** Emitted when there has been an error while trying to restore an existing session */
+    on(event: 'auth_failure', listener: (message: string) => void): this
+    
+    /** Emitted when authentication is successful */
+    on(event: 'authenticated', listener: (
+        /** 
+         * Object containing session information, when using LegacySessionAuth. Can be used to restore the session
+         */
+        session?: ClientSession
+    ) => void): this
+    
+    /** 
+     * Emitted when the battery percentage for the attached device changes
+     * @deprecated 
+     */
+    on(event: 'change_battery', listener: (batteryInfo: BatteryInfo) => void): this
+    
+    /** Emitted when the connection state changes */
+    on(event: 'change_state', listener: (
+        /** the new connection state */
+        state: typeof WAState[keyof typeof WAState]
+    ) => void): this
+    
+    /** Emitted when the client has been disconnected */
+    on(event: 'disconnected', listener: (
+        /** reason that caused the disconnect */
+        reason: typeof WAState[keyof typeof WAState] | "LOGOUT"
+    ) => void): this
+    
+    /** Emitted when a user joins the chat via invite link or is added by an admin */
+    on(event: 'group_join', listener: (
+        /** GroupNotification with more information about the action */
+        notification: GroupNotification
+    ) => void): this
+    
+    /** Emitted when a user leaves the chat or is removed by an admin */
+    on(event: 'group_leave', listener: (
+        /** GroupNotification with more information about the action */
+        notification: GroupNotification
+    ) => void): this
+    
+    /** Emitted when a current user is promoted to an admin or demoted to a regular user */
+    on(event: 'group_admin_changed', listener: (
+        /** GroupNotification with more information about the action */
+        notification: GroupNotification
+    ) => void): this
+    
+    /**
+     * Emitted when some user requested to join the group
+     * that has the membership approval mode turned on
+     */
+    on(event: 'group_membership_request', listener: (
+        /** GroupNotification with more information about the action */
+        notification: GroupNotification
+    ) => void): this
+    
+    /** Emitted when group settings are updated, such as subject, description or picture */
+    on(event: 'group_update', listener: (
+        /** GroupNotification with more information about the action */
+        notification: GroupNotification
+    ) => void): this
+    
+    /** Emitted when a contact or a group participant changed their phone number. */
+    on(event: 'contact_changed', listener: (
+        /** Message with more information about the event. */
+        message: Message,
+        /** Old user's id. */
+        oldId : String,
+        /** New user's id. */
+        newId : String,
+        /** Indicates if a contact or a group participant changed their phone number. */
+        isContact : Boolean
+    ) => void): this
+    
+    /** Emitted when media has been uploaded for a message sent by the client */
+    on(event: 'media_uploaded', listener: (
+        /** The message with media that was uploaded */
+        message: Message
+    ) => void): this
+    
+    /** Emitted when a new message is received */
+    on(event: 'message', listener: (
+        /** The message that was received */
+        message: Message
+    ) => void): this
+    
+    /** Emitted when an ack event occurrs on message type */
+    on(event: 'message_ack', listener: (
+        /** The message that was affected */
+        message: Message,
+        /** The new ACK value */
+        ack: typeof MessageAck[keyof typeof MessageAck]
+    ) => void): this
+            
+    /** Emitted when an ack event occurrs on message type */
+    on(event: 'message_edit', listener: (
+        /** The message that was affected */
+        message: Message,
+        /** New text message */
+        newBody: String,
+        /** Prev text message */
+        prevBody: String
+    ) => void): this
+            
+    /** Emitted when a chat unread count changes */
+    on(event: 'unread_count', listener: (
+        /** The chat that was affected */
+        chat: Chat
+    ) => void): this
+    
+    /** Emitted when a new message is created, which may include the current user's own messages */
+    on(event: 'message_create', listener: (
+        /** The message that was created */
+        message: Message
+    ) => void): this
+            
+    /** Emitted when a new message ciphertext is received  */
+    on(event: 'message_ciphertext', listener: (
+        /** The message that was ciphertext */
+        message: Message
+    ) => void): this
+    
+    /** Emitted when a message is deleted for everyone in the chat */
+    on(event: 'message_revoke_everyone', listener: (
+        /** The message that was revoked, in its current state. It will not contain the original message's data */
+        message: Message,
+        /**The message that was revoked, before it was revoked. 
+         * It will contain the message's original data. 
+         * Note that due to the way this data is captured, 
+         * it may be possible that this param will be undefined. */
+        revoked_msg?: Message | null
+    ) => void): this
+    
+    /** Emitted when a message is deleted by the current user */
+    on(event: 'message_revoke_me', listener: (
+        /** The message that was revoked */
+        message: Message
+    ) => void): this
+    
+    /** Emitted when a reaction is sent, received, updated or removed */
+    on(event: 'message_reaction', listener: (
+        /** The reaction object */
+        reaction: Reaction
+    ) => void): this
+    
+    /** Emitted when a chat is removed */
+    on(event: 'chat_removed', listener: (
+        /** The chat that was removed */
+        chat: Chat
+    ) => void): this
+    
+    /** Emitted when a chat is archived/unarchived */
+    on(event: 'chat_archived', listener: (
+        /** The chat that was archived/unarchived */
+        chat: Chat,
+        /** State the chat is currently in */
+        currState: boolean,
+        /** State the chat was previously in */
+        prevState: boolean
+    ) => void): this
+    
+    /** Emitted when loading screen is appearing */
+    on(event: 'loading_screen', listener: (percent: string, message: string) => void): this
+    
+    /** Emitted when the QR code is received */
+    on(event: 'qr', listener: (
+        /** qr code string
+         *  @example ```1@9Q8tWf6bnezr8uVGwVCluyRuBOJ3tIglimzI5dHB0vQW2m4DQ0GMlCGf,f1/vGcW4Z3vBa1eDNl3tOjWqLL5DpYTI84DMVkYnQE8=,ZL7YnK2qdPN8vKo2ESxhOQ==``` */
+        qr: string
+    ) => void): this
+    
+    /** Emitted when a call is received */
+    on(event: 'call', listener: (
+        /** The call that started */
+        call: Call
+    ) => void): this
+    
+    /** Emitted when the client has initialized and is ready to receive messages */
+    on(event: 'ready', listener: () => void): this
+    
+    /** Emitted when the RemoteAuth session is saved successfully on the external Database */
+    on(event: 'remote_session_saved', listener: () => void): this
+    
+    /**
+     * Emitted when some poll option is selected or deselected,
+     * shows a user's current selected option(s) on the poll
+     */
+    on(event: 'vote_update', listener: (
+        vote: PollVote
+    ) => void): this    
+}
+
 
 /**
  * Starting point for interacting with the WhatsApp Web API
@@ -27,7 +323,7 @@ import { exposeFunctionIfAbsent } from './util/Puppeteer.js';
  * @param {number} options.authTimeoutMs - Timeout for authentication selector in puppeteer
  * @param {object} options.puppeteer - Puppeteer launch options. View docs here: https://github.com/puppeteer/puppeteer/
  * @param {number} options.qrMaxRetries - How many times should the qrcode be refreshed before giving up
- * @param {string} options.restartOnAuthFail  - @deprecated This option should be set directly on the LegacySessionAuth.
+ * @param {string} options.restartOnAuthFail - @deprecated This option should be set directly on the LegacySessionAuth.
  * @param {object} options.session - @deprecated Only here for backwards-compatibility. You should move to using LocalAuth, or set the authStrategy to LegacySessionAuth explicitly. 
  * @param {number} options.takeoverOnConflict - If another whatsapp web session is detected (another browser), take over the session in the current browser
  * @param {number} options.takeoverTimeoutMs - How much time to wait before taking over the session
@@ -58,8 +354,21 @@ import { exposeFunctionIfAbsent } from './util/Puppeteer.js';
  * @fires Client#group_membership_request
  * @fires Client#vote_update
  */
-class Client extends EventEmitter {
-    constructor(options = {}) {
+class Client extends EventEmitter implements ClientEventsInterface {
+    options: ClientOptions;
+    authStrategy: AuthStrategy;
+    /** Puppeteer browser running WhatsApp Web */
+    pupBrowser: puppeteer.Browser;
+    /** Puppeteer page running WhatsApp Web */
+    pupPage: puppeteer.Page;
+    currentIndexHtml: string | null;
+    lastLoggedOut: boolean;
+    /** Current connection information */
+    public info: ClientInfo
+    /** Client interactivity interface */
+    interface?: InterfaceController;
+
+    constructor(options: ClientOptions = {}) {
         super();
 
         this.options = Util.mergeDefault(DefaultOptions, options);
@@ -107,7 +416,7 @@ class Client extends EventEmitter {
 
             if (state === 'OPENING' || state === 'UNLAUNCHED' || state === 'PAIRING') {
                 // wait till state changes
-                await new Promise(r => {
+                await new Promise<void>(r => {
                     window.AuthStore.AppState.on('change:state', function waitTillInit(_AppState, state) {
                         if (state !== 'OPENING' && state !== 'UNLAUNCHED' && state !== 'PAIRING') {
                             window.AuthStore.AppState.off('change:state', waitTillInit);
@@ -260,20 +569,9 @@ class Client extends EventEmitter {
     /**
      * Sets up events and requirements, kicks off authentication request
      */
-    async initialize() {
-
-        let 
-            /**
-             * @type {puppeteer.Browser}
-             */
-            browser, 
-            /**
-             * @type {puppeteer.Page}
-             */
-            page;
-
-        browser = null;
-        page = null;
+    async initialize(): Promise<void> {
+        let browser: puppeteer.Browser | null = null;
+        let page: puppeteer.Page | null = null;
 
         await this.authStrategy.beforeBrowserInitialized();
 
@@ -311,8 +609,8 @@ class Client extends EventEmitter {
         await page.evaluateOnNewDocument(() => {
             const originalError = Error;
             window.originalError = originalError;
-            //eslint-disable-next-line no-global-assign
-            Error = function (message) {
+            // @ts-ignore
+            Error = function (message: string) {
                 const error = new originalError(message);
                 const originalStack = error.stack;
                 if (error.stack.includes('moduleRaid')) error.stack = originalStack + '\n    at https://web.whatsapp.com/vendors~lazy_loaded_low_priority_components.05e98054dbd60f980427.js:2:44';
@@ -346,7 +644,7 @@ class Client extends EventEmitter {
      * @param {boolean} showNotification - Show notification to pair on phone number
      * @returns {Promise<string>} - Returns a pairing code in format "ABCDEFGH"
      */
-    async requestPairingCode(phoneNumber, showNotification = true) {
+    async requestPairingCode(phoneNumber: string, showNotification = true): Promise<string> {
         return await this.pupPage.evaluate(async (phoneNumber, showNotification) => {
             window.AuthStore.PairingCodeLinkUtils.setPairingType('ALT_DEVICE_LINKING');
             await window.AuthStore.PairingCodeLinkUtils.initializeAltDeviceLinking();
@@ -544,7 +842,7 @@ class Client extends EventEmitter {
                  */
             this.emit(Events.STATE_CHANGED, state);
 
-            const ACCEPTED_STATES = [WAState.CONNECTED, WAState.OPENING, WAState.PAIRING, WAState.TIMEOUT];
+            const ACCEPTED_STATES: typeof WAState[keyof typeof WAState][] = [WAState.CONNECTED, WAState.OPENING, WAState.PAIRING, WAState.TIMEOUT];
 
             if (this.options.takeoverOnConflict) {
                 ACCEPTED_STATES.push(WAState.CONFLICT);
@@ -778,7 +1076,7 @@ class Client extends EventEmitter {
     /**
      * Closes the client
      */
-    async destroy() {
+    async destroy(): Promise<void> {
         await this.pupBrowser.close();
         await this.authStrategy.destroy();
     }
@@ -786,7 +1084,7 @@ class Client extends EventEmitter {
     /**
      * Logs out the client, closing the current session
      */
-    async logout() {
+    async logout(): Promise<void> {
         await this.pupPage.evaluate(() => {
             if (window.Store && window.Store.AppState && typeof window.Store.AppState.logout === 'function') {
                 return window.Store.AppState.logout();
@@ -807,7 +1105,7 @@ class Client extends EventEmitter {
      * Returns the version of WhatsApp Web currently being run
      * @returns {Promise<string>}
      */
-    async getWWebVersion() {
+    async getWWebVersion(): Promise<string> {
         return await this.pupPage.evaluate(() => {
             return window.Debug.VERSION;
         });
@@ -819,7 +1117,7 @@ class Client extends EventEmitter {
      *  @returns {Promise<boolean>} result
      * 
      */
-    async sendSeen(chatId) {
+    async sendSeen(chatId: string): Promise<boolean> {
         return await this.pupPage.evaluate(async (chatId) => {
             return window.WWebJS.sendSeen(chatId);
         }, chatId);
@@ -865,7 +1163,7 @@ class Client extends EventEmitter {
      * 
      * @returns {Promise<Message>} Message that was just sent
      */
-    async sendMessage(chatId, content, options = {}) {
+    async sendMessage(chatId: string, content: MessageContent, options: MessageSendOptions = {}) {
         const isChannel = /@\w*newsletter\b/.test(chatId);
 
         if (isChannel && [
@@ -881,9 +1179,9 @@ class Client extends EventEmitter {
     
         if (options.mentions) {
             !Array.isArray(options.mentions) && (options.mentions = [options.mentions]);
-            if (options.mentions.some((possiblyContact) => possiblyContact instanceof Contact)) {
+            if (options.mentions.some((possiblyContact: string | Contact) => possiblyContact instanceof Contact)) {
                 console.warn('Mentions with an array of Contact are now deprecated. See more at https://github.com/pedroslopez/whatsapp-web.js/pull/2166.');
-                options.mentions = options.mentions.map((a) => a.id._serialized);
+                options.mentions = options.mentions.map((a: string | Contact) => a instanceof Contact ? a.id._serialized : a);
             }
         }
 
@@ -903,8 +1201,8 @@ class Client extends EventEmitter {
             groupMentions: options.groupMentions,
             invokedBotWid: options.invokedBotWid,
             ignoreQuoteErrors: options.ignoreQuoteErrors !== false,
-            extraOptions: options.extra
-        };
+            extraOptions: options.extra,
+        } as any;
 
         const sendSeen = options.sendSeen !== false;
 
@@ -982,7 +1280,7 @@ class Client extends EventEmitter {
      * @param {SendChannelAdminInviteOptions} options 
      * @returns {Promise<boolean>} Returns true if an invitation was sent successfully, false otherwise
      */
-    async sendChannelAdminInvite(chatId, channelId, options = {}) {
+    async sendChannelAdminInvite(chatId: string, channelId: string, options: { comment?: string } = {}) {
         const response = await this.pupPage.evaluate(async (chatId, channelId, options) => {
             const channelWid = window.Store.WidFactory.createWid(channelId);
             const chatWid = window.Store.WidFactory.createWid(chatId);
@@ -1015,7 +1313,7 @@ class Client extends EventEmitter {
      * @param {string} [options.chatId]
      * @returns {Promise<Message[]>}
      */
-    async searchMessages(query, options = {}) {
+    async searchMessages(query: string, options: { page?: number, limit?: number, chatId?: string } = {}): Promise<Message[]> {
         const messages = await this.pupPage.evaluate(async (query, page, count, remote) => {
             const { messages } = await window.Store.Msg.search(query, page, count, remote);
             return messages.map(msg => window.WWebJS.getMessageModel(msg));
@@ -1028,24 +1326,24 @@ class Client extends EventEmitter {
      * Get all current chat instances
      * @returns {Promise<Array<Chat>>}
      */
-    async getChats() {
+    async getChats(): Promise<Chat[]> {
         const chats = await this.pupPage.evaluate(async () => {
             return await window.WWebJS.getChats();
         });
 
-        return chats.map(chat => ChatFactory.create(this, chat));
+        return chats.map(chat => ChatFactory.create(this, chat)) as Chat[];
     }
 
     /**
      * Gets all cached {@link Channel} instance
      * @returns {Promise<Array<Channel>>}
      */
-    async getChannels() {
+    async getChannels(): Promise<Channel[]> {
         const channels = await this.pupPage.evaluate(async () => {
             return await window.WWebJS.getChannels();
         });
 
-        return channels.map((channel) => ChatFactory.create(this, channel));
+        return channels.map((channel) => ChatFactory.create(this, channel) as Channel);
     }
 
     /**
@@ -1053,12 +1351,12 @@ class Client extends EventEmitter {
      * @param {string} chatId 
      * @returns {Promise<Chat|Channel>}
      */
-    async getChatById(chatId) {
+    async getChatById(chatId: string): Promise<Chat> {
         const chat = await this.pupPage.evaluate(async chatId => {
             return await window.WWebJS.getChat(chatId);
         }, chatId);
         return chat
-            ? ChatFactory.create(this, chat)
+            ? ChatFactory.create(this, chat) as Chat
             : undefined;
     }
 
@@ -1067,7 +1365,7 @@ class Client extends EventEmitter {
      * @param {string} inviteCode The code that comes after the 'https://whatsapp.com/channel/'
      * @returns {Promise<Channel>}
      */
-    async getChannelByInviteCode(inviteCode) {
+    async getChannelByInviteCode(inviteCode: string): Promise<Channel> {
         const channel = await this.pupPage.evaluate(async (inviteCode) => {
             let channelMetadata;
             try {
@@ -1080,7 +1378,7 @@ class Client extends EventEmitter {
         }, inviteCode);
 
         return channel
-            ? ChatFactory.create(this, channel)
+            ? ChatFactory.create(this, channel) as Channel
             : undefined;
     }
 
@@ -1088,7 +1386,7 @@ class Client extends EventEmitter {
      * Get all current contact instances
      * @returns {Promise<Array<Contact>>}
      */
-    async getContacts() {
+    async getContacts(): Promise<Contact[]> {
         let contacts = await this.pupPage.evaluate(() => {
             return window.WWebJS.getContacts();
         });
@@ -1101,7 +1399,7 @@ class Client extends EventEmitter {
      * @param {string} contactId
      * @returns {Promise<Contact>}
      */
-    async getContactById(contactId) {
+    async getContactById(contactId: string): Promise<Contact> {
         let contact = await this.pupPage.evaluate(contactId => {
             return window.WWebJS.getContact(contactId);
         }, contactId);
@@ -1109,7 +1407,7 @@ class Client extends EventEmitter {
         return ContactFactory.create(this, contact);
     }
     
-    async getMessageById(messageId) {
+    async getMessageById(messageId: string): Promise<Message> {
         const msg = await this.pupPage.evaluate(async messageId => {
             let msg = window.Store.Msg.get(messageId);
             if(msg) return window.WWebJS.getMessageModel(msg);
@@ -1132,7 +1430,7 @@ class Client extends EventEmitter {
      * @param {string} inviteCode 
      * @returns {Promise<object>} Invite information
      */
-    async getInviteInfo(inviteCode) {
+    async getInviteInfo(inviteCode: string): Promise<{id: {_serialized: string}, participants: string[]}> {
         return await this.pupPage.evaluate(inviteCode => {
             return window.Store.GroupInvite.queryGroupInvite(inviteCode);
         }, inviteCode);
@@ -1143,7 +1441,7 @@ class Client extends EventEmitter {
      * @param {string} inviteCode Invitation code
      * @returns {Promise<string>} Id of the joined Chat
      */
-    async acceptInvite(inviteCode) {
+    async acceptInvite(inviteCode: string): Promise<string> {
         const res = await this.pupPage.evaluate(async inviteCode => {
             return await window.Store.GroupInvite.joinGroupViaInvite(inviteCode);
         }, inviteCode);
@@ -1156,7 +1454,7 @@ class Client extends EventEmitter {
      * @param {string} channelId The channel ID to accept the admin invitation from
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
-    async acceptChannelAdminInvite(channelId) {
+    async acceptChannelAdminInvite(channelId: string): Promise<boolean> {
         return await this.pupPage.evaluate(async (channelId) => {
             try {
                 await window.Store.ChannelUtils.acceptNewsletterAdminInvite(channelId);
@@ -1174,7 +1472,7 @@ class Client extends EventEmitter {
      * @param {string} userId The user ID the invitation was sent to
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
-    async revokeChannelAdminInvite(channelId, userId) {
+    async revokeChannelAdminInvite(channelId: string, userId: string): Promise<boolean> {
         return await this.pupPage.evaluate(async (channelId, userId) => {
             try {
                 const userWid = window.Store.WidFactory.createWid(userId);
@@ -1193,7 +1491,7 @@ class Client extends EventEmitter {
      * @param {string} userId The user ID to demote
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
-    async demoteChannelAdmin(channelId, userId) {
+    async demoteChannelAdmin(channelId: string, userId: string): Promise<boolean> {
         return await this.pupPage.evaluate(async (channelId, userId) => {
             try {
                 const userWid = window.Store.WidFactory.createWid(userId);
@@ -1211,7 +1509,7 @@ class Client extends EventEmitter {
      * @param {object} inviteInfo Invite V4 Info
      * @returns {Promise<Object>}
      */
-    async acceptGroupV4Invite(inviteInfo) {
+    async acceptGroupV4Invite(inviteInfo: InviteV4Data): Promise<{status: number}> {
         if (!inviteInfo.inviteCode) throw 'Invalid invite code, try passing the message.inviteV4 object';
         if (inviteInfo.inviteCodeExp == 0) throw 'Expired invite code';
         return this.pupPage.evaluate(async inviteInfo => {
@@ -1225,7 +1523,7 @@ class Client extends EventEmitter {
      * Sets the current user's status message
      * @param {string} status New status message
      */
-    async setStatus(status) {
+    async setStatus(status: string): Promise<void> {
         await this.pupPage.evaluate(async status => {
             return await window.Store.StatusUtils.setMyStatus(status);
         }, status);
@@ -1237,7 +1535,7 @@ class Client extends EventEmitter {
      * @param {string} displayName New display name
      * @returns {Promise<Boolean>}
      */
-    async setDisplayName(displayName) {
+    async setDisplayName(displayName: string): Promise<boolean> {
         const couldSet = await this.pupPage.evaluate(async displayName => {
             if(!window.Store.Conn.canSetMyPushname()) return false;
             await window.Store.Settings.setPushname(displayName);
@@ -1251,17 +1549,18 @@ class Client extends EventEmitter {
      * Gets the current connection state for the client
      * @returns {WAState} 
      */
-    async getState() {
-        return await this.pupPage.evaluate(() => {
+    async getState(): Promise<typeof WAState[keyof typeof WAState]> {
+        const result = await this.pupPage.evaluate(() => {
             if(!window.Store) return null;
             return window.Store.AppState.state;
         });
+        return result as typeof WAState[keyof typeof WAState];
     }
 
     /**
      * Marks the client as online
      */
-    async sendPresenceAvailable() {
+    async sendPresenceAvailable(): Promise<void> {
         return await this.pupPage.evaluate(() => {
             return window.Store.PresenceUtils.sendPresenceAvailable();
         });
@@ -1270,7 +1569,7 @@ class Client extends EventEmitter {
     /**
      * Marks the client as unavailable
      */
-    async sendPresenceUnavailable() {
+    async sendPresenceUnavailable(): Promise<void> {
         return await this.pupPage.evaluate(() => {
             return window.Store.PresenceUtils.sendPresenceUnavailable();
         });
@@ -1280,7 +1579,7 @@ class Client extends EventEmitter {
      * Enables and returns the archive state of the Chat
      * @returns {boolean}
      */
-    async archiveChat(chatId) {
+    async archiveChat(chatId: string): Promise<boolean> {
         return await this.pupPage.evaluate(async chatId => {
             let chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
             await window.Store.Cmd.archiveChat(chat, true);
@@ -1292,7 +1591,7 @@ class Client extends EventEmitter {
      * Changes and returns the archive state of the Chat
      * @returns {boolean}
      */
-    async unarchiveChat(chatId) {
+    async unarchiveChat(chatId: string): Promise<boolean> {
         return await this.pupPage.evaluate(async chatId => {
             let chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
             await window.Store.Cmd.archiveChat(chat, false);
@@ -1304,7 +1603,7 @@ class Client extends EventEmitter {
      * Pins the Chat
      * @returns {Promise<boolean>} New pin state. Could be false if the max number of pinned chats was reached.
      */
-    async pinChat(chatId) {
+    async pinChat(chatId: string): Promise<boolean> {
         return this.pupPage.evaluate(async chatId => {
             let chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
             if (chat.pin) {
@@ -1327,7 +1626,7 @@ class Client extends EventEmitter {
      * Unpins the Chat
      * @returns {Promise<boolean>} New pin state
      */
-    async unpinChat(chatId) {
+    async unpinChat(chatId: string): Promise<boolean> {
         return this.pupPage.evaluate(async chatId => {
             let chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
             if (!chat.pin) {
@@ -1344,9 +1643,9 @@ class Client extends EventEmitter {
      * @param {?Date} unmuteDate Date when the chat will be unmuted, don't provide a value to mute forever
      * @returns {Promise<{isMuted: boolean, muteExpiration: number}>}
      */
-    async muteChat(chatId, unmuteDate) {
-        unmuteDate = unmuteDate ? Math.floor(unmuteDate.getTime() / 1000) : -1;
-        return this._muteUnmuteChat(chatId, 'MUTE', unmuteDate);
+    async muteChat(chatId: string, unmuteDate?: Date): Promise<{isMuted: boolean, muteExpiration: number}> {
+        const unmuteDateTs = unmuteDate ? Math.floor(unmuteDate.getTime() / 1000) : -1;
+        return this._muteUnmuteChat(chatId, 'MUTE', unmuteDateTs);
     }
 
     /**
@@ -1354,7 +1653,7 @@ class Client extends EventEmitter {
      * @param {string} chatId ID of the chat that will be unmuted
      * @returns {Promise<{isMuted: boolean, muteExpiration: number}>}
      */
-    async unmuteChat(chatId) {
+    async unmuteChat(chatId: string): Promise<{isMuted: boolean, muteExpiration: number}> {
         return this._muteUnmuteChat(chatId, 'UNMUTE');
     }
 
@@ -1365,7 +1664,7 @@ class Client extends EventEmitter {
      * @param {number} unmuteDateTs Timestamp at which the chat will be unmuted
      * @returns {Promise<{isMuted: boolean, muteExpiration: number}>}
      */
-    async _muteUnmuteChat (chatId, action, unmuteDateTs) {
+    async _muteUnmuteChat (chatId: string, action: string, unmuteDateTs?: number): Promise<{isMuted: boolean, muteExpiration: number}> {
         return this.pupPage.evaluate(async (chatId, action, unmuteDateTs) => {
             const chat = window.Store.Chat.get(chatId) ?? await window.Store.Chat.find(chatId);
             action === 'MUTE'
@@ -1379,7 +1678,7 @@ class Client extends EventEmitter {
      * Mark the Chat as unread
      * @param {string} chatId ID of the chat that will be marked as unread
      */
-    async markChatUnread(chatId) {
+    async markChatUnread(chatId: string): Promise<void> {
         await this.pupPage.evaluate(async chatId => {
             let chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
             await window.Store.Cmd.markChatUnread(chat, true);
@@ -1391,7 +1690,7 @@ class Client extends EventEmitter {
      * @param {string} contactId the whatsapp user's ID
      * @returns {Promise<string>}
      */
-    async getProfilePicUrl(contactId) {
+    async getProfilePicUrl(contactId: string): Promise<string> {
         const profilePic = await this.pupPage.evaluate(async contactId => {
             try {
                 const chatWid = window.Store.WidFactory.createWid(contactId);
@@ -1412,7 +1711,7 @@ class Client extends EventEmitter {
      * @param {string} contactId the whatsapp user's ID (_serialized format)
      * @returns {Promise<WAWebJS.ChatId[]>}
      */
-    async getCommonGroups(contactId) {
+    async getCommonGroups(contactId: string): Promise<ChatId[]> {
         const commonGroups = await this.pupPage.evaluate(async (contactId) => {
             let contact = window.Store.Contact.get(contactId);
             if (!contact) {
@@ -1440,7 +1739,7 @@ class Client extends EventEmitter {
     /**
      * Force reset of connection state for the client
     */
-    async resetState() {
+    async resetState(): Promise<void> {
         await this.pupPage.evaluate(() => {
             window.Store.AppState.reconnect(); 
         });
@@ -1448,11 +1747,10 @@ class Client extends EventEmitter {
 
     /**
      * Check if a given ID is registered in whatsapp
-     * @param {string} id the whatsapp user's ID
-     * @returns {Promise<Boolean>}
+     * @param {string} contactId the whatsapp user's ID
      */
-    async isRegisteredUser(id) {
-        return Boolean(await this.getNumberId(id));
+    async isRegisteredUser(contactId: string): Promise<boolean> {
+        return Boolean(await this.getNumberId(contactId));
     }
 
     /**
@@ -1461,7 +1759,7 @@ class Client extends EventEmitter {
      * @param {string} number Number or ID ("@c.us" will be automatically appended if not specified)
      * @returns {Promise<Object|null>}
      */
-    async getNumberId(number) {
+    async getNumberId(number: string): Promise<ContactId | null> {
         if (!number.endsWith('@c.us')) {
             number += '@c.us';
         }
@@ -1475,11 +1773,11 @@ class Client extends EventEmitter {
     }
 
     /**
-     * Get the formatted number of a WhatsApp ID.
+     * Get the formatted number of a WhatsApp ID. (12345678901@c.us) => (+1 (234) 5678-901)
      * @param {string} number Number or ID
      * @returns {Promise<string>}
      */
-    async getFormattedNumber(number) {
+    async getFormattedNumber(number: string): Promise<string> {
         if (!number.endsWith('@s.whatsapp.net')) number = number.replace('c.us', 's.whatsapp.net');
         if (!number.includes('@s.whatsapp.net')) number = `${number}@s.whatsapp.net`;
 
@@ -1489,11 +1787,11 @@ class Client extends EventEmitter {
     }
 
     /**
-     * Get the country code of a WhatsApp ID.
+     * Get the country code of a WhatsApp ID. (154185968@c.us) => (1)
      * @param {string} number Number or ID
      * @returns {Promise<string>}
      */
-    async getCountryCode(number) {
+    async getCountryCode(number: string): Promise<string> {
         number = number.replace(' ', '').replace('+', '').replace('@c.us', '');
 
         return await this.pupPage.evaluate(async numberId => {
@@ -1511,37 +1809,17 @@ class Client extends EventEmitter {
      */
 
     /**
-     * An object that handles the result for {@link createGroup} method
-     * @typedef {Object} CreateGroupResult
-     * @property {string} title A group title
-     * @property {Object} gid An object that handles the newly created group ID
-     * @property {string} gid.server
-     * @property {string} gid.user
-     * @property {string} gid._serialized
-     * @property {Object.<string, ParticipantResult>} participants An object that handles the result value for each added to the group participant
-     */
-
-    /**
-     * An object that handles options for group creation
-     * @typedef {Object} CreateGroupOptions
-     * @property {number} [messageTimer = 0] The number of seconds for the messages to disappear in the group (0 by default, won't take an effect if the group is been creating with myself only)
-     * @property {string|undefined} parentGroupId The ID of a parent community group to link the newly created group with (won't take an effect if the group is been creating with myself only)
-     * @property {boolean} [autoSendInviteV4 = true] If true, the inviteV4 will be sent to those participants who have restricted others from being automatically added to groups, otherwise the inviteV4 won't be sent (true by default)
-     * @property {string} [comment = ''] The comment to be added to an inviteV4 (empty string by default)
-     */
-
-    /**
      * Creates a new group
      * @param {string} title Group title
      * @param {string|Contact|Array<Contact|string>|undefined} participants A single Contact object or an ID as a string or an array of Contact objects or contact IDs to add to the group
      * @param {CreateGroupOptions} options An object that handles options for group creation
      * @returns {Promise<CreateGroupResult|string>} Object with resulting data or an error message as a string
      */
-    async createGroup(title, participants = [], options = {}) {
-        !Array.isArray(participants) && (participants = [participants]);
+    async createGroup(title: string, participants?: string | Contact | Contact[] | string[], options?: CreateGroupOptions): Promise< CreateGroupResult | string > {
+        !Array.isArray(participants) && (participants = [participants as Contact]);
         participants.map(p => (p instanceof Contact) ? p.id._serialized : p);
 
-        return await this.pupPage.evaluate(async (title, participants, options) => {
+        return await this.pupPage.evaluate(async (title, participants, options: any) => {
             const { messageTimer = 0, parentGroupId, autoSendInviteV4 = true, comment = '' } = options;
             const participantData = {}, participantWids = [], failedParticipants = [];
             let createGroupResult, parentGroupWid;
@@ -1554,7 +1832,7 @@ class Client extends EventEmitter {
             };
 
             for (const participant of participants) {
-                const pWid = window.Store.WidFactory.createWid(participant);
+                const pWid = window.Store.WidFactory.createWid(participant as string);
                 if ((await window.Store.QueryExist(pWid))?.wid) participantWids.push(pWid);
                 else failedParticipants.push(participant);
             }
@@ -1623,40 +1901,23 @@ class Client extends EventEmitter {
     }
 
     /**
-     * An object that handles the result for {@link createChannel} method
-     * @typedef {Object} CreateChannelResult
-     * @property {string} title A channel title
-     * @property {ChatId} nid An object that handels the newly created channel ID
-     * @property {string} nid.server 'newsletter'
-     * @property {string} nid.user 'XXXXXXXXXX'
-     * @property {string} nid._serialized 'XXXXXXXXXX@newsletter'
-     * @property {string} inviteLink The channel invite link, starts with 'https://whatsapp.com/channel/'
-     * @property {number} createdAtTs The timestamp the channel was created at
-     */
-
-    /**
-     * Options for the channel creation
-     * @typedef {Object} CreateChannelOptions
-     * @property {?string} description The channel description
-     * @property {?MessageMedia} picture The channel profile picture
-     */
-
-    /**
      * Creates a new channel
      * @param {string} title The channel name
      * @param {CreateChannelOptions} options 
      * @returns {Promise<CreateChannelResult|string>} Returns an object that handles the result for the channel creation or an error message as a string
      */
-    async createChannel(title, options = {}) {
-        return await this.pupPage.evaluate(async (title, options) => {
-            let response, { description = null, picture = null } = options;
+    async createChannel(title: string, options?: CreateChannelOptions): Promise<CreateChannelResult | string> {
+        const result = await this.pupPage.evaluate(async (title, options) => {
+            let response: any;
+            const { description = null, picture: pictureData = null } = options;
 
             if (!window.Store.ChannelUtils.isNewsletterCreationEnabled()) {
                 return 'CreateChannelError: A channel creation is not enabled';
             }
 
-            if (picture) {
-                picture = await window.WWebJS.cropAndResizeImage(picture, {
+            let picture: any;
+            if (pictureData) {
+                picture = await window.WWebJS.cropAndResizeImage(pictureData, {
                     asDataUrl: true,
                     mimetype: 'image/jpeg',
                     size: 640,
@@ -1684,6 +1945,8 @@ class Client extends EventEmitter {
                 createdAtTs: response.newsletterCreationTimeMetadataMixin.creationTimeValue
             };
         }, title, options);
+
+        return result as any;
     }
 
     /**
@@ -1691,25 +1954,18 @@ class Client extends EventEmitter {
      * @param {string} channelId The channel ID
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
-    async subscribeToChannel(channelId) {
+    async subscribeToChannel(channelId: string): Promise<boolean> {
         return await this.pupPage.evaluate(async (channelId) => {
             return await window.WWebJS.subscribeToUnsubscribeFromChannel(channelId, 'Subscribe');
         }, channelId);
     }
-
-    /**
-     * Options for unsubscribe from a channel
-     * @typedef {Object} UnsubscribeOptions
-     * @property {boolean} [deleteLocalModels = false] If true, after an unsubscription, it will completely remove a channel from the channel collection making it seem like the current user have never interacted with it. Otherwise it will only remove a channel from the list of channels the current user is subscribed to and will set the membership type for that channel to GUEST
-     */
-
     /**
      * Unsubscribe from channel
      * @param {string} channelId The channel ID
      * @param {UnsubscribeOptions} options
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
-    async unsubscribeFromChannel(channelId, options) {
+    async unsubscribeFromChannel(channelId: string, options?: UnsubscribeOptions): Promise<boolean> {
         return await this.pupPage.evaluate(async (channelId, options) => {
             return await window.WWebJS.subscribeToUnsubscribeFromChannel(channelId, 'Unsubscribe', options);
         }, channelId, options);
@@ -1729,7 +1985,7 @@ class Client extends EventEmitter {
      * @param {TransferChannelOwnershipOptions} options
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
-    async transferChannelOwnership(channelId, newOwnerId, options = {}) {
+    async transferChannelOwnership(channelId: string, newOwnerId: string, options: TransferChannelOwnershipOptions = {}): Promise<boolean> {
         return await this.pupPage.evaluate(async (channelId, newOwnerId, options) => {
             const channel = await window.WWebJS.getChat(channelId, { getAsModel: false });
             const newOwner = window.Store.Contact.get(newOwnerId) || (await window.Store.Contact.find(newOwnerId));
@@ -1771,7 +2027,7 @@ class Client extends EventEmitter {
      * @param {number} [searchOptions.limit = 50] The limit of found channels to be appear in the returnig result
      * @returns {Promise<Array<Channel>|[]>} Returns an array of Channel objects or an empty array if no channels were found
      */
-    async searchChannels(searchOptions = {}) {
+    async searchChannels(searchOptions: SearchChannelsOptions = {}): Promise<Array<Channel> | []> {
         return await this.pupPage.evaluate(async ({
             searchText = '',
             countryCodes = [window.Store.ChannelUtils.currentRegion],
@@ -1821,8 +2077,8 @@ class Client extends EventEmitter {
      * @param {string} channelId The ID of a channel to delete
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
-    async deleteChannel(channelId) {
-        return await this.client.pupPage.evaluate(async (channelId) => {
+    async deleteChannel(channelId: string): Promise<boolean> {
+        return await this.pupPage.evaluate(async (channelId) => {
             const channel = await window.WWebJS.getChat(channelId, { getAsModel: false });
             if (!channel) return false;
             try {
@@ -1839,7 +2095,7 @@ class Client extends EventEmitter {
      * Get all current Labels
      * @returns {Promise<Array<Label>>}
      */
-    async getLabels() {
+    async getLabels(): Promise<Array<Label>> {
         const labels = await this.pupPage.evaluate(async () => {
             return window.WWebJS.getLabels();
         });
@@ -1851,7 +2107,7 @@ class Client extends EventEmitter {
      * Get all current Broadcast
      * @returns {Promise<Array<Broadcast>>}
      */
-    async getBroadcasts() {
+    async getBroadcasts(): Promise<Array<Broadcast>> {
         const broadcasts = await this.pupPage.evaluate(async () => {
             return window.WWebJS.getAllStatuses();
         });
@@ -1863,7 +2119,7 @@ class Client extends EventEmitter {
      * @param {string} labelId
      * @returns {Promise<Label>}
      */
-    async getLabelById(labelId) {
+    async getLabelById(labelId: string): Promise<Label> {
         const label = await this.pupPage.evaluate(async (labelId) => {
             return window.WWebJS.getLabel(labelId);
         }, labelId);
@@ -1876,7 +2132,7 @@ class Client extends EventEmitter {
      * @param {string} chatId
      * @returns {Promise<Array<Label>>}
      */
-    async getChatLabels(chatId) {
+    async getChatLabels(chatId: string): Promise<Array<Label>> {
         const labels = await this.pupPage.evaluate(async (chatId) => {
             return window.WWebJS.getChatLabels(chatId);
         }, chatId);
@@ -1889,7 +2145,7 @@ class Client extends EventEmitter {
      * @param {string} labelId
      * @returns {Promise<Array<Chat>>}
      */
-    async getChatsByLabelId(labelId) {
+    async getChatsByLabelId(labelId: string): Promise<Array<Chat>> {
         const chatIds = await this.pupPage.evaluate(async (labelId) => {
             const label = window.Store.Label.get(labelId);
             const labelItems = label.labelItemCollection.getModelsArray();
@@ -1908,13 +2164,13 @@ class Client extends EventEmitter {
      * Gets all blocked contacts by host account
      * @returns {Promise<Array<Contact>>}
      */
-    async getBlockedContacts() {
+    async getBlockedContacts(): Promise<Array<Contact>> {
         const blockedContacts = await this.pupPage.evaluate(() => {
             let chatIds = window.Store.Blocklist.getModelsArray().map(a => a.id._serialized);
             return Promise.all(chatIds.map(id => window.WWebJS.getContact(id)));
         });
 
-        return blockedContacts.map(contact => ContactFactory.create(this.client, contact));
+        return blockedContacts.map(contact => ContactFactory.create(this, contact));
     }
 
     /**
@@ -1922,7 +2178,7 @@ class Client extends EventEmitter {
      * @param {MessageMedia} media
      * @returns {Promise<boolean>} Returns true if the picture was properly updated.
      */
-    async setProfilePicture(media) {
+    async setProfilePicture(media: MessageMedia): Promise<boolean> {
         const success = await this.pupPage.evaluate((chatid, media) => {
             return window.WWebJS.setPicture(chatid, media);
         }, this.info.wid._serialized, media);
@@ -1934,7 +2190,7 @@ class Client extends EventEmitter {
      * Deletes the current user's profile picture.
      * @returns {Promise<boolean>} Returns true if the picture was properly deleted.
      */
-    async deleteProfilePicture() {
+    async deleteProfilePicture(): Promise<boolean> {
         const success = await this.pupPage.evaluate((chatid) => {
             return window.WWebJS.deletePicture(chatid);
         }, this.info.wid._serialized);
@@ -1948,7 +2204,7 @@ class Client extends EventEmitter {
      * @param {Array<string>} chatIds
      * @returns {Promise<void>}
      */
-    async addOrRemoveLabels(labelIds, chatIds) {
+    async addOrRemoveLabels(labelIds: Array<number|string>, chatIds: Array<string>): Promise<void> {
 
         return this.pupPage.evaluate(async (labelIds, chatIds) => {
             if (['smba', 'smbi'].indexOf(window.Store.Conn.platform) === -1) {
@@ -1959,7 +2215,7 @@ class Client extends EventEmitter {
 
             let actions = labels.map(label => ({id: label.id, type: 'add'}));
 
-            chats.forEach(chat => {
+            chats.forEach((chat) => {
                 (chat.labels || []).forEach(n => {
                     if (!actions.find(e => e.id == n)) {
                         actions.push({id: n, type: 'remove'});
@@ -1986,7 +2242,7 @@ class Client extends EventEmitter {
      * @param {string} groupId The ID of a group to get membership requests for
      * @returns {Promise<Array<GroupMembershipRequest>>} An array of membership requests
      */
-    async getGroupMembershipRequests(groupId) {
+    async getGroupMembershipRequests(groupId: string): Promise<Array<GroupMembershipRequest>> {
         return await this.pupPage.evaluate(async (groupId) => {
             const groupWid = window.Store.WidFactory.createWid(groupId);
             return await window.Store.MembershipRequestUtils.getMembershipApprovalRequests(groupWid);
@@ -2014,10 +2270,10 @@ class Client extends EventEmitter {
      * @param {MembershipRequestActionOptions} options Options for performing a membership request action
      * @returns {Promise<Array<MembershipRequestActionResult>>} Returns an array of requester IDs whose membership requests were approved and an error for each requester, if any occurred during the operation. If there are no requests, an empty array will be returned
      */
-    async approveGroupMembershipRequests(groupId, options = {}) {
+    async approveGroupMembershipRequests(groupId: string, options: MembershipRequestActionOptions = {}): Promise<Array<MembershipRequestActionResult>> {
         return await this.pupPage.evaluate(async (groupId, options) => {
             const { requesterIds = null, sleep = [250, 500] } = options;
-            return await window.WWebJS.membershipRequestAction(groupId, 'Approve', requesterIds, sleep);
+            return await window.WWebJS.membershipRequestAction(groupId, 'Approve', requesterIds as string[], sleep as [number, number]);
         }, groupId, options);
     }
 
@@ -2027,10 +2283,10 @@ class Client extends EventEmitter {
      * @param {MembershipRequestActionOptions} options Options for performing a membership request action
      * @returns {Promise<Array<MembershipRequestActionResult>>} Returns an array of requester IDs whose membership requests were rejected and an error for each requester, if any occurred during the operation. If there are no requests, an empty array will be returned
      */
-    async rejectGroupMembershipRequests(groupId, options = {}) {
+    async rejectGroupMembershipRequests(groupId: string, options: MembershipRequestActionOptions = {}): Promise<Array<MembershipRequestActionResult>> {
         return await this.pupPage.evaluate(async (groupId, options) => {
             const { requesterIds = null, sleep = [250, 500] } = options;
-            return await window.WWebJS.membershipRequestAction(groupId, 'Reject', requesterIds, sleep);
+            return await window.WWebJS.membershipRequestAction(groupId, 'Reject', requesterIds as string[], sleep as [number, number]);
         }, groupId, options);
     }
 
@@ -2039,7 +2295,7 @@ class Client extends EventEmitter {
      * Setting  autoload download audio
      * @param {boolean} flag true/false
      */
-    async setAutoDownloadAudio(flag) {
+    async setAutoDownloadAudio(flag: boolean): Promise<void> {
         await this.pupPage.evaluate(async flag => {
             const autoDownload = window.Store.Settings.getAutoDownloadAudio();
             if (autoDownload === flag) {
@@ -2054,7 +2310,7 @@ class Client extends EventEmitter {
      * Setting  autoload download documents
      * @param {boolean} flag true/false
      */
-    async setAutoDownloadDocuments(flag) {
+    async setAutoDownloadDocuments(flag: boolean): Promise<void> {
         await this.pupPage.evaluate(async flag => {
             const autoDownload = window.Store.Settings.getAutoDownloadDocuments();
             if (autoDownload === flag) {
@@ -2069,7 +2325,7 @@ class Client extends EventEmitter {
      * Setting  autoload download photos
      * @param {boolean} flag true/false
      */
-    async setAutoDownloadPhotos(flag) {
+    async setAutoDownloadPhotos(flag: boolean): Promise<void> {
         await this.pupPage.evaluate(async flag => {
             const autoDownload = window.Store.Settings.getAutoDownloadPhotos();
             if (autoDownload === flag) {
@@ -2084,7 +2340,7 @@ class Client extends EventEmitter {
      * Setting  autoload download videos
      * @param {boolean} flag true/false
      */
-    async setAutoDownloadVideos(flag) {
+    async setAutoDownloadVideos(flag: boolean): Promise<void> {
         await this.pupPage.evaluate(async flag => {
             const autoDownload = window.Store.Settings.getAutoDownloadVideos();
             if (autoDownload === flag) {
@@ -2101,8 +2357,8 @@ class Client extends EventEmitter {
      * @param {boolean} flag true/false
      * @returns {Promise<boolean>}
      */
-    async setBackgroundSync(flag) {
-        return await this.pupPage.evaluate(async flag => {
+    async setBackgroundSync(flag: boolean): Promise<boolean> {
+        const result = await this.pupPage.evaluate(async flag => {
             const backSync = window.Store.Settings.getGlobalOfflineNotifications();
             if (backSync === flag) {
                 return flag;
@@ -2110,6 +2366,7 @@ class Client extends EventEmitter {
             await window.Store.Settings.setGlobalOfflineNotifications(flag);
             return flag;
         }, flag);
+        return result as boolean;
     }
     
     /**
@@ -2119,7 +2376,7 @@ class Client extends EventEmitter {
      * @param {string} userId
      * @returns {Promise<number>}
      */
-    async getContactDeviceCount(userId) {
+    async getContactDeviceCount(userId: string): Promise<number> {
         return await this.pupPage.evaluate(async (userId) => {
             const devices = await window.Store.DeviceList.getDeviceIds([window.Store.WidFactory.createWid(userId)]);
             if (devices && devices.length && devices[0] != null && typeof devices[0].devices == 'object') {
@@ -2134,7 +2391,7 @@ class Client extends EventEmitter {
      * @param {string} chatId
      * @return {Promise<boolean>} True if operation completed successfully, false otherwise.
      */
-    async syncHistory(chatId) {
+    async syncHistory(chatId: string): Promise<boolean> {
         return await this.pupPage.evaluate(async (chatId) => {
             const chatWid = window.Store.WidFactory.createWid(chatId);
             const chat = window.Store.Chat.get(chatWid) ?? (await window.Store.Chat.find(chatWid));
@@ -2156,7 +2413,7 @@ class Client extends EventEmitter {
      * @param {boolean} [syncToAddressbook = false] If set to true, the contact will also be saved to the user's address book on their phone. False by default
      * @returns {Promise<import('..').ChatId>} Object in a wid format
      */
-    async saveOrEditAddressbookContact(phoneNumber, firstName, lastName, syncToAddressbook = false)
+    async saveOrEditAddressbookContact(phoneNumber: string, firstName: string, lastName: string, syncToAddressbook: boolean = false): Promise<ChatId>
     {
         return await this.pupPage.evaluate(async (phoneNumber, firstName, lastName, syncToAddressbook) => {
             return await window.Store.AddressbookContactUtils.saveContactAction(
@@ -2174,7 +2431,7 @@ class Client extends EventEmitter {
      * @param {string} phoneNumber The contact's phone number in a format "17182222222", where "1" is a country code
      * @returns {Promise<void>}
      */
-    async deleteAddressbookContact(phoneNumber)
+    async deleteAddressbookContact(phoneNumber: string): Promise<void>
     {
         return await this.pupPage.evaluate(async (phoneNumber) => {
             return await window.Store.AddressbookContactUtils.deleteContactAction(phoneNumber);

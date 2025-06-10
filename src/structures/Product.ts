@@ -1,12 +1,37 @@
+import Client from '../Client.js';
 import Base from './Base.js';
 import ProductMetadata from './ProductMetadata.js';
 
 /**
  * Represents a Product on WhatsAppBusiness
  * @extends {Base}
+ * @example
+ * {
+ * "id": "123456789",
+ * "price": "150000",
+ * "thumbnailId": "123456789",
+ * "thumbnailUrl": "https://mmg.whatsapp.net",
+ * "currency": "GTQ",
+ * "name": "Store Name",
+ * "quantity": 1
+ * }
  */
 class Product extends Base {
-    constructor(client, data) {
+    /** Product Id */
+    id: string;
+    /** Price */
+    price?: string;
+    /** Product Thumbnail*/
+    thumbnailUrl: string;
+    /** Currency */
+    currency: string;
+    /** Product Name */
+    name: string;
+    /** Product Quantity*/
+    quantity: number;
+    data?: ProductMetadata;
+    
+    constructor(client: Client, data: any) {
         super(client);
 
         if (data) this._patch(data);
@@ -48,7 +73,9 @@ class Product extends Base {
         return super._patch(data);
     }
 
-    async getData() {
+
+    /** Gets the Product metadata */
+    async getData(): Promise<ProductMetadata> {
         if (this.data === null) {
             let result = await this.client.pupPage.evaluate((productId) => {
                 return window.WWebJS.getProductMetadata(productId);

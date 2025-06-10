@@ -3,8 +3,11 @@
  */
 // import Contact from './Contact.js';
 
+import Client from "../Client.js";
+
 class Base {
-    constructor(client) {
+    client: Client;
+    constructor(client: Client) {
         /**
          * The client that instantiated this
          * @readonly
@@ -16,7 +19,7 @@ class Base {
         return Object.assign(Object.create(this), this);
     }
     
-    _patch(data) { return data; }
+    _patch(data: any) { return data; }
 }
 
 export default Base;

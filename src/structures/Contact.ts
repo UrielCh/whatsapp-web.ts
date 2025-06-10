@@ -1,4 +1,43 @@
+import Client from '../Client.js';
 import Base from './Base.js';
+import Chat, { ChatId } from './Chat.js';
+
+export interface ContactId {
+    server: string,
+    user: string,
+    _serialized: string,
+}
+
+
+/**
+ * Represents a Contact on WhatsApp
+ *
+ * @example 
+ * {
+ *   id: {
+ *     server: 'c.us',
+ *     user: '554199999999',
+ *     _serialized: `554199999999@c.us`
+ *   },
+ *   number: '554199999999',
+ *   isBusiness: false,
+ *   isEnterprise: false,
+ *   labels: [],
+ *   name: undefined,
+ *   pushname: 'John',
+ *   sectionHeader: undefined,
+ *   shortName: undefined,
+ *   statusMute: false,
+ *   type: 'in',
+ *   verifiedLevel: undefined,
+ *   verifiedName: undefined,
+ *   isMe: false,
+ *   isUser: true,
+ *   isGroup: false,
+ *   isWAContact: true,
+ *   isMyContact: false
+ * }
+ */
 
 /**
  * ID that represents a contact
@@ -13,7 +52,46 @@ import Base from './Base.js';
  * @extends {Base}
  */
 class Contact extends Base {
-    constructor(client, data) {
+    /** Contact's phone number */
+    number: string;
+    /** Indicates if the contact is a business contact */
+    isBusiness: boolean;
+    /** ID that represents the contact */
+    id: ContactId;
+    /** Indicates if the contact is an enterprise contact */
+    isEnterprise: boolean;
+    /** Indicates if the contact is a group contact */
+    isGroup: boolean;
+    /** Indicates if the contact is the current user's contact */
+    isMe: boolean;
+    /** Indicates if the number is saved in the current phone's contacts */
+    isMyContact: boolean;
+    /** Indicates if the contact is a user contact */
+    isUser: boolean;
+    /** Indicates if the number is registered on WhatsApp */
+    isWAContact: boolean;
+    /** Indicates if you have blocked this contact */
+    isBlocked: boolean;
+    /** @todo verify labels type. didn't have any documentation */
+    labels?: string[];
+    /** The contact's name, as saved by the current user */
+    name?: string;
+    /** The name that the contact has configured to be shown publically */
+    pushname: string;
+    /** @todo missing documentation */
+    sectionHeader: string;
+    /** A shortened version of name */
+    shortName?: string;
+    /** Indicates if the status from the contact is muted */
+    statusMute: boolean;
+    /** @todo missing documentation */
+    type: string;
+    /** @todo missing documentation */
+    verifiedLevel?: undefined;
+    /** @todo missing documentation */
+    verifiedName?: undefined;
+
+    constructor(client: Client, data: any) {
         super(client);
 
         if(data) this._patch(data);
@@ -112,34 +190,30 @@ class Contact extends Base {
 
     /**
      * Returns the contact's profile picture URL, if privacy settings allow it
-     * @returns {Promise<string>}
      */
-    async getProfilePicUrl() {
+    async getProfilePicUrl(): Promise<string> {
         return await this.client.getProfilePicUrl(this.id._serialized);
     }
 
     /**
      * Returns the contact's formatted phone number, (12345678901@c.us) => (+1 (234) 5678-901)
-     * @returns {Promise<string>}
      */
-    async getFormattedNumber() {
+    async getFormattedNumber(): Promise<string> {
         return await this.client.getFormattedNumber(this.id._serialized);
     }
     
     /**
      * Returns the contact's countrycode, (1541859685@c.us) => (1)
-     * @returns {Promise<string>}
      */
-    async getCountryCode() {
+    async getCountryCode(): Promise<string> {
         return await this.client.getCountryCode(this.id._serialized);
     }
     
     /**
      * Returns the Chat that corresponds to this Contact. 
      * Will return null when getting chat for currently logged in user.
-     * @returns {Promise<Chat>}
      */
-    async getChat() {
+    async getChat(): Promise<Chat> {
         if(this.isMe) return null;
 
         return await this.client.getChatById(this.id._serialized);
@@ -147,9 +221,8 @@ class Contact extends Base {
 
     /**
      * Blocks this contact from WhatsApp
-     * @returns {Promise<boolean>}
      */
-    async block() {
+    async block(): Promise<boolean> {
         if(this.isGroup) return false;
 
         await this.client.pupPage.evaluate(async (contactId) => {
@@ -163,9 +236,8 @@ class Contact extends Base {
 
     /**
      * Unblocks this contact from WhatsApp
-     * @returns {Promise<boolean>}
      */
-    async unblock() {
+    async unblock(): Promise<boolean> {
         if(this.isGroup) return false;
 
         await this.client.pupPage.evaluate(async (contactId) => {
@@ -176,12 +248,12 @@ class Contact extends Base {
         this.isBlocked = false;
         return true;
     }
-
+    
     /**
      * Gets the Contact's current "about" info. Returns null if you don't have permission to read their status.
      * @returns {Promise<?string>}
      */
-    async getAbout() {
+    async getAbout(): Promise<string | null> {
         const about = await this.client.pupPage.evaluate(async (contactId) => {
             const wid = window.Store.WidFactory.createWid(contactId);
             return window.Store.StatusUtils.getStatus(wid);
@@ -195,12 +267,10 @@ class Contact extends Base {
 
     /**
      * Gets the Contact's common groups with you. Returns empty array if you don't have any common group.
-     * @returns {Promise<WAWebJS.ChatId[]>}
      */
-    async getCommonGroups() {
+    async getCommonGroups(): Promise<ChatId[]> {
         return await this.client.getCommonGroups(this.id._serialized);
-    }
-    
+    }    
 }
 
 export default Contact;

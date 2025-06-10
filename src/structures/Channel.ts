@@ -1,5 +1,10 @@
+import Client from '../Client.js';
+import { MessageSendOptions } from '../types.js';
 import Base from './Base.js';
+import { MessageSearchOptions } from './Chat.js';
+import Contact from './Contact.js';
 import Message from './Message.js';
+import MessageMedia from './MessageMedia.js';
 
 /**
  * Channel ID structure
@@ -9,18 +14,55 @@ import Message from './Message.js';
  * @property {string} _serialized
  */
 
+/** Options for transferring a channel ownership to another user */
+export interface TransferChannelOwnershipOptions {
+    /**
+     * If true, after the channel ownership is being transferred to another user,
+     * the current user will be dismissed as a channel admin and will become to a channel subscriber.
+     */
+    shouldDismissSelfAsAdmin?: boolean
+}
+
 /**
  * Represents a Channel on WhatsApp
  * @extends {Base}
  */
 class Channel extends Base {
-    constructor(client, data) {
+    /** ID that represents the channel */
+    id: {
+        server: string;
+        user: string;
+        _serialized: string;
+    };
+    /** Title of the channel */
+    name: string;
+    /** The channel description */
+    description: string;
+    /** Indicates if it is a Channel */
+    isChannel: boolean;
+    /** Indicates if it is a Group */
+    isGroup: boolean;
+    /** Indicates if the channel is readonly */
+    isReadOnly: boolean;
+    /** Amount of messages unread */
+    unreadCount: number;
+    /** Unix timestamp for when the last activity occurred */
+    timestamp: number;
+    /** Indicates if the channel is muted or not */
+    isMuted: boolean;
+    /** Unix timestamp for when the mute expires */
+    muteExpiration: number;
+    /** Last message in the channel */
+    lastMessage: Message | undefined;
+    channelMetadata: any;
+    
+    constructor(client: Client, data: any) {
         super(client);
 
         if (data) this._patch(data);
     }
 
-    _patch(data) {
+    _patch(data: any) {
         this.channelMetadata = data.channelMetadata;
 
         /**
@@ -87,7 +129,7 @@ class Channel extends Base {
          * Last message in the channel
          * @type {Message}
          */
-        this.lastMessage = data.lastMessage ? new Message(super.client, data.lastMessage) : undefined;
+        this.lastMessage = data.lastMessage ? new Message(this.client, data.lastMessage) : undefined;
 
         return super._patch(data);
     }
@@ -97,7 +139,7 @@ class Channel extends Base {
      * @param {?number} limit Optional parameter to specify the limit of subscribers to retrieve
      * @returns {Promise<{contact: Contact, role: string}[]>} Returns an array of objects that handle the subscribed contacts and their roles in the channel
      */
-    async getSubscribers(limit) {
+    async getSubscribers(limit?: number): Promise<{contact: Contact, role: string}[]> {
         return await this.client.pupPage.evaluate(async (channelId, limit) => {
             const channel = await window.WWebJS.getChat(channelId, { getAsModel: false });
             if (!channel) return [];
@@ -116,7 +158,7 @@ class Channel extends Base {
      * @param {string} newSubject 
      * @returns {Promise<boolean>} Returns true if the subject was properly updated. This can return false if the user does not have the necessary permissions.
      */
-    async setSubject(newSubject) {
+    async setSubject(newSubject: string): Promise<boolean> {
         const success = await this._setChannelMetadata({ name: newSubject }, { editName: true });
         success && (this.name = newSubject);
         return success;
@@ -127,7 +169,7 @@ class Channel extends Base {
      * @param {string} newDescription 
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
-    async setDescription(newDescription) {
+    async setDescription(newDescription: string): Promise<boolean> {
         const success = await this._setChannelMetadata({ description: newDescription }, { editDescription: true });
         success && (this.description = newDescription);
         return success;
@@ -138,7 +180,7 @@ class Channel extends Base {
      * @param {MessageMedia} newProfilePicture 
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
-    async setProfilePicture(newProfilePicture) {
+    async setProfilePicture(newProfilePicture: MessageMedia): Promise<boolean> {
         return await this._setChannelMetadata({ picture: newProfilePicture }, { editPicture: true });
     }
 
@@ -152,7 +194,7 @@ class Channel extends Base {
      * @param {number} reactionCode 
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
-    async setReactionSetting(reactionCode) {
+    async setReactionSetting(reactionCode: number): Promise<boolean> {
         if (![0, 1, 2].includes(reactionCode)) return false;
         const reactionMapper = {
             0: 3,
@@ -171,7 +213,7 @@ class Channel extends Base {
      * Mutes the channel
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
-    async mute() {
+    async mute(): Promise<boolean> {
         const success = await this._muteUnmuteChannel('MUTE');
         if (success) {
             this.isMuted = true;
@@ -184,7 +226,7 @@ class Channel extends Base {
      * Unmutes the channel
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
-    async unmute() {
+    async unmute(): Promise<boolean> {
         const success = await this._muteUnmuteChannel('UNMUTE');
         if (success) {
             this.isMuted = false;
@@ -207,7 +249,7 @@ class Channel extends Base {
      * @param {?MessageSendOptions} options
      * @returns {Promise<Message>} Message that was just sent
      */
-    async sendMessage(content, options) {
+    async sendMessage(content: string|MessageMedia, options?: MessageSendOptions): Promise<Message> {
         return this.client.sendMessage(this.id._serialized, content, options);
     }
 
@@ -215,7 +257,7 @@ class Channel extends Base {
      * Sets the channel as seen
      * @returns {Promise<boolean>}
      */
-    async sendSeen() {
+    async sendSeen(): Promise<boolean> {
         return this.client.sendSeen(this.id._serialized);
     }
 
@@ -230,7 +272,7 @@ class Channel extends Base {
      * @param {SendChannelAdminInviteOptions} options 
      * @returns {Promise<boolean>} Returns true if an invitation was sent successfully, false otherwise
      */
-    async sendChannelAdminInvite(chatId, options = {}) {
+    async sendChannelAdminInvite(chatId: string, options: { comment?: string } = {}): Promise<boolean> {
         return this.client.sendChannelAdminInvite(chatId, this.id._serialized, options);
     }
 
@@ -238,7 +280,7 @@ class Channel extends Base {
      * Accepts a channel admin invitation and promotes the current user to a channel admin
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
-    async acceptChannelAdminInvite() {
+    async acceptChannelAdminInvite(): Promise<boolean> {
         return this.client.acceptChannelAdminInvite(this.id._serialized);
     }
 
@@ -247,7 +289,7 @@ class Channel extends Base {
      * @param {string} userId The user ID the invitation was sent to
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
-    async revokeChannelAdminInvite(userId) {
+    async revokeChannelAdminInvite(userId: string): Promise<boolean> {
         return this.client.revokeChannelAdminInvite(this.id._serialized, userId);
     }
 
@@ -256,7 +298,7 @@ class Channel extends Base {
      * @param {string} userId The user ID to demote
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
-    async demoteChannelAdmin(userId) {
+    async demoteChannelAdmin(userId: string): Promise<boolean> {
         return this.client.demoteChannelAdmin(this.id._serialized, userId);
     }
 
@@ -273,7 +315,7 @@ class Channel extends Base {
      * @param {TransferChannelOwnershipOptions} options
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
-    async transferChannelOwnership(newOwnerId, options = {}) {
+    async transferChannelOwnership(newOwnerId: string, options: TransferChannelOwnershipOptions = {}): Promise<boolean> {
         return this.client.transferChannelOwnership(this.id._serialized, newOwnerId, options);
     }
 
@@ -284,7 +326,7 @@ class Channel extends Base {
      * @param {Boolean} [searchOptions.fromMe] Return only messages from the bot number or vise versa. To get all messages, leave the option undefined
      * @returns {Promise<Array<Message>>}
      */
-    async fetchMessages(searchOptions) {
+    async fetchMessages(searchOptions: MessageSearchOptions): Promise<Message[]> {
         let messages = await this.client.pupPage.evaluate(async (channelId, searchOptions) => {
             const msgFilter = (m) => {
                 if (m.isNotification || m.type === 'newsletter_notification') {
@@ -323,7 +365,7 @@ class Channel extends Base {
      * Deletes the channel you created
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
-    async deleteChannel() {
+    async deleteChannel(): Promise<boolean> {
         return this.client.deleteChannel(this.id._serialized);
     }
 

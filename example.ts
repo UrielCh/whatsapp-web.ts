@@ -302,7 +302,7 @@ client.on('message', async msg => {
         // To get group mentions from a message:
         const groupId = 'ZZZZZZZZZZ@g.us';
         const msg = await client.sendMessage('chatId', `Check the last message here: @${groupId}`, {
-            groupMentions: { subject: 'GroupSubject', id: groupId }
+            groupMentions: [{ subject: 'GroupSubject', id: groupId }]
         });
         /** {@link groupMentions} is an array of `GroupChat` */
         const groupMentions = await msg.getGroupMentions();
@@ -666,7 +666,7 @@ client.on('group_membership_request', async (notification) => {
      */
     console.log(notification);
     /** You can approve or reject the newly appeared membership request: */
-    await client.approveGroupMembershipRequestss(notification.chatId, notification.author);
+    await client.approveGroupMembershipRequests(notification.chatId, notification.author);
     await client.rejectGroupMembershipRequests(notification.chatId, notification.author);
 });
 

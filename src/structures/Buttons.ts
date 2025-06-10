@@ -19,13 +19,19 @@ import Util from '../util/Util.js';
  * Message type buttons
  */
 class Buttons {
+    body: string | MessageMedia
+    buttons: Array<{ buttonId: string; buttonText: {displayText: string}; type: number }>
+    title?: string | null
+    footer?: string | null
+    type?: 'media' | 'chat';
+
     /**
      * @param {string|MessageMedia} body
      * @param {ButtonSpec[]} buttons - See {@link ButtonSpec}
      * @param {string?} title
      * @param {string?} footer
      */
-    constructor(body, buttons, title, footer) {
+    constructor(body: string | MessageMedia, buttons: Array<{ id?: string; body: string }>, title?: string | null, footer?: string | null) {
         /**
          * Message body
          * @type {string|MessageMedia}
@@ -68,7 +74,7 @@ class Buttons {
      * Input: [{id:'customId',body:'button1'},{body:'button2'},{body:'button3'},{body:'button4'}]
      * Returns: [{ buttonId:'customId',buttonText:{'displayText':'button1'},type: 1 },{buttonId:'n3XKsL',buttonText:{'displayText':'button2'},type:1},{buttonId:'NDJk0a',buttonText:{'displayText':'button3'},type:1}]
      */
-    _format(buttons){
+    _format(buttons: Array<{ id?: string; body: string }>): Array<{ buttonId: string; buttonText: { displayText: string }; type: number }> {
         buttons = buttons.slice(0,3); // phone users can only see 3 buttons, so lets limit this
         return buttons.map((btn) => {
             return {'buttonId':btn.id ? String(btn.id) : Util.generateHash(6),'buttonText':{'displayText':btn.body},'type':1};

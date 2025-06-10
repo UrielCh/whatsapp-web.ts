@@ -1,9 +1,13 @@
+import Client from "../Client.js";
+
 /**
  * Base class which all authentication strategies extend
  */
 class BaseAuthStrategy {
+    client: Client;
+    
     constructor() {}
-    setup(client) {
+    setup(client: Client) {
         this.client = client;
     }
     async beforeBrowserInitialized() {}

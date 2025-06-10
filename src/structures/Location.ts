@@ -7,16 +7,33 @@
  * @property {string} [description] Location full description
  */
 
+/** Options for sending a location */
+export interface LocationSendOptions {
+    /** Location name */
+    name?: string;
+    /** Location address */
+    address?: string;
+    /** URL address to be shown within a location message */
+    url?: string;
+}
+
 /**
  * Location information
  */
 class Location {
+    latitude: number;
+    longitude: number;
+    name?: string;
+    address?: string;
+    url?: string;
+    description?: string;
+
     /**
      * @param {number} latitude
      * @param {number} longitude
      * @param {LocationSendOptions} [options] Location send options
      */
-    constructor(latitude, longitude, options = {}) {
+    constructor(latitude: number, longitude: number, options?: LocationSendOptions) {
         /**
          * Location latitude
          * @type {number}

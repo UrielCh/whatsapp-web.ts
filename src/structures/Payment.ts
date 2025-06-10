@@ -1,13 +1,60 @@
+import Client from '../Client.js';
 import Base from './Base.js';
 
+/**
+  * Represents a Payment on WhatsApp
+  *
+  * @example
+  * {
+  * id: {
+  * fromMe: true,
+  * remote: {
+  * server: 'c.us',
+  * user: '5511999999999',
+  * _serialized: '5511999999999@c.us'
+  * },
+  *  id: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+  * _serialized: 'true_5511999999999@c.us_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+  * },
+  * paymentCurrency: 'BRL',
+  * paymentAmount1000: 1000,
+  * paymentMessageReceiverJid: {
+  * server: 'c.us',
+  * user: '5511999999999',
+  * _serialized: '5511999999999@c.us'
+  * },
+  * paymentTransactionTimestamp: 1623463058,
+  * paymentStatus: 4,
+  * paymentTxnStatus: 4,
+  * paymentNote: 'note'
+  * }
+  */
+
 class Payment extends Base {
-    constructor(client, data) {
+    /** Payment Id*/
+    id: object;
+    /** Payment currency */
+    paymentCurrency: string;
+    /** Payment ammount  */
+    paymentAmount1000 : number;
+    /** Payment receiver */
+    paymentMessageReceiverJid : object;
+    /** Payment transaction timestamp */
+    paymentTransactionTimestamp : number;
+    /** Payment paymentStatus */
+    paymentStatus : number;
+    /** Integer that represents the payment Text */
+    paymentTxnStatus  : number;
+    /** The note sent with the payment */
+    paymentNote  : string;
+    
+    constructor(client: Client, data: any) {
         super(client);
 
         if (data) this._patch(data);
     }
 
-    _patch(data) {
+    _patch(data: any) {
         /**
          * The payment Id
          * @type {object}

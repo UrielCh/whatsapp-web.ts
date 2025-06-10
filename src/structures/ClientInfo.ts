@@ -1,10 +1,56 @@
 import Base from './Base.js';
+import { ContactId } from './Contact.js';
+
+/** 
+ * Information about the phone this client is connected to 
+ * @deprecated
+ */
+export interface ClientInfoPhone {
+    /** WhatsApp Version running on the phone */
+    wa_version: string
+    /** OS Version running on the phone (iOS or Android version) */
+    os_version: string
+    /** Device manufacturer */
+    device_manufacturer: string
+    /** Device model */
+    device_model: string
+    /** OS build number */
+    os_build_number: string
+}
+
+/** 
+ * @deprecated
+ */
+export interface BatteryInfo {
+    /** The current battery percentage */
+    battery: number,
+    /** Indicates if the phone is plugged in (true) or not (false) */
+    plugged: boolean,
+}
+
 
 /**
  * Current connection information
  * @extends {Base}
  */
 class ClientInfo extends Base {
+    /** 
+     * Current user ID 
+     * @deprecated Use .wid instead 
+     */
+    me: ContactId;
+    /** Current user ID */
+    wid: ContactId;
+    /** 
+     * Information about the phone this client is connected to.  Not available in multi-device. 
+     * @deprecated 
+     */
+    phone: ClientInfoPhone;
+    /** Platform the phone is running on */
+    platform: string
+    /** Name configured to be shown in push notifications */
+    pushname: string
+    
     constructor(client, data) {
         super(client);
 
@@ -66,7 +112,7 @@ class ClientInfo extends Base {
      * @returns {boolean} batteryStatus.plugged - Indicates if the phone is plugged in (true) or not (false)
      * @deprecated
      */
-    async getBatteryStatus() {
+    async getBatteryStatus(): Promise<BatteryInfo> {
         return await this.client.pupPage.evaluate(() => {
             const { battery, plugged } = window.Store.Conn;
             return { battery, plugged };

@@ -1,18 +1,85 @@
 import Base from './Base.js';
 import Message from './Message.js';
+import Client from '../Client.js';
+import Contact from './Contact.js';
+import Label from './Label.js';
+
+
+export interface MessageSearchOptions {
+    /**
+     * The amount of messages to return. If no limit is specified, the available messages will be returned.
+     * Note that the actual number of returned messages may be smaller if there aren't enough messages in the conversation. 
+     * Set this to Infinity to load all messages.
+     */
+    limit?: number
+    /**
+    * Return only messages from the bot number or vise versa. To get all messages, leave the option undefined.
+    */
+    fromMe?: boolean
+}
+/**
+ * Id that represents the chat
+ * 
+ * @example
+ * id: {
+ *   server: 'c.us',
+ *   user: '554199999999',
+ *   _serialized: `554199999999@c.us`
+ * },
+ */
+export interface ChatId {
+    /**
+     * Whatsapp server domain
+     * @example `c.us`
+     */
+    server: string,
+    /**
+     * User whatsapp number
+     * @example `554199999999`
+     */
+    user: string,
+    /**
+     * Serialized id
+     * @example `554199999999@c.us`
+     */
+    _serialized: string,
+}
 
 /**
  * Represents a Chat on WhatsApp
  * @extends {Base}
  */
 class Chat extends Base {
-    constructor(client, data) {
+    /** Indicates if the Chat is archived */
+    archived: boolean;
+    /** ID that represents the chat */
+    id: ChatId;
+    /** Indicates if the Chat is a Group Chat */
+    isGroup: boolean;
+    /** Indicates if the Chat is readonly */
+    isReadOnly: boolean;
+    /** Indicates if the Chat is muted */
+    isMuted: boolean;
+    /** Unix timestamp for when the mute expires */
+    muteExpiration: number;
+    /** Title of the chat */
+    name: string;
+    /** Unix timestamp for when the last activity occurred */
+    timestamp: number;
+    /** Amount of messages unread */
+    unreadCount: number;
+    /** Last message of chat */
+    lastMessage: Message;
+    /** Indicates if the Chat is pinned */
+    pinned: boolean;
+
+    constructor(client: Client, data: any) {
         super(client);
 
         if (data) this._patch(data);
     }
 
-    _patch(data) {
+    _patch(data: any) {
         /**
          * ID that represents the chat
          * @type {object}
@@ -123,14 +190,14 @@ class Chat extends Base {
     /**
      * Archives this chat
      */
-    async archive() {
+    async archive(): Promise<boolean> {
         return this.client.archiveChat(this.id._serialized);
     }
 
     /**
      * un-archives this chat
      */
-    async unarchive() {
+    async unarchive(): Promise<boolean> {
         return this.client.unarchiveChat(this.id._serialized);
     }
 
@@ -138,7 +205,7 @@ class Chat extends Base {
      * Pins this chat
      * @returns {Promise<boolean>} New pin state. Could be false if the max number of pinned chats was reached.
      */
-    async pin() {
+    async pin(): Promise<boolean> {
         return this.client.pinChat(this.id._serialized);
     }
 
@@ -146,7 +213,7 @@ class Chat extends Base {
      * Unpins this chat
      * @returns {Promise<boolean>} New pin state
      */
-    async unpin() {
+    async unpin(): Promise<boolean> {
         return this.client.unpinChat(this.id._serialized);
     }
 
@@ -155,7 +222,7 @@ class Chat extends Base {
      * @param {?Date} unmuteDate Date when the chat will be unmuted, don't provide a value to mute forever
      * @returns {Promise<{isMuted: boolean, muteExpiration: number}>}
      */
-    async mute(unmuteDate) {
+    async mute(unmuteDate: Date): Promise<{isMuted: boolean, muteExpiration: number}> {
         const result = await this.client.muteChat(this.id._serialized, unmuteDate);
         this.isMuted = result.isMuted;
         this.muteExpiration = result.muteExpiration;
@@ -166,7 +233,7 @@ class Chat extends Base {
      * Unmutes this chat
      * @returns {Promise<{isMuted: boolean, muteExpiration: number}>}
      */
-    async unmute() {
+    async unmute(): Promise<{isMuted: boolean, muteExpiration: number}> {
         const result = await this.client.unmuteChat(this.id._serialized);
         this.isMuted = result.isMuted;
         this.muteExpiration = result.muteExpiration;
@@ -176,7 +243,7 @@ class Chat extends Base {
     /**
      * Mark this chat as unread
      */
-    async markUnread(){
+    async markUnread(): Promise<void> {
         return this.client.markChatUnread(this.id._serialized);
     }
 
@@ -187,7 +254,7 @@ class Chat extends Base {
      * @param {Boolean} [searchOptions.fromMe] Return only messages from the bot number or vise versa. To get all messages, leave the option undefined.
      * @returns {Promise<Array<Message>>}
      */
-    async fetchMessages(searchOptions) {
+    async fetchMessages(searchOptions: MessageSearchOptions): Promise<Message[]> {
         let messages = await this.client.pupPage.evaluate(async (chatId, searchOptions) => {
             const msgFilter = (m) => {
                 if (m.isNotification) {
@@ -225,7 +292,7 @@ class Chat extends Base {
     /**
      * Simulate typing in chat. This will last for 25 seconds.
      */
-    async sendStateTyping() {
+    async sendStateTyping(): Promise<boolean> {
         return this.client.pupPage.evaluate(chatId => {
             window.WWebJS.sendChatstate('typing', chatId);
             return true;
@@ -235,7 +302,7 @@ class Chat extends Base {
     /**
      * Simulate recording audio in chat. This will last for 25 seconds.
      */
-    async sendStateRecording() {
+    async sendStateRecording(): Promise<boolean> {
         return this.client.pupPage.evaluate(chatId => {
             window.WWebJS.sendChatstate('recording', chatId);
             return true;
@@ -245,7 +312,7 @@ class Chat extends Base {
     /**
      * Stops typing or recording in chat immediately.
      */
-    async clearState() {
+    async clearState(): Promise<boolean> {
         return this.client.pupPage.evaluate(chatId => {
             window.WWebJS.sendChatstate('stop', chatId);
             return true;
@@ -256,7 +323,7 @@ class Chat extends Base {
      * Returns the Contact that corresponds to this Chat.
      * @returns {Promise<Contact>}
      */
-    async getContact() {
+    async getContact(): Promise<Contact> {
         return await this.client.getContactById(this.id._serialized);
     }
 
@@ -264,7 +331,7 @@ class Chat extends Base {
      * Returns array of all Labels assigned to this Chat
      * @returns {Promise<Array<Label>>}
      */
-    async getLabels() {
+    async getLabels(): Promise<Label[]> {
         return this.client.getChatLabels(this.id._serialized);
     }
 
@@ -273,7 +340,7 @@ class Chat extends Base {
      * @param {Array<number|string>} labelIds
      * @returns {Promise<void>}
      */
-    async changeLabels(labelIds) {
+    async changeLabels(labelIds: Array<number | string>): Promise<void> {
         return this.client.addOrRemoveLabels(labelIds, [this.id._serialized]);
     }
 
@@ -281,7 +348,7 @@ class Chat extends Base {
      * Sync chat history conversation
      * @return {Promise<boolean>} True if operation completed successfully, false otherwise.
      */
-    async syncHistory() {
+    async syncHistory(): Promise<boolean> {
         return this.client.syncHistory(this.id._serialized);
     }
 }

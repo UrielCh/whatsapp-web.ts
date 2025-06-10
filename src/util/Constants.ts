@@ -28,7 +28,7 @@ export const Status = {
     INITIALIZING: 0,
     AUTHENTICATING: 1,
     READY: 3
-};
+} as const;
 
 /**
  * Events that can be emitted by the client
@@ -65,11 +65,12 @@ export const Events = {
     INCOMING_CALL: 'call',
     REMOTE_SESSION_SAVED: 'remote_session_saved',
     VOTE_UPDATE: 'vote_update'
-};
+} as const;
 
 /**
  * Message types
  * @readonly
+ * typeof MessageTypes[keyof typeof MessageTypes];
  * @enum {string}
  */
 export const MessageTypes = {
@@ -109,12 +110,13 @@ export const MessageTypes = {
     REACTION: 'reaction',
     TEMPLATE_BUTTON_REPLY: 'template_button_reply',
     POLL_CREATION: 'poll_creation',
-};
+} as const;
 
 /**
  * Group notification types
  * @readonly
  * @enum {string}
+ * typeof GroupNotificationTypes[keyof typeof GroupNotificationTypes];
  */
 export const GroupNotificationTypes = {
     ADD: 'add',
@@ -126,22 +128,24 @@ export const GroupNotificationTypes = {
     PICTURE: 'picture',
     ANNOUNCE: 'announce',
     RESTRICT: 'restrict',
-};
+} as const;
 
 /**
  * Chat types
  * @readonly
  * @enum {string}
+ * typeof ChatTypes[keyof typeof ChatTypes];
  */
 export const ChatTypes = {
     SOLO: 'solo',
     GROUP: 'group',
     UNKNOWN: 'unknown'
-};
+} as const;
 
 /**
  * WhatsApp state
  * @readonly
+ * typeof WAState[keyof typeof WAState];
  * @enum {string}
  */
 export const WAState = {
@@ -157,11 +161,12 @@ export const WAState = {
     UNLAUNCHED: 'UNLAUNCHED',
     UNPAIRED: 'UNPAIRED',
     UNPAIRED_IDLE: 'UNPAIRED_IDLE'
-};
+} as const;
 
 /**
  * Message ACK
  * @readonly
+ * typeof MessageAck[keyof typeof MessageAck];
  * @enum {number}
  */
 export const MessageAck = {
@@ -171,4 +176,4 @@ export const MessageAck = {
     ACK_DEVICE: 2,
     ACK_READ: 3,
     ACK_PLAYED: 4,
-};
+} as const;

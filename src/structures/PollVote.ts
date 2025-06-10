@@ -1,25 +1,45 @@
 import Message from './Message.js';
 import Base from './Base.js';
+import Client from '../Client.js';
 
-/**
- * Selected poll option structure
- * @typedef {Object} SelectedPollOption
- * @property {number} id The local selected or deselected option ID
- * @property {string} name The option name
- */
+
+/** Selected poll option structure */
+export interface SelectedPollOption {
+    /** The local selected option ID */
+    id: number;
+    /** The option name */
+    name: string;
+}
+
 
 /**
  * Represents a Poll Vote on WhatsApp
  * @extends {Base}
  */
 class PollVote extends Base {
-    constructor(client, data) {
+    /** The person who voted */
+    voter: string;
+
+    /**
+     * The selected poll option(s)
+     * If it's an empty array, the user hasn't selected any options on the poll,
+     * may occur when they deselected all poll options
+     */
+    selectedOptions: SelectedPollOption[];
+    
+    /** Timestamp the option was selected or deselected at */
+    interractedAtTs: number;
+    
+    /** The poll creation message associated with the poll vote */
+    parentMessage: Message;
+
+    constructor(client: Client, data: any) {
         super(client);
 
         if (data) this._patch(data);
     }
 
-    _patch(data) {
+    _patch(data: any) {
         /**
          * The person who voted
          * @type {string}
