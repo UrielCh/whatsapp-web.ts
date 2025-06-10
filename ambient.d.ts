@@ -33,6 +33,18 @@ declare global {
       BlockContact?: { blockContact?: Function, unblockContact?: Function };
       StatusUtils?: { getStatus?: Function };
       AddonReactionTable?: any;
+      MembershipRequestUtils?: {
+        sendMembershipRequestsActionRPC: (args: any) => Promise<any> | any;
+      };
+      WidToJid?: {
+        widToUserJid: (wid: any) => string;
+        widToGroupJid: (wid: any) => string;
+      };
+      JidToWid?: {
+        userJidToUserWid: (jid: string) => { _serialized: string };
+      };
+      GroupQueryAndUpdate?: (args: { id: string }) => Promise<any> | any;
+
       HistorySync?: {
         sendPeerDataOperationRequest: (op: number, data: {chatId: string}) => Promise<any> | any;
       };
