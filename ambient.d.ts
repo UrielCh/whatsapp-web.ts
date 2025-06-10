@@ -77,15 +77,17 @@ declare global {
         action: 'Approve' | 'Reject',
         requesterIds?: string[] | null,
         sleep?: [number, number]
-      ) => Promise<any>;
+      ) => Promise<any>; // Replace `any` with the actual return type if known
       getLabels?: () => any[];
       getLabelModel?: (label: any) => any; // {hexColor: string, ...}
       getLabel?: (labelId: string) => any;
       
-      getOrderDetail?: (orderId: string, token: string, chatId: string) => Promise<any> | any;
-      getProductMetadata?: (productId: string) => Promise<any> | any;
-      rejectCall?: (peerJid: string, id: string) => Promise<void> | void;
+      getOrderDetail?: (orderId: string, token: string, chatId: string) => Promise<any>;
+      getProductMetadata?: (productId: string) => Promise<any>;
+      rejectCall?: (peerJid: string, id: string) => Promise<void>;
+
       arrayBufferToBase64?: (arrayBuffer: ArrayBuffer) => string;
+
       arrayBufferToBase64Async?: (arrayBuffer: ArrayBuffer) => Promise<string>;
       getFileHash?: (data: { arrayBuffer: () => Promise<ArrayBuffer> }) => Promise<string>;
       generateHash?: (length: number) => Promise<string>;
@@ -94,8 +96,7 @@ declare global {
       sendDeleteChat?: (chatId: string) => Promise<boolean>;
       sendChatstate?: (state: 'typing' | 'recording' | 'stop', chatId: string) => Promise<boolean>;
 
-      getChatLabels?: (chatId: string) => Promise<any[]> | any[];
-      getChatLabels?: (chatId: string) => any;
+      getChatLabels?: (chatId: string) => Promise<any | any[]>;
       
       getMessageModel?: (msg: any) => any;
       getPollVoteModel?: (vote: any) => any;
@@ -124,9 +125,6 @@ declare global {
         opts: { forceSticker?: boolean; forceGif?: boolean; forceVoice?: boolean; forceDocument?: boolean; forceMediaHd?: boolean; sendToChannel?: boolean }
       ) => Promise<any>;
 
-      getOrderDetail?: (orderId: string, token: string, chatId: string) => any;
-      rejectCall?: (peerJid: string, id: string) => any;
-      // ...add more as needed
     };
     AuthStore?: {
       AppState?: { state?: string, on?: Function, off?: Function };
@@ -160,16 +158,6 @@ declare global {
     onChatUnreadCountEvent?: (chat: any) => void;
     onPollVoteEvent?: (pollVoteModel: any) => void;
     originalError?: any;
-  
-    WWebJS: {
-      membershipRequestAction: (
-        groupId: string,
-        action: 'Approve' | 'Reject',
-        requesterIds?: string[] | null,
-        sleep?: [number, number]
-      ) => Promise<any>; // Replace `any` with the actual return type if known
-    };
-
   }
 }
 export {};
