@@ -1,10 +1,12 @@
-import path from 'path';
-import Crypto from 'crypto';
-import { tmpdir } from 'os';
+import path from 'node:path';
+import Crypto from 'node:crypto';
+import { tmpdir } from 'node:os';
+import { promises as fs } from 'node:fs';
+import { Readable } from 'node:stream';
+
 import ffmpeg from 'fluent-ffmpeg';
 import webp from 'node-webpmux';
-import { promises as fs } from 'fs';
-import { Readable } from 'stream';
+
 const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 
 /**

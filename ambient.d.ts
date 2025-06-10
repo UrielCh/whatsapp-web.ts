@@ -1,6 +1,9 @@
 // global.d.ts or src/types/whatsapp.d.ts
 declare global {
   interface Window {
+    /**
+     * Injected by src/util/Injected/Store.js
+     */
     Store: {
       WidFactory: {
         createWid: (chatId: string) => any;
@@ -70,7 +73,20 @@ declare global {
         saveContactAction?: (phoneNumber: string, arg2: any, firstName: string, lastName: string, syncToAddressbook: boolean) => Promise<any>;
       };
       // ...add more as needed
+      MediaPrep?: {
+        prepRawMedia: (opaqueData: any, mediaParams: any) => { waitForPrep: () => Promise<any> };
+      };
+      MediaObject?: {
+        getOrCreateMediaObject: (filehash: string) => any;
+      };
+      MediaTypes?: {
+        msgToMediaType: (opts: { type: string; isGif?: boolean; isNewsletter?: boolean }) => any;
+      };
+
     };
+    /**
+     * Injected by src/util/Injected/Utils.js
+     */
     WWebJS: {
       membershipRequestAction: (
         groupId: string,

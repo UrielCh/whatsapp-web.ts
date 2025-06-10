@@ -1,4 +1,4 @@
-import EventEmitter from 'events';
+import EventEmitter from 'node:events';
 import puppeteer from 'puppeteer';
 import { moduleRaid } from './util/moduleraid.js';
 

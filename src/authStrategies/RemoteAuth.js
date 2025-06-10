@@ -3,7 +3,7 @@ import fs from 'fs-extra';
 import unzipper from 'unzipper';
 import archiver from 'archiver';
 
-import path from 'path';
+import path from 'node:path';
 import { Events } from './../util/Constants.js';
 import BaseAuthStrategy from './BaseAuthStrategy.js';
 
@@ -19,6 +19,8 @@ import BaseAuthStrategy from './BaseAuthStrategy.js';
 class RemoteAuth extends BaseAuthStrategy {
     constructor({ clientId, dataPath, store, backupSyncIntervalMs, rmMaxRetries } = {}) {
         super();
+
+
         if (!fs && !unzipper && !archiver) throw new Error('Optional Dependencies [fs-extra, unzipper, archiver] are required to use RemoteAuth. Make sure to run npm install correctly and remove the --no-optional flag');
 
         const idRegex = /^[-_\w]+$/i;
