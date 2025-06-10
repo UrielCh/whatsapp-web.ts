@@ -1,8 +1,8 @@
-import chai from 'chai';
+import * as chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import sinon from 'sinon';
 
-import helper from './helper.js';
+import * as helper from './helper.js';
 import Chat from '../src/structures/Chat.js';
 import Contact from '../src/structures/Contact.js';
 import Message from '../src/structures/Message.js';
@@ -161,7 +161,7 @@ describe('Client', function() {
                     'WASecretBundle', 
                     'WAToken1', 
                     'WAToken2'
-                ]);
+                ] as any as string); // bypasse bad mocha typing
             }
             
             expect(nbReady).to.equal(1);

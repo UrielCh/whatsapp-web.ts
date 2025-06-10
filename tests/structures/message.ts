@@ -1,13 +1,14 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import helper from '../helper.js';
+import * as helper from '../helper.js';
 import { Contact, Chat } from '../../src/structures/index.js';
+import { Client } from '../../index.js';
 
 const remoteId = helper.remoteId;
 
 describe('Message', function () {
-    let client;
+    let client: Client;
     let chat;
     let message;
 

@@ -12,7 +12,11 @@ import { URL } from 'node:url';
  * @param {?number} filesize Document file size in bytes. Value can be null
  */
 class MessageMedia {
-    constructor(mimetype, data, filename, filesize) {
+    mimetype: string;
+    data: string;
+    filename?: string;
+    filesize?: number;
+    constructor(mimetype: string, data: string, filename?: string, filesize?: number) {
         /**
          * MIME type of the attachment
          * @type {string}
@@ -62,7 +66,14 @@ class MessageMedia {
      * @param {number} [options.reqOptions.size=0]
      * @returns {Promise<MessageMedia>}
      */
-    static async fromUrl(url, options = {}) {
+    static async fromUrl(url, options: {
+        unsafeMime?: boolean;
+        filename?: string;
+        client?: any;// Client;
+        reqOptions?: {
+            size?: number;
+        };
+    } = {}) {
         const pUrl = new URL(url);
         let mimetype = mime.getType(pUrl.pathname);
 

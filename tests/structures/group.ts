@@ -1,10 +1,11 @@
 import { expect } from 'chai';
-import helper from '../helper.js';
+import * as helper from '../helper.js';
+import { Client } from '../../index.js';
 
 const remoteId = helper.remoteId;
 
 describe('Group', function() {
-    let client;
+    let client: Client;
     let group;
 
     before(async function() {
