@@ -26,7 +26,26 @@ import { ContactId } from './structures/Contact.js';
 import { TransferChannelOwnershipOptions } from './structures/Channel.js';
 import { BatteryInfo } from './structures/ClientInfo.js';
 import { hideModuleRaid } from './payloads.js';
+import fs from 'node:fs/promises';
 
+class Logger {
+    filename: string;
+    lines: number;
+
+    constructor(filename: string) {
+        this.filename = filename;
+        this.lines = 0;
+    }
+
+    async log(message: string) {
+        if (this.lines === 0)
+            await fs.appendFile(this.filename, "---------------- START SESSION ----------------\n");
+        await fs.appendFile(this.filename, '\n' + message + '\n');
+        this.lines++;
+    }
+}
+
+const logger = new Logger("./log.txt");
 
 /** An object that handles the result for createGroup method */
 export interface CreateChannelResult {
@@ -421,9 +440,8 @@ class Client extends EventEmitter implements ClientEventsInterface {
         const asStr = this.serializeFunctionWithArgs(pageFunction, args);
         try {
             // check evaluateOnNewDocument
-            const p = this.pupPage;
-            const result = await p.evaluate(asStr);
-            console.log("--" + asStr.substring(0, 200));
+            await logger.log(asStr);
+            const result = await this.pupPage.evaluate(asStr);
             return result as any;
         } catch (error) {
             debugger;
