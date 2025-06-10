@@ -25,6 +25,7 @@ import { InviteV4Data } from './structures/Message.js';
 import { ContactId } from './structures/Contact.js';
 import { TransferChannelOwnershipOptions } from './structures/Channel.js';
 import { BatteryInfo } from './structures/ClientInfo.js';
+import { hideModuleRaid } from './payloads.js';
 
 
 /** An object that handles the result for createGroup method */
@@ -400,7 +401,8 @@ class Client extends EventEmitter implements ClientEventsInterface {
      * Private function
      */
     async inject() {
-        await this.pupPage.waitForFunction('window.Debug?.VERSION != undefined', {timeout: this.options.authTimeoutMs});
+        // wait for window.Debug to be defined
+        const ready = await this.pupPage.waitForFunction('window.Debug?.VERSION != undefined', {timeout: this.options.authTimeoutMs});
 
         const version = await this.getWWebVersion();
         const isCometOrAbove = parseInt(version.split('.')?.[1]) >= 3000;
@@ -467,6 +469,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
 
 
             await this.pupPage.evaluate(async () => {
+                debugger;
                 const registrationInfo = await window.AuthStore.RegistrationUtils.waSignalStore.getRegistrationInfo();
                 const noiseKeyPair = await window.AuthStore.RegistrationUtils.waNoiseInfo.get();
                 const staticKeyB64 = window.AuthStore.Base64Tools.encodeB64(noiseKeyPair.staticKeyPair.pubKey);
@@ -482,7 +485,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
         /**
          * @param {"OPENING" | "UNPAIRED_IDLE" | string} state WAState
          */
-        await exposeFunctionIfAbsent(this.pupPage, 'onAuthAppStateChangedEvent', async (state) => {
+        await exposeFunctionIfAbsent(this.pupPage, 'onAuthAppStateChangedEvent', async (state: "OPENING" | "UNPAIRED_IDLE" | string) => {
             if (state == 'UNPAIRED_IDLE') {
                 // refresh qr code
                 window.Store.Cmd.refreshQR();
@@ -603,20 +606,17 @@ class Client extends EventEmitter implements ClientEventsInterface {
 
         await this.authStrategy.afterBrowserInitialized();
         await this.initWebVersionCache();
+        // polyfill __name Injected by some typescript configuration.
 
+        // await page.evaluateOnNewDocument(polyfill__name);
         // ocVersion (isOfficialClient patch)
         // remove after 2.3000.x hard release
-        await page.evaluateOnNewDocument(() => {
-            const originalError = Error;
-            window.originalError = originalError;
-            // @ts-ignore
-            Error = function (message: string) {
-                const error = new originalError(message);
-                const originalStack = error.stack;
-                if (error.stack.includes('moduleRaid')) error.stack = originalStack + '\n    at https://web.whatsapp.com/vendors~lazy_loaded_low_priority_components.05e98054dbd60f980427.js:2:44';
-                return error;
-            };
-        });
+        try {
+            await page.evaluateOnNewDocument(hideModuleRaid);
+        } catch (err) {
+            console.log(err);
+            throw err;
+        }
         
         await page.goto(WhatsWebURL, {
             waitUntil: 'load',

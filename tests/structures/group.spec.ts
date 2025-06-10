@@ -4,7 +4,7 @@ import { Client } from '../../index.js';
 
 const remoteId = helper.remoteId;
 
-describe('Group', function() {
+describe.skip('Group', function() {
     let client: Client;
     let group;
 

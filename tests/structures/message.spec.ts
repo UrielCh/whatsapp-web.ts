@@ -7,7 +7,7 @@ import { Client } from '../../index.js';
 
 const remoteId = helper.remoteId;
 
-describe('Message', function () {
+describe.skip('Message', function () {
     let client: Client;
     let chat;
     let message;

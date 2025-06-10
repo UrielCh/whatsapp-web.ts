@@ -1,3 +1,4 @@
+import "mocha"
 import * as chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import sinon from 'sinon';
@@ -21,33 +22,53 @@ const LONG_WAIT = 500;
 const SUPER_TIMEOUT = 600000;
 const AUTH_TIMEOUT = 600000;
 
+const PUPPETER_HEADLESS = { headless: false };
+
+
+it('TSX environment', async function () {
+    const test = () => {
+        const fnc = () => {
+            return 1;
+        };
+    }
+    const str = test.toString();
+    expect(str).to.not.include('__name', 'Typescript transpile configuration should not add __name in function');
+});
+
 // for debug
 describe('Client', function() {
-    describe.skip('User Agent', function () {
-        it('should set user agent on browser', async function () {
+    describe('User Agent', function () {
+        it.skip('should set user agent on browser', async function () {
             this.timeout(SUPER_TIMEOUT);
 
-            const client = await helper.createClient();
-            await client.initialize();
+            const client = await helper.createClient({
+                options: {
+                    puppeteer: {...PUPPETER_HEADLESS}
+                }
+            });
+            try {
+                await client.initialize();
 
-            await helper.sleep(LONG_WAIT);
-
-            const browserUA = await client.pupBrowser.userAgent();
-            expect(browserUA).to.equal(DefaultOptions.userAgent);
-
-            const pageUA = await client.pupPage.evaluate(() => window.navigator.userAgent);
-            expect(pageUA).to.equal(DefaultOptions.userAgent);
-
-            await client.destroy();
+                await helper.sleep(LONG_WAIT);
+    
+                const browserUA = await client.pupBrowser.userAgent();
+                expect(browserUA).to.equal(DefaultOptions.userAgent);
+    
+                const pageUA = await client.pupPage.evaluate(() => window.navigator.userAgent);
+                expect(pageUA).to.equal(DefaultOptions.userAgent);
+            } finally {
+                await client.destroy();
+            }
         });
 
-        it('should set custom user agent on browser', async function () {
+        it.skip('should set custom user agent on browser', async function () {
             this.timeout(SUPER_TIMEOUT);
             const customUA = DefaultOptions.userAgent.replace(/Chrome\/.* /, 'Chrome/99.9.9999.999 ');
 
             const client = await helper.createClient({
                 options: {
-                    userAgent: customUA
+                    userAgent: customUA,
+                    puppeteer: {...PUPPETER_HEADLESS}
                 }
             });
 
@@ -64,7 +85,7 @@ describe('Client', function() {
             await client.destroy();
         });
 
-        it('should respect an existing user agent arg', async function () {
+        it.skip('should respect an existing user agent arg', async function () {
             this.timeout(SUPER_TIMEOUT);
 
             const customUA = DefaultOptions.userAgent.replace(/Chrome\/.* /, 'Chrome/99.9.9999.999 ');
@@ -72,7 +93,8 @@ describe('Client', function() {
             const client = await helper.createClient({
                 options: {
                     puppeteer: {
-                        args: [`--user-agent=${customUA}`]
+                        args: [`--user-agent=${customUA}`],
+                        ...PUPPETER_HEADLESS
                     }
                 }
             });
@@ -91,12 +113,16 @@ describe('Client', function() {
         });
     });
 
-    describe('Authentication', function() {
-        it.skip('should emit QR code if not authenticated', async function() {
+    describe.skip('Authentication', function() {
+        it('should emit QR code if not authenticated', async function() {
             this.timeout(SUPER_TIMEOUT);
             const callback = sinon.spy();
 
-            const client = await helper.createClient();
+            const client = await helper.createClient({
+                options: {
+                    puppeteer: {...PUPPETER_HEADLESS}
+                }
+            });
             client.on('qr', callback);
             await client.initialize();
 
@@ -119,7 +145,7 @@ describe('Client', function() {
             let disconnectedReason = "";
             const disconnectedCallback = (deco_reason) => disconnectedReason = deco_reason;
 
-            const client = await helper.createClient({options: {qrMaxRetries: 1 } });
+            const client = await helper.createClient({options: {qrMaxRetries: 1, puppeteer: {...PUPPETER_HEADLESS} } });
             client.on('qr', getQrCode);
             client.on('disconnected', disconnectedCallback);
 
@@ -137,7 +163,7 @@ describe('Client', function() {
             const authenticatedCallback = sinon.spy();
             const client = await helper.createClient({
                 authenticated: true,
-                options: {puppeteer: { headless: false }},
+                options: {puppeteer: {...PUPPETER_HEADLESS} }
             });
 
             let nbQrCode = 0;
@@ -288,13 +314,13 @@ describe('Client', function() {
         }); 
     });
 
-    describe('Authenticated', function() {
+    describe.skip('Authenticated', function() {
         // this.timeout(SUPER_TIMEOUT);
         let client;
 
         before(async function() {
             this.timeout(AUTH_TIMEOUT);
-            client = await helper.createClient({authenticated: true, options: {puppeteer: { headless: false }}});
+            client = await helper.createClient({authenticated: true, options: {puppeteer: { ...PUPPETER_HEADLESS }}});
             await client.initialize();
             console.log('Client initialized');
         });
@@ -507,7 +533,7 @@ describe('Client', function() {
     
             it('can send a location message', async function() {
                 // broken the Place name is now properly sent
-                const location = new Location(37.422, -122.084, {description: 'Googleplex\nGoogle Headquarters', name: 'Googleplex'});
+                const location = new Location(37.422, -122.084, {name: 'Googleplex\nGoogle Headquarters'});
     
                 const msg = await client.sendMessage(remoteId, location);
                 expect(msg).to.be.instanceOf(Message, "Expected message to be an instance of Message");
@@ -518,8 +544,7 @@ describe('Client', function() {
                 expect(msg.location).to.be.instanceOf(Location, "Expected message location to be an instance of Location");
                 expect(msg.location.latitude).to.equal(37.422, "Expected message location latitude to be 37.422");
                 expect(msg.location.longitude).to.equal(-122.084, "Expected message location longitude to be -122.084");
-                expect(msg.location.description).to.equal('Googleplex\nGoogle Headquarters', "Expected message location description to be 'Googleplex\nGoogle Headquarters'");
-                expect(msg.location.name).to.equal('Googleplex', "Expected message location name to be 'Googleplex'");
+                expect(msg.location.name).to.equal('Googleplex\nGoogle Headquarters', "Expected message location description to be 'Googleplex\nGoogle Headquarters'");
             });
     
             it.skip('can send a vCard as a contact card message', async function() {

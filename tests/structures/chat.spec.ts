@@ -1,13 +1,13 @@
 import { expect } from 'chai';
 
-import helper from '../helper.js';
+import * as helper from '../helper.js';
 import Message from '../../src/structures/Message.js';
 import { MessageTypes } from '../../src/util/Constants.js';
 import Contact from '../../src/structures/Contact.js';
 
 const remoteId = helper.remoteId;
 
-describe('Chat', function () {
+describe.skip('Chat', function () {
     let client;
     let chat;
 

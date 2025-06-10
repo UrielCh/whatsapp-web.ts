@@ -3,12 +3,16 @@
     /* Visit https://aka.ms/tsconfig to read more about this file */
 
     /* Language and Environment */
-    "target": "es2022", /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
+    "target": "ES2020",
+    "module": "ES2020",
+    "types": ["mocha", "chai", "node"],
+    "moduleResolution": "node",
 
-    /* Modules */
-    "module": "NodeNext", /* Specify what module code is generated. */
-    "moduleResolution": "NodeNext", /* Specify how TypeScript looks up a file from a given module specifier. */
-    "importHelpers": true, /* Allow importing helper functions from tslib once per project, instead of including them per-file. */
+    "noEmitHelpers": true, // needed for puppeter;
+    "importHelpers": false, // needed for puppeter;
+    "removeComments": true, // improve puppeter code readability
+    "lib": ["ESNext", "DOM"],
+
     "allowSyntheticDefaultImports": true, /* Allow 'import x from y' when a module doesn't have a default export. */
     "esModuleInterop": true, /* Emit additional JavaScript to ease support for importing CommonJS modules. This enables 'allowSyntheticDefaultImports' for type compatibility. */
     "forceConsistentCasingInFileNames": true, /* Ensure that casing is correct in imports. */
@@ -35,6 +39,9 @@
     "allowUnreachableCode": false, /* Disable error reporting for unreachable code. */
     "resolveJsonModule": true,
     /* Completeness */
-    "skipLibCheck": true /* Skip type checking all .d.ts files. */
-  }
+    "skipLibCheck": true, /* Skip type checking all .d.ts files. */
+  "outDir": "./dist"
+  },
+  "include": ["ambient.d.ts", "src/**/*.ts", "tests/**/*.ts"],
+  "exclude": ["node_modules"]
 }
