@@ -33,6 +33,22 @@ declare global {
       BlockContact?: { blockContact?: Function, unblockContact?: Function };
       StatusUtils?: { getStatus?: Function };
       AddonReactionTable?: any;
+      ContactMethods?: {
+        getIsMe: (contact: any) => boolean;
+        getIsUser: (contact: any) => boolean;
+        getIsGroup: (contact: any) => boolean;
+        getIsWAContact: (contact: any) => boolean;
+        getIsMyContact: (contact: any) => boolean;
+        getUserid: (contact: any) => string;
+        getIsEnterprise: (contact: any) => boolean;
+        getVerifiedName: (contact: any) => string;
+        getVerifiedLevel: (contact: any) => string | number;
+        getStatusMute: (contact: any) => boolean;
+        getName: (contact: any) => string;
+        getShortName: (contact: any) => string;
+        getPushname: (contact: any) => string;
+      };
+
       MembershipRequestUtils?: {
         sendMembershipRequestsActionRPC: (args: any) => Promise<any> | any;
       };
@@ -65,21 +81,48 @@ declare global {
       getLabels?: () => any[];
       getLabelModel?: (label: any) => any; // {hexColor: string, ...}
       getLabel?: (labelId: string) => any;
-      getChatLabels?: (chatId: string) => Promise<any[]> | any[];
+      
       getOrderDetail?: (orderId: string, token: string, chatId: string) => Promise<any> | any;
       getProductMetadata?: (productId: string) => Promise<any> | any;
       rejectCall?: (peerJid: string, id: string) => Promise<void> | void;
+      arrayBufferToBase64?: (arrayBuffer: ArrayBuffer) => string;
+      arrayBufferToBase64Async?: (arrayBuffer: ArrayBuffer) => Promise<string>;
+      getFileHash?: (data: { arrayBuffer: () => Promise<ArrayBuffer> }) => Promise<string>;
+      generateHash?: (length: number) => Promise<string>;
+      generateWaveform?: (audioFile: { arrayBuffer: () => Promise<ArrayBuffer> }) => Promise<Uint8Array | undefined>;
+      sendClearChat?: (chatId: string) => Promise<boolean>;
+      sendDeleteChat?: (chatId: string) => Promise<boolean>;
+      sendChatstate?: (state: 'typing' | 'recording' | 'stop', chatId: string) => Promise<boolean>;
 
+      getChatLabels?: (chatId: string) => Promise<any[]> | any[];
       getChatLabels?: (chatId: string) => any;
+      
       getMessageModel?: (msg: any) => any;
       getPollVoteModel?: (vote: any) => any;
       getChatModel?: (chat: any) => any;
+      getContactModel?: (contact: any) => any;
+      getChat?: (chatId: string, opts?: { getAsModel?: boolean }) => Promise<any>;
+      getChannelMetadata?: (inviteCode: string) => Promise<any>;
+      getChats?: () => Promise<any[]>;
+      getChannels?: () => Promise<any[]>;
+
       forwardMessage?: (chatId: string, msgId: string) => any;
+      sendMessage?: (
+        chat: any,
+        content: any,
+        options?: { [key: string]: any }
+      ) => Promise<any>;
+
       editMessage?: (msg: any, message: string, options?: any) => any;
       cropAndResizeImage?: (
         media: { mimetype: string; data: string; [key: string]: any },
         options?: { size?: number; mimetype?: string; quality?: number; asDataUrl?: boolean; [key: string]: any }
       ) => Promise<string | { mimetype: string; data: string; [key: string]: any }>;
+      toStickerData?: (mediaInfo: { mimetype: string; data: string; [key: string]: any }) => Promise<{ mimetype: string; data: string }>;
+      processMediaData?: (
+        mediaInfo: { mimetype: string; data: string; [key: string]: any },
+        opts: { forceSticker?: boolean; forceGif?: boolean; forceVoice?: boolean; forceDocument?: boolean; forceMediaHd?: boolean; sendToChannel?: boolean }
+      ) => Promise<any>;
 
       getOrderDetail?: (orderId: string, token: string, chatId: string) => any;
       rejectCall?: (peerJid: string, id: string) => any;
