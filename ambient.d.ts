@@ -62,13 +62,25 @@ declare global {
         requesterIds?: string[] | null,
         sleep?: [number, number]
       ) => Promise<any>;
-      getLabels?: () => any;
+      getLabels?: () => any[];
+      getLabelModel?: (label: any) => any; // {hexColor: string, ...}
+      getLabel?: (labelId: string) => any;
+      getChatLabels?: (chatId: string) => Promise<any[]> | any[];
+      getOrderDetail?: (orderId: string, token: string, chatId: string) => Promise<any> | any;
+      getProductMetadata?: (productId: string) => Promise<any> | any;
+      rejectCall?: (peerJid: string, id: string) => Promise<void> | void;
+
       getChatLabels?: (chatId: string) => any;
       getMessageModel?: (msg: any) => any;
       getPollVoteModel?: (vote: any) => any;
       getChatModel?: (chat: any) => any;
       forwardMessage?: (chatId: string, msgId: string) => any;
       editMessage?: (msg: any, message: string, options?: any) => any;
+      cropAndResizeImage?: (
+        media: { mimetype: string; data: string; [key: string]: any },
+        options?: { size?: number; mimetype?: string; quality?: number; asDataUrl?: boolean; [key: string]: any }
+      ) => Promise<string | { mimetype: string; data: string; [key: string]: any }>;
+
       getOrderDetail?: (orderId: string, token: string, chatId: string) => any;
       rejectCall?: (peerJid: string, id: string) => any;
       // ...add more as needed
