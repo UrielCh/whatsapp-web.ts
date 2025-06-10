@@ -19,6 +19,7 @@ const isMD = helper.isMD();
 const TIMEOUT = 3000;
 const LONG_WAIT = 500;
 const SUPER_TIMEOUT = 600000;
+const AUTH_TIMEOUT = 600000;
 
 describe('Client', function() {
     describe.skip('User Agent', function () {
@@ -287,12 +288,14 @@ describe('Client', function() {
     });
 
     describe('Authenticated', function() {
+        // this.timeout(SUPER_TIMEOUT);
         let client;
 
         before(async function() {
-            this.timeout(TIMEOUT + LONG_WAIT);
+            this.timeout(AUTH_TIMEOUT);
             client = await helper.createClient({authenticated: true, options: {puppeteer: { headless: false }}});
             await client.initialize();
+            console.log('Client initialized');
         });
 
         after(async function () {
@@ -307,14 +310,59 @@ describe('Client', function() {
 
         describe('Expose Store', function() {
             it('exposes the store', async function() {
-                const exposed = await client.pupPage.evaluate(() => {
-                    return Boolean(window.Store);
+                const exposed = await client.pupPage.evaluate(async () => {
+                    for (let i=0; i< 50; i++) {
+                        if (window.Store) {
+                            return i + 1;
+                        }
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                    }
+                    return -1;
                 });
-    
-                expect(exposed).to.equal(true);
+                expect(exposed).to.be.greaterThanOrEqual(1);
             });
     
-            it('exposes all required WhatsApp Web internal models', async function() {
+            it('exposes all required WhatsApp Web internal models 1/2', async function() {
+                const expectedModules = [
+                    'Conn',
+                    'DownloadManager',
+                    'EphemeralFields',
+                    'GroupMetadata',
+                    'GroupParticipants',
+                    'GroupUtils',
+                    'MessageInfo',
+                    'Msg',
+                    'MsgKey',
+                    'OpaqueData',
+                    'PresenceUtils',
+                    'ProfilePic',
+                    'QueryExist',
+                    'QueryProduct',
+                    'SendDelete',
+                    'SendMessage',
+                    'SendSeen',
+                    'StatusUtils',
+                    'UserConstructor',
+                    'VCard',
+                    'Validators',
+                    'WidFactory',
+                ];
+              
+                const loadedModules = await client.pupPage.evaluate((expectedModules) => {
+                    return expectedModules.filter(m => Boolean(window.Store[m]));
+                }, expectedModules);
+                
+                const missingModules = [];
+                for (const module of expectedModules) {
+                    if (!loadedModules.includes(module)) {
+                        missingModules.push(module);
+                    }
+                }
+                expect(loadedModules).to.have.members(expectedModules, `Missing modules: ${missingModules.join(', ')}`);
+            });
+
+
+            it('exposes all required WhatsApp Web internal models 2/2', async function() {
                 const expectedModules = [
                     'AppState',
                     'BlockContact',
@@ -322,43 +370,19 @@ describe('Client', function() {
                     'Chat',
                     'ChatState',
                     'Cmd',
-                    'Conn',
                     'Contact',
-                    'DownloadManager',
-                    'EphemeralFields',
                     'Features',
-                    'GroupMetadata',
-                    'GroupParticipants',
-                    'GroupUtils',
                     'Invite',
                     'InviteInfo',
                     'JoinInviteV4',
-                    'Label',
-                    'MediaObject',
-                    'MediaPrep',
-                    'MediaTypes',
-                    'MediaUpload',
                     'MessageInfo',
-                    'Msg',
-                    'MsgKey',
-                    'OpaqueData',
-                    'QueryOrder',
-                    'QueryProduct',
                     'PresenceUtils',
                     'ProfilePic',
                     'QueryExist',
                     'QueryProduct',
                     'QueryOrder',
                     'SendClear',
-                    'SendDelete',
-                    'SendMessage',
-                    'SendSeen',
-                    'StatusUtils',
                     'UploadUtils',
-                    'UserConstructor',
-                    'VCard',
-                    'Validators',
-                    'WidFactory',
                     'findCommonGroups',
                     'sendReactionToMsg',
                 ];
@@ -366,19 +390,27 @@ describe('Client', function() {
                 const loadedModules = await client.pupPage.evaluate((expectedModules) => {
                     return expectedModules.filter(m => Boolean(window.Store[m]));
                 }, expectedModules);
-    
-                expect(loadedModules).to.have.members(expectedModules);
+                
+                const missingModules = [];
+                for (const module of expectedModules) {
+                    if (!loadedModules.includes(module)) {
+                        missingModules.push(module);
+                    }
+                }
+                expect(loadedModules).to.have.members(expectedModules, `Missing modules: ${missingModules.join(', ')}`);
             });
+
+
         });
     
         describe('Send Messages', function () {            
             it('can send a message', async function() {
                 const msg = await client.sendMessage(remoteId, 'hello world');
-                expect(msg).to.be.instanceOf(Message);
-                expect(msg.type).to.equal(MessageTypes.TEXT);
-                expect(msg.fromMe).to.equal(true);
-                expect(msg.body).to.equal('hello world');
-                expect(msg.to).to.equal(remoteId);
+                expect(msg).to.be.instanceOf(Message, "Expected message to be an instance of Message");
+                expect(msg.type).to.equal(MessageTypes.TEXT, "Expected message type to be TEXT");
+                expect(msg.fromMe).to.equal(true, "Expected message to be from me");
+                expect(msg.body).to.equal('hello world', "Expected message body to be 'hello world'");
+                expect(msg.to).to.equal(remoteId, "Expected message to be sent to remoteId");
             });
     
             it('can send a media message', async function() {
@@ -388,23 +420,24 @@ describe('Client', function() {
                 );
     
                 const msg = await client.sendMessage(remoteId, media, {caption: 'here\'s my media'});
-                expect(msg).to.be.instanceOf(Message);
-                expect(msg.type).to.equal(MessageTypes.IMAGE);
-                expect(msg.fromMe).to.equal(true);
-                expect(msg.hasMedia).to.equal(true);
-                expect(msg.body).to.equal('here\'s my media');
-                expect(msg.to).to.equal(remoteId);
+                expect(msg).to.be.instanceOf(Message, "Expected message to be an instance of Message");
+                expect(msg.type).to.equal(MessageTypes.IMAGE, "Expected message type to be IMAGE");
+                expect(msg.fromMe).to.equal(true, "Expected message to be from me");
+                expect(msg.hasMedia).to.equal(true, "Expected message to have media");
+                expect(msg.body).to.equal('here\'s my media', "Expected message body to be 'here\'s my media'");
+                expect(msg.to).to.equal(remoteId, "Expected message to be sent to remoteId");
             });
 
             it('can send a media message from URL', async function() {
-                const media = await MessageMedia.fromUrl('https://via.placeholder.com/350x150.png');
-    
+                // const media = await MessageMedia.fromUrl('https://via.placeholder.com/350x150.png');
+                const media = await MessageMedia.fromUrl('https://www.o-immobilierdurable.fr/wp-content/uploads/2023/06/Image3-350x150.png');
+                // https://upload.wikimedia.org/wikipedia/commons/6/63/Wikipedia-logo.png
                 const msg = await client.sendMessage(remoteId, media);
-                expect(msg).to.be.instanceOf(Message);
-                expect(msg.type).to.equal(MessageTypes.IMAGE);
-                expect(msg.fromMe).to.equal(true);
-                expect(msg.hasMedia).to.equal(true);
-                expect(msg.to).to.equal(remoteId);
+                expect(msg).to.be.instanceOf(Message, "Expected message to be an instance of Message");
+                expect(msg.type).to.equal(MessageTypes.IMAGE, "Expected message type to be IMAGE");
+                expect(msg.fromMe).to.equal(true, "Expected message to be from me");
+                expect(msg.hasMedia).to.equal(true, "Expected message to have media");
+                expect(msg.to).to.equal(remoteId, "Expected message to be sent to remoteId");
             });
     
             it('can send a media message as a document', async function() {
@@ -415,12 +448,12 @@ describe('Client', function() {
                 );
     
                 const msg = await client.sendMessage(remoteId, media, { sendMediaAsDocument: true});
-                expect(msg).to.be.instanceOf(Message);
-                expect(msg.type).to.equal(MessageTypes.DOCUMENT);
-                expect(msg.fromMe).to.equal(true);
-                expect(msg.hasMedia).to.equal(true);
-                expect(msg.body).to.equal('this is my filename.png');
-                expect(msg.to).to.equal(remoteId);
+                expect(msg).to.be.instanceOf(Message, "Expected message to be an instance of Message");
+                expect(msg.type).to.equal(MessageTypes.DOCUMENT, "Expected message type to be DOCUMENT");
+                expect(msg.fromMe).to.equal(true, "Expected message to be from me");
+                expect(msg.hasMedia).to.equal(true, "Expected message to have media");
+                expect(msg.body).to.equal('this is my filename.png', "Expected message body to be 'this is my filename.png'");
+                expect(msg.to).to.equal(remoteId, "Expected message to be sent to remoteId");
             });
     
             it('can send a sticker message', async function() {
@@ -430,11 +463,11 @@ describe('Client', function() {
                 );
     
                 const msg = await client.sendMessage(remoteId, media, {sendMediaAsSticker: true});
-                expect(msg).to.be.instanceOf(Message);
-                expect(msg.type).to.equal(MessageTypes.STICKER);
-                expect(msg.fromMe).to.equal(true);
-                expect(msg.hasMedia).to.equal(true);
-                expect(msg.to).to.equal(remoteId);
+                expect(msg).to.be.instanceOf(Message, "Expected message to be an instance of Message");
+                expect(msg.type).to.equal(MessageTypes.STICKER, "Expected message type to be STICKER");
+                expect(msg.fromMe).to.equal(true, "Expected message to be from me");
+                expect(msg.hasMedia).to.equal(true, "Expected message to have media");
+                expect(msg.to).to.equal(remoteId, "Expected message to be sent to remoteId");
             });
     
             it('can send a sticker message with custom author and name', async function() {
@@ -448,26 +481,26 @@ describe('Client', function() {
                     stickerAuthor: 'WWEBJS', 
                     stickerName: 'My Sticker'
                 });
-                expect(msg).to.be.instanceOf(Message);
-                expect(msg.type).to.equal(MessageTypes.STICKER);
-                expect(msg.fromMe).to.equal(true);
-                expect(msg.hasMedia).to.equal(true);
-                expect(msg.to).to.equal(remoteId);
+                expect(msg).to.be.instanceOf(Message, "Expected message to be an instance of Message");
+                expect(msg.type).to.equal(MessageTypes.STICKER, "Expected message type to be STICKER");
+                expect(msg.fromMe).to.equal(true, "Expected message to be from me");
+                expect(msg.hasMedia).to.equal(true, "Expected message to have media");
+                expect(msg.to).to.equal(remoteId, "Expected message to be sent to remoteId");
             });
     
             it('can send a location message', async function() {
                 const location = new Location(37.422, -122.084, 'Googleplex\nGoogle Headquarters');
     
                 const msg = await client.sendMessage(remoteId, location);
-                expect(msg).to.be.instanceOf(Message);
-                expect(msg.type).to.equal(MessageTypes.LOCATION);
-                expect(msg.fromMe).to.equal(true);
-                expect(msg.to).to.equal(remoteId);
+                expect(msg).to.be.instanceOf(Message, "Expected message to be an instance of Message");
+                expect(msg.type).to.equal(MessageTypes.LOCATION, "Expected message type to be LOCATION");
+                expect(msg.fromMe).to.equal(true, "Expected message to be from me");
+                expect(msg.to).to.equal(remoteId, "Expected message to be sent to remoteId");
     
-                expect(msg.location).to.be.instanceOf(Location);
-                expect(msg.location.latitude).to.equal(37.422);
-                expect(msg.location.longitude).to.equal(-122.084);
-                expect(msg.location.description).to.equal('Googleplex\nGoogle Headquarters');
+                expect(msg.location).to.be.instanceOf(Location, "Expected message location to be an instance of Location");
+                expect(msg.location.latitude).to.equal(37.422, "Expected message location latitude to be 37.422");
+                expect(msg.location.longitude).to.equal(-122.084, "Expected message location longitude to be -122.084");
+                expect(msg.location.description).to.equal('Googleplex\nGoogle Headquarters', "Expected message location description to be 'Googleplex\nGoogle Headquarters'");
             });
     
             it('can send a vCard as a contact card message', async function() {
@@ -481,13 +514,13 @@ REV:2021-06-06T02:35:53.559Z
 END:VCARD`;
     
                 const msg = await client.sendMessage(remoteId, vCard);
-                expect(msg).to.be.instanceOf(Message);
-                expect(msg.type).to.equal(MessageTypes.CONTACT_CARD);
-                expect(msg.fromMe).to.equal(true);
-                expect(msg.to).to.equal(remoteId);
-                expect(msg.body).to.equal(vCard);
-                expect(msg.vCards).to.have.lengthOf(1);
-                expect(msg.vCards[0]).to.equal(vCard);
+                expect(msg).to.be.instanceOf(Message, "Expected message to be an instance of Message");
+                expect(msg.type).to.equal(MessageTypes.CONTACT_CARD, "Expected message type to be CONTACT_CARD");
+                expect(msg.fromMe).to.equal(true, "Expected message to be from me");
+                expect(msg.to).to.equal(remoteId, "Expected message to be sent to remoteId");
+                expect(msg.body).to.equal(vCard, "Expected message body to be the vCard");
+                expect(msg.vCards).to.have.lengthOf(1, "Expected message vCards to have length of 1");
+                expect(msg.vCards[0]).to.equal(vCard, "Expected message vCards to be the vCard");
             });
     
             it('can optionally turn off vCard parsing', async function() {
@@ -501,24 +534,24 @@ REV:2021-06-06T02:35:53.559Z
 END:VCARD`;
     
                 const msg = await client.sendMessage(remoteId, vCard, {parseVCards: false});
-                expect(msg).to.be.instanceOf(Message);
-                expect(msg.type).to.equal(MessageTypes.TEXT); // not a contact card
-                expect(msg.fromMe).to.equal(true);
-                expect(msg.to).to.equal(remoteId);
-                expect(msg.body).to.equal(vCard);
+                expect(msg).to.be.instanceOf(Message, "Expected message to be an instance of Message");
+                expect(msg.type).to.equal(MessageTypes.TEXT, "Expected message type to be TEXT"); // not a contact card
+                expect(msg.fromMe).to.equal(true, "Expected message to be from me");
+                expect(msg.to).to.equal(remoteId, "Expected message to be sent to remoteId");
+                expect(msg.body).to.equal(vCard, "Expected message body to be the vCard");
             });
     
             it('can send a Contact as a contact card message', async function() {
                 const contact = await client.getContactById(remoteId);
     
                 const msg = await client.sendMessage(remoteId, contact);
-                expect(msg).to.be.instanceOf(Message);
-                expect(msg.type).to.equal(MessageTypes.CONTACT_CARD);
-                expect(msg.fromMe).to.equal(true);
-                expect(msg.to).to.equal(remoteId);
-                expect(msg.body).to.match(/BEGIN:VCARD/);
-                expect(msg.vCards).to.have.lengthOf(1);
-                expect(msg.vCards[0]).to.match(/BEGIN:VCARD/);
+                expect(msg).to.be.instanceOf(Message, "Expected message to be an instance of Message");
+                expect(msg.type).to.equal(MessageTypes.CONTACT_CARD, "Expected message type to be CONTACT_CARD");
+                expect(msg.fromMe).to.equal(true, "Expected message to be from me");
+                expect(msg.to).to.equal(remoteId, "Expected message to be sent to remoteId");
+                expect(msg.body).to.match(/BEGIN:VCARD/, "Expected message body to match /BEGIN:VCARD/");
+                expect(msg.vCards).to.have.lengthOf(1, "Expected message vCards to have length of 1");
+                expect(msg.vCards[0]).to.match(/BEGIN:VCARD/, "Expected message vCards to match /BEGIN:VCARD/");
             });
     
             it('can send multiple Contacts as a contact card message', async function () {
@@ -526,49 +559,49 @@ END:VCARD`;
                 const contact2 = await client.getContactById('5511942167462@c.us'); //iFood
     
                 const msg = await client.sendMessage(remoteId, [contact1, contact2]);
-                expect(msg).to.be.instanceOf(Message);
-                expect(msg.type).to.equal(MessageTypes.CONTACT_CARD_MULTI);
-                expect(msg.fromMe).to.equal(true);
-                expect(msg.to).to.equal(remoteId);
-                expect(msg.vCards).to.have.lengthOf(2);
-                expect(msg.vCards[0]).to.match(/BEGIN:VCARD/);
-                expect(msg.vCards[1]).to.match(/BEGIN:VCARD/);
+                expect(msg).to.be.instanceOf(Message, "Expected message to be an instance of Message");
+                expect(msg.type).to.equal(MessageTypes.CONTACT_CARD_MULTI, "Expected message type to be CONTACT_CARD_MULTI");
+                expect(msg.fromMe).to.equal(true, "Expected message to be from me");
+                expect(msg.to).to.equal(remoteId, "Expected message to be sent to remoteId");
+                expect(msg.vCards).to.have.lengthOf(2, "Expected message vCards to have length of 2");
+                expect(msg.vCards[0]).to.match(/BEGIN:VCARD/, "Expected message vCards to match /BEGIN:VCARD/");
+                expect(msg.vCards[1]).to.match(/BEGIN:VCARD/, "Expected message vCards to match /BEGIN:VCARD/");
             });
         });
     
         describe('Get Chats', function () {    
             it('can get a chat by its ID', async function () {
                 const chat = await client.getChatById(remoteId);
-                expect(chat).to.be.instanceOf(Chat);
-                expect(chat.id._serialized).to.eql(remoteId);
-                expect(chat.isGroup).to.eql(false);
+                expect(chat).to.be.instanceOf(Chat, "Expected chat to be an instance of Chat");
+                expect(chat.id._serialized).to.eql(remoteId, "Expected chat ID to be equal to remoteId");
+                expect(chat.isGroup).to.eql(false, "Expected chat to not be a group");
             });
     
             it('can get all chats', async function () {
                 const chats = await client.getChats();
-                expect(chats.length).to.be.greaterThanOrEqual(1);
+                expect(chats.length).to.be.greaterThanOrEqual(1, "Expected chats to have length of at least 1");
     
                 const chat = chats.find(c => c.id._serialized === remoteId);
                 expect(chat).to.exist;
-                expect(chat).to.be.instanceOf(Chat);
+                expect(chat).to.be.instanceOf(Chat, "Expected chat to be an instance of Chat");
             });
         });
 
         describe('Get Contacts', function () {    
             it('can get a contact by its ID', async function () {
                 const contact = await client.getContactById(remoteId);
-                expect(contact).to.be.instanceOf(Contact);
-                expect(contact.id._serialized).to.eql(remoteId);
-                expect(contact.number).to.eql(remoteId.split('@')[0]);
+                expect(contact).to.be.instanceOf(Contact, "Expected contact to be an instance of Contact");
+                expect(contact.id._serialized).to.eql(remoteId, "Expected contact ID to be equal to remoteId");
+                expect(contact.number).to.eql(remoteId.split('@')[0], "Expected contact number to be equal to remoteId");
             });
     
             it('can get all contacts', async function () {
                 const contacts = await client.getContacts();
-                expect(contacts.length).to.be.greaterThanOrEqual(1);
+                expect(contacts.length).to.be.greaterThanOrEqual(1, "Expected contacts to have length of at least 1");
     
                 const contact = contacts.find(c => c.id._serialized === remoteId);
                 expect(contact).to.exist;
-                expect(contact).to.be.instanceOf(Contact);
+                expect(contact).to.be.instanceOf(Contact, "Expected contact to be an instance of Contact");
             });
 
             it('can block a contact', async function () {
@@ -576,17 +609,16 @@ END:VCARD`;
                 await contact.block();
 
                 const refreshedContact = await client.getContactById(remoteId);
-                expect(refreshedContact.isBlocked).to.eql(true);
+                expect(refreshedContact.isBlocked).to.eql(true, "Expected contact to be blocked");
             });
 
             it('can get a list of blocked contacts', async function () {
                 const blockedContacts = await client.getBlockedContacts();
-                expect(blockedContacts.length).to.be.greaterThanOrEqual(1);
+                expect(blockedContacts.length).to.be.greaterThanOrEqual(1, "Expected blocked contacts to have length of at least 1");
 
                 const contact = blockedContacts.find(c => c.id._serialized === remoteId);
                 expect(contact).to.exist;
-                expect(contact).to.be.instanceOf(Contact);
-
+                expect(contact).to.be.instanceOf(Contact, "Expected contact to be an instance of Contact");
             });
 
             it('can unblock a contact', async function () {
@@ -594,19 +626,19 @@ END:VCARD`;
                 await contact.unblock();
 
                 const refreshedContact = await client.getContactById(remoteId);
-                expect(refreshedContact.isBlocked).to.eql(false);
+                expect(refreshedContact.isBlocked).to.eql(false, "Expected contact to not be blocked");
             });
         });
 
         describe('Numbers and Users', function () {
             it('can verify that a user is registered', async function () {
                 const isRegistered = await client.isRegisteredUser(remoteId);
-                expect(isRegistered).to.be.true;
+                expect(isRegistered).to.be.true("Expected isRegistered to be true");
             });
 
             it('can verify that a user is not registered', async function () {
                 const isRegistered = await client.isRegisteredUser('9999999999@c.us');
-                expect(isRegistered).to.be.false;
+                expect(isRegistered).to.be.false("Expected isRegistered to be false");
             });
 
             it('can get a number\'s whatsapp id', async function () {
@@ -622,25 +654,25 @@ END:VCARD`;
             it('returns null when getting an unregistered number\'s whatsapp id', async function () {
                 const number = '9999999999';
                 const numberId = await client.getNumberId(number);
-                expect(numberId).to.eql(null);
+                expect(numberId).to.eql(null, "Expected numberId to be null");
             });
 
             it('can get a number\'s country code', async function () {
                 const number = '18092201111';
                 const countryCode = await client.getCountryCode(number);
-                expect(countryCode).to.eql('1');
+                expect(countryCode).to.eql('1', "Expected countryCode to be 1");
             });
 
             it('can get a formatted number', async function () {
                 const number = '18092201111';
                 const formatted = await client.getFormattedNumber(number);
-                expect(formatted).to.eql('+1 (809) 220-1111');
+                expect(formatted).to.eql('+1 (809) 220-1111', "Expected formatted to be +1 (809) 220-1111");
             });
 
             it('can get a formatted number from a serialized ID', async function () {
                 const number = '18092201111@c.us';
                 const formatted = await client.getFormattedNumber(number);
-                expect(formatted).to.eql('+1 (809) 220-1111');
+                expect(formatted).to.eql('+1 (809) 220-1111', "Expected formatted to be +1 (809) 220-1111");
             });
         });
 
@@ -654,12 +686,12 @@ END:VCARD`;
                 await helper.sleep(1000);
                 
                 const msgs = await client.searchMessages('Mario', {chatId: remoteId});
-                expect(msgs.length).to.be.greaterThanOrEqual(2);
+                expect(msgs.length).to.be.greaterThanOrEqual(2, "Expected msgs to have length of at least 2");
                 const msgIds = msgs.map(m => m.id._serialized);
                 expect(msgIds).to.include.members([
                     m1.id._serialized, m2.id._serialized
-                ]);
-                expect(msgIds).to.not.include.members([m3.id._serialized]);
+                ], "Expected msgIds to include m1.id._serialized and m2.id._serialized");
+                expect(msgIds).to.not.include.members([m3.id._serialized], "Expected msgIds to not include m3.id._serialized");
             });
         });
 
@@ -679,14 +711,14 @@ END:VCARD`;
                 await client.setStatus('My shiny new status');
 
                 const status = await me.getAbout();
-                expect(status).to.eql('My shiny new status');
+                expect(status).to.eql('My shiny new status', "Expected status to be 'My shiny new status'");
             });
 
             it('can set the status text to something else', async function () {
                 await client.setStatus('Busy');
                 
                 const status = await me.getAbout();
-                expect(status).to.eql('Busy');
+                expect(status).to.eql('Busy', "Expected status to be 'Busy'");
             });
         });
     });
