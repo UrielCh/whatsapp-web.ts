@@ -49,7 +49,11 @@ class Message extends Base {
          * Message content
          * @type {string}
          */
-        this.body = this.hasMedia ? data.caption || '' : data.body || data.pollName || '';
+        if (this.hasMedia) {
+            this.body = data.caption || data.filename || '';
+        } else {
+            this.body = data.body || data.pollName || '';
+        }
 
         /**
          * Message type
