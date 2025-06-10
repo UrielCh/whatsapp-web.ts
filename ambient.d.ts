@@ -22,13 +22,21 @@ declare global {
       AppState?: { state?: string, on?: Function, off?: Function, takeover?: Function };
       GroupParticipants?: { removeParticipants?: Function, demoteParticipants?: Function };
       Call?: { on?: Function };
-      Chat?: { on?: Function };
+      Chat?: {
+        on?: Function;
+        get?: (wid: any) => any;
+        find?: (wid: any) => Promise<any> | any;
+      };
       PollVote?: { on?: Function };
       Reactions?: { find?: Function };
       QuotedMsg?: { getQuotedMsgObj?: Function };
       BlockContact?: { blockContact?: Function, unblockContact?: Function };
       StatusUtils?: { getStatus?: Function };
       AddonReactionTable?: any;
+      HistorySync?: {
+        sendPeerDataOperationRequest: (op: number, data: {chatId: string}) => Promise<any> | any;
+      };
+
       AddressbookContactUtils?: {
         deleteContactAction: (phoneNumber: string) => Promise<void> | void;
         saveContactAction?: (phoneNumber: string, arg2: any, firstName: string, lastName: string, syncToAddressbook: boolean) => Promise<any>;
