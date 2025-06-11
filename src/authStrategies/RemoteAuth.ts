@@ -6,8 +6,8 @@ import unzipper from 'unzipper';
 import archiver from 'archiver';
 
 import path from 'node:path';
-import { Events } from './../util/Constants.js';
-import BaseAuthStrategy from './BaseAuthStrategy.js';
+import { Events } from './../util/Constants.ts';
+import BaseAuthStrategy from './BaseAuthStrategy.ts';
 
 /** 
  * Remote store interface

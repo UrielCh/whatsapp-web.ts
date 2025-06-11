@@ -1,4 +1,4 @@
-import Contact, { ContactId } from './Contact.js';
+import Contact, { ContactId } from './Contact.ts';
 
 export interface BusinessCategory {
     id: string,

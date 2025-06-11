@@ -1,5 +1,5 @@
-import type Client from '../Client.js';
-import Base from './Base.js';
+import type Client from '../Client.ts';
+import Base from './Base.ts';
 
 export interface CallData {
     /**

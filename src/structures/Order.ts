@@ -1,6 +1,6 @@
-import Base from './Base.js';
-import Product from './Product.js';
-import Client from '../Client.js';
+import Base from './Base.ts';
+import Product from './Product.ts';
+import Client from '../Client.ts';
 
 /**
  * Represents a Order on WhatsApp

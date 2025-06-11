@@ -1,8 +1,8 @@
-import Base from './Base.js';
-import Message from './Message.js';
-import Client from '../Client.js';
-import Contact from './Contact.js';
-import Label from './Label.js';
+import Base from './Base.ts';
+import Message from './Message.ts';
+import Client from '../Client.ts';
+import Contact from './Contact.ts';
+import Label from './Label.ts';
 import MessageMedia from "./MessageMedia.ts";
 import { MessageContent, MessageSendOptions } from "../types.ts";
 

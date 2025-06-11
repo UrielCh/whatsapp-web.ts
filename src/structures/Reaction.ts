@@ -1,6 +1,6 @@
-import Client from '../Client.js';
-import { MessageId } from '../types.js';
-import Base from './Base.js';
+import Client from '../Client.ts';
+import { MessageId } from '../types.ts';
+import Base from './Base.ts';
 
 /**
  * Represents a Reaction on WhatsApp

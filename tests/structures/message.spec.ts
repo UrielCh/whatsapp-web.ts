@@ -1,11 +1,11 @@
 /// <reference lib="deno.ns" />
-import { describe, it, beforeAll, afterAll, beforeEach, afterEach } from "@std/testing/bdd";
-import { assertEquals, assertExists, assertMatch, assertRejects, assertThrows, assertNotEquals, assert, assertGreaterOrEqual, assertInstanceOf } from "@std/assert";
-import { assertSpyCalls, spy } from "jsr:@std/testing/mock";
+import { describe, it, beforeAll, afterAll } from "@std/testing/bdd";
+import { assertEquals, assertExists, assert, assertInstanceOf } from "@std/assert";
+import { spy } from "jsr:@std/testing/mock";
 
-import * as helper from '../helper.js';
-import { Contact, Chat } from '../../src/structures/index.js';
-import type { Client, Message } from '../../index.js';
+import * as helper from '../helper.ts';
+import { Contact, Chat } from '../../src/structures/index.ts';
+import type { Client, Message } from '../../index.ts';
 
 const remoteId = helper.remoteId;
 

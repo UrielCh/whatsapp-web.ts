@@ -1,15 +1,15 @@
-import Base from './Base.js';
-import MessageMedia from './MessageMedia.js';
-import Location from './Location.js';
-import Order from './Order.js';
-import Payment from './Payment.js';
-import Reaction from './Reaction.js';
-import Contact, { ContactId } from './Contact.js';
-import { MessageAck, MessageTypes } from '../util/Constants.js';
-import Client from '../Client.js';
-import { MessageContent, MessageId, MessageSendOptions } from '../types.js';
-import Chat from './Chat.js';
-import GroupChat from './GroupChat.js';
+import Base from './Base.ts';
+import MessageMedia from './MessageMedia.ts';
+import Location from './Location.ts';
+import Order from './Order.ts';
+import Payment from './Payment.ts';
+import Reaction from './Reaction.ts';
+import Contact, { ContactId } from './Contact.ts';
+import { MessageAck, MessageTypes } from '../util/Constants.ts';
+import Client from '../Client.ts';
+import { MessageContent, MessageId, MessageSendOptions } from '../types.ts';
+import Chat from './Chat.ts';
+import GroupChat from './GroupChat.ts';
 
 export type MessageInfo = {
     delivery: Array<{id: ContactId, t: number}>,

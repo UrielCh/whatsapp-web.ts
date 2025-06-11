@@ -1,5 +1,5 @@
 // import fetch from 'node-fetch';
-import { WebCache, VersionResolveError } from './WebCache.js';
+import { WebCache, VersionResolveError } from './WebCache.ts';
 
 /**
  * RemoteWebCache - Fetches a WhatsApp Web version index from a remote server

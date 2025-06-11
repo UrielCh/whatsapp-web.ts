@@ -1,6 +1,6 @@
-import Client from '../Client.js';
-import Base from './Base.js';
-import Chat, { ChatId } from './Chat.js';
+import Client from '../Client.ts';
+import Base from './Base.ts';
+import Chat, { ChatId } from './Chat.ts';
 
 export interface ContactId {
     server: string,

@@ -1,8 +1,8 @@
-import PrivateChat from '../structures/PrivateChat.js';
-import GroupChat from '../structures/GroupChat.js';
-import Channel from '../structures/Channel.js';
-import Chat from '../structures/Chat.js';
-import Client from '../Client.js';
+import PrivateChat from '../structures/PrivateChat.ts';
+import GroupChat from '../structures/GroupChat.ts';
+import Channel from '../structures/Channel.ts';
+import Chat from '../structures/Chat.ts';
+import Client from '../Client.ts';
 
 class ChatFactory {
     static create(client: Client, data: any): Chat | Channel | GroupChat {

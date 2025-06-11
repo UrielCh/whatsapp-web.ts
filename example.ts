@@ -1,4 +1,4 @@
-import { Client, Location, Poll, List, Buttons, LocalAuth } from './index.js';
+import { Client, Location, Poll, List, Buttons, LocalAuth } from './index.ts';
 
 const client = new Client({
     authStrategy: new LocalAuth(),

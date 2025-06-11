@@ -1,4 +1,4 @@
-import Client from "../Client.js";
+import type Client from "../Client.ts";
 
 /**
  * Base class which all authentication strategies extend

@@ -1,4 +1,4 @@
-import Contact from './Contact.js';
+import Contact from './Contact.ts';
 
 /**
  * Represents a Private Contact on WhatsApp

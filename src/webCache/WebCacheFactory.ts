@@ -1,6 +1,6 @@
-import RemoteWebCache from './RemoteWebCache.js';
-import LocalWebCache from './LocalWebCache.js';
-import { WebCache } from './WebCache.js';
+import RemoteWebCache from './RemoteWebCache.ts';
+import LocalWebCache from './LocalWebCache.ts';
+import { WebCache } from './WebCache.ts';
 
 export const createWebCache = (type: string, options: any) => {
     switch (type) {

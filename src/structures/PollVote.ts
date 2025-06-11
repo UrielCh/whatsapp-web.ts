@@ -1,6 +1,6 @@
-import Message from './Message.js';
-import Base from './Base.js';
-import Client from '../Client.js';
+import Message from './Message.ts';
+import Base from './Base.ts';
+import Client from '../Client.ts';
 
 
 /** Selected poll option structure */

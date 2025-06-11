@@ -1,7 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 
-import { WebCache, VersionResolveError } from './WebCache.js';
+import { WebCache, VersionResolveError } from './WebCache.ts';
 
 /**
  * LocalWebCache - Fetches a WhatsApp Web version from a local file store

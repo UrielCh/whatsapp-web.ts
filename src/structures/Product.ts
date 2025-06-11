@@ -1,6 +1,6 @@
-import Client from '../Client.js';
-import Base from './Base.js';
-import ProductMetadata from './ProductMetadata.js';
+import Client from '../Client.ts';
+import Base from './Base.ts';
+import ProductMetadata from './ProductMetadata.ts';
 
 /**
  * Represents a Product on WhatsAppBusiness

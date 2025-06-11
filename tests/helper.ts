@@ -1,6 +1,6 @@
 import path from 'node:path';
 import process from 'node:process';
-import { Client, LocalAuth } from '../index.js';
+import { Client, LocalAuth } from '../index.ts';
 
 import * as dotenv from "@std/dotenv";
 const env = await dotenv.load();

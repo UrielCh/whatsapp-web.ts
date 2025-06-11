@@ -1,12 +1,12 @@
-import { MessageSendOptions } from '../types.js';
-import { GroupNotificationTypes } from '../util/Constants.js';
-import Base from './Base.js';
-import Chat from './Chat.js';
-import Contact from './Contact.js';
-import Location from './Location.js';
-import Message from './Message.js';
-import MessageMedia from './MessageMedia.js';
-import Client from '../Client.js';
+import { MessageSendOptions } from '../types.ts';
+import { GroupNotificationTypes } from '../util/Constants.ts';
+import Base from './Base.ts';
+import Chat from './Chat.ts';
+import Contact from './Contact.ts';
+import Location from './Location.ts';
+import Message from './Message.ts';
+import MessageMedia from './MessageMedia.ts';
+import Client from '../Client.ts';
 
 /**
  * Represents a GroupNotification on WhatsApp

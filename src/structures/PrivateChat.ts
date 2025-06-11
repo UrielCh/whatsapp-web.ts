@@ -1,4 +1,4 @@
-import Chat from './Chat.js';
+import Chat from './Chat.ts';
 
 /**
  * Represents a Private Chat on WhatsApp

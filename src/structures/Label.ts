@@ -1,6 +1,6 @@
-import Client from '../Client.js';
-import Base from './Base.js';
-import type Chat from './Chat.js';
+import Client from '../Client.ts';
+import Base from './Base.ts';
+import type Chat from './Chat.ts';
 
 /**
  * WhatsApp Business Label information

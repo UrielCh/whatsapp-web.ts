@@ -1,6 +1,6 @@
-import PrivateContact from '../structures/PrivateContact.js';
-import BusinessContact from '../structures/BusinessContact.js';
-import Client from '../Client.js';
+import PrivateContact from '../structures/PrivateContact.ts';
+import BusinessContact from '../structures/BusinessContact.ts';
+import Client from '../Client.ts';
 
 class ContactFactory {
     static create(client: Client, data: any) {

@@ -1,8 +1,8 @@
-import Client from '../Client.js';
-import Base from './Base.js';
-import Chat from './Chat.js';
-import Contact from './Contact.js';
-import Message from './Message.js';
+import Client from '../Client.ts';
+import Base from './Base.ts';
+import Chat from './Chat.ts';
+import Contact from './Contact.ts';
+import Message from './Message.ts';
 
 /**
  * Represents a Status/Story on WhatsApp

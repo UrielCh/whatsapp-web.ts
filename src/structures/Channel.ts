@@ -1,10 +1,10 @@
-import Client from '../Client.js';
-import { MessageSendOptions } from '../types.js';
-import Base from './Base.js';
-import { MessageSearchOptions } from './Chat.js';
-import Contact from './Contact.js';
-import Message from './Message.js';
-import MessageMedia from './MessageMedia.js';
+import Client from '../Client.ts';
+import { MessageSendOptions } from '../types.ts';
+import Base from './Base.ts';
+import { MessageSearchOptions } from './Chat.ts';
+import Contact from './Contact.ts';
+import Message from './Message.ts';
+import MessageMedia from './MessageMedia.ts';
 
 /**
  * Channel ID structure

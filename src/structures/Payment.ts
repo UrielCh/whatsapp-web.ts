@@ -1,5 +1,5 @@
-import Client from '../Client.js';
-import Base from './Base.js';
+import Client from '../Client.ts';
+import Base from './Base.ts';
 
 /**
   * Represents a Payment on WhatsApp

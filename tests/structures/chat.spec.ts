@@ -2,10 +2,10 @@
 import { describe, it, beforeAll, afterAll, beforeEach, afterEach } from "@std/testing/bdd";
 import { assertEquals, assertExists, assertMatch, assertRejects, assertThrows, assertNotEquals, assert, assertGreaterOrEqual, assertInstanceOf } from "@std/assert";
 
-import * as helper from '../helper.js';
-import Message from '../../src/structures/Message.js';
-import { MessageTypes } from '../../src/util/Constants.js';
-import Contact from '../../src/structures/Contact.js';
+import * as helper from '../helper.ts';
+import Message from '../../src/structures/Message.ts';
+import { MessageTypes } from '../../src/util/Constants.ts';
+import Contact from '../../src/structures/Contact.ts';
 import type Client from "../../src/Client.ts";
 import type { Chat } from "../../src/structures/index.ts";
 

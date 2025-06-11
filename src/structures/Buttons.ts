@@ -1,5 +1,5 @@
-import MessageMedia from './MessageMedia.js';
-import Util from '../util/Util.js';
+import MessageMedia from './MessageMedia.ts';
+import Util from '../util/Util.ts';
 
 /**
  * Button spec used in Buttons constructor

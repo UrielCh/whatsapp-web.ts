@@ -1,4 +1,4 @@
-import BaseAuthStrategy from './BaseAuthStrategy.js';
+import BaseAuthStrategy from './BaseAuthStrategy.ts';
 
 /**
  * No session restoring functionality

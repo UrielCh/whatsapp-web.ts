@@ -1,6 +1,6 @@
-import Chat from './Chat.js';
-import { ContactId } from './Contact.js';
-import MessageMedia from './MessageMedia.js';
+import Chat from './Chat.ts';
+import { ContactId } from './Contact.ts';
+import MessageMedia from './MessageMedia.ts';
 
 /**
  * Group participant information

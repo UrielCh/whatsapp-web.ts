@@ -1,9 +1,9 @@
 /**
  * Represents a WhatsApp data structure
  */
-// import Contact from './Contact.js';
+// import Contact from './Contact.ts';
 
-import type Client from "../Client.js";
+import type Client from "../Client.ts";
 
 class Base {
     client!: Client;

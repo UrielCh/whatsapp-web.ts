@@ -1,6 +1,6 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import BaseAuthStrategy from './BaseAuthStrategy.js';
+import BaseAuthStrategy from './BaseAuthStrategy.ts';
 
 /**
  * Local directory-based authentication

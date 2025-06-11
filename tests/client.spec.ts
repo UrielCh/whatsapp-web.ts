@@ -2,14 +2,14 @@ import { describe, it, beforeAll, afterAll, before, after } from "@std/testing/b
 import { assertEquals, assertExists, assertMatch, assert, assertGreaterOrEqual } from "@std/assert";
 import { spy } from "jsr:@std/testing/mock";
 
-import Chat from '../src/structures/Chat.js';
-import Contact from '../src/structures/Contact.js';
-import Message from '../src/structures/Message.js';
-import MessageMedia from '../src/structures/MessageMedia.js';
-import Location from '../src/structures/Location.js';
-import { MessageTypes, WAState, DefaultOptions } from '../src/util/Constants.js';
-import type Client from "../src/Client.js";
-import * as helper from './helper.js';
+import Chat from '../src/structures/Chat.ts';
+import Contact from '../src/structures/Contact.ts';
+import Message from '../src/structures/Message.ts';
+import MessageMedia from '../src/structures/MessageMedia.ts';
+import Location from '../src/structures/Location.ts';
+import { MessageTypes, WAState, DefaultOptions } from '../src/util/Constants.ts';
+import type Client from "../src/Client.ts";
+import * as helper from './helper.ts';
 
 const remoteId = helper.remoteId;
 const isMD = helper.isMD();

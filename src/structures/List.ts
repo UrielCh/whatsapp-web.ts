@@ -1,4 +1,4 @@
-import Util from '../util/Util.js';
+import Util from '../util/Util.ts';
 
 /**
  * Message type List

@@ -1,11 +1,11 @@
-import type BaseAuthStrategy from "./authStrategies/BaseAuthStrategy.js";
+import type BaseAuthStrategy from "./authStrategies/BaseAuthStrategy.ts";
 import type {LaunchOptions, ConnectOptions} from 'puppeteer'
-import type MessageMedia from "./structures/MessageMedia.js";
-import type Poll from "./structures/Poll.js";
-import type Contact from "./structures/Contact.js";
-import type List from "./structures/List.js";
-import type Buttons from "./structures/Buttons.js";
-import type Location from "./structures/Location.js";
+import type MessageMedia from "./structures/MessageMedia.ts";
+import type Poll from "./structures/Poll.ts";
+import type Contact from "./structures/Contact.ts";
+import type List from "./structures/List.ts";
+import type Buttons from "./structures/Buttons.ts";
+import type Location from "./structures/Location.ts";
 
 /**
  * Base class which all authentication strategies extend
