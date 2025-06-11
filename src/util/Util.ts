@@ -7,8 +7,8 @@ import { Buffer } from 'node:buffer';
 
 import ffmpeg from 'fluent-ffmpeg';
 import webp from 'node-webpmux';
-import { MessageMedia } from '../structures';
 import type puppeteer from 'puppeteer';
+import MessageMedia from "../structures/MessageMedia.ts";
 
 const has = (o: object, k: string) => Object.prototype.hasOwnProperty.call(o, k);
 
@@ -164,9 +164,9 @@ class Util {
             const author = metadata.author;
             const categories = metadata.categories || [''];
             const json = { 'sticker-pack-id': stickerPackId, 'sticker-pack-name': packname, 'sticker-pack-publisher': author, 'emojis': categories };
-            let exifAttr = Buffer.from([0x49, 0x49, 0x2A, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x41, 0x57, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16, 0x00, 0x00, 0x00]);
-            let jsonBuffer = Buffer.from(JSON.stringify(json), 'utf8');
-            let exif = Buffer.concat([exifAttr, jsonBuffer]);
+            const exifAttr = Buffer.from([0x49, 0x49, 0x2A, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x41, 0x57, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16, 0x00, 0x00, 0x00]);
+            const jsonBuffer = Buffer.from(JSON.stringify(json), 'utf8');
+            const exif = Buffer.concat([exifAttr, jsonBuffer]);
             exif.writeUIntLE(jsonBuffer.length, 14, 4);
             await img.load(Buffer.from(webpMedia.data, 'base64'));
             img.exif = exif;
