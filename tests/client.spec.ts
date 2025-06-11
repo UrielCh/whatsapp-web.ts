@@ -1,6 +1,7 @@
-import { describe, it, before, after } from "https://deno.land/std@0.207.0/testing/bdd.ts";
-import { assertEquals, assertExists, assertMatch, assertRejects, assertThrows, assertNotEquals, assertLess, assertGreaterOrEqual } from "https://deno.land/std@0.207.0/assert/mod.ts";
-import { spy, stub, mockSession } from "https://deno.land/std@0.207.0/testing/mock.ts";
+/// <reference lib="deno.ns" />
+import { describe, it, beforeAll, afterAll, beforeEach, afterEach, before, after } from "@std/testing/bdd";
+import { assertEquals, assertExists, assertMatch, assertRejects, assertThrows, assertNotEquals, assert, assertGreaterOrEqual, assertInstanceOf } from "@std/assert";
+import { spy } from "jsr:@std/testing/mock";
 
 import * as helper from './helper.js';
 import Chat from '../src/structures/Chat.js';
@@ -9,20 +10,22 @@ import Message from '../src/structures/Message.js';
 import MessageMedia from '../src/structures/MessageMedia.js';
 import Location from '../src/structures/Location.js';
 import { MessageTypes, WAState, DefaultOptions } from '../src/util/Constants.js';
-import Client from "../src/Client.js";
+import type Client from "../src/Client.js";
+import * as dotenv from "@std/dotenv";
+await dotenv.load();
 
 const remoteId = helper.remoteId;
 const isMD = helper.isMD();
 
-const TIMEOUT = 3000;
+// const TIMEOUT = 3000;
 const LONG_WAIT = 500;
-const SUPER_TIMEOUT = 600000;
-const AUTH_TIMEOUT = 600000;
+// const SUPER_TIMEOUT = 600000;
+// const AUTH_TIMEOUT = 600000;
 
 const PUPPETER_HEADLESS = { headless: false };
 
 
-Deno.test('TSX environment', async function () {
+Deno.test('TSX environment', function () {
     const test = () => {
         const fnc = () => {
             return 1;
@@ -141,7 +144,7 @@ describe('Client', function() {
 
                 await helper.sleep(LONG_WAIT);
     
-                assertEquals(callback.callCount > 0, true);
+                assertEquals(callback.calls.length > 0, true);
                 assertGreaterOrEqual(callback.calls[0].args[0].length, 152);
             } finally {
                 await client.destroy();
@@ -314,20 +317,20 @@ describe('Client', function() {
                     client2.on('disconnected', disconnectedCallback2);
     
                     await client1.initialize();
-                    assertEquals(readyCallback1.callCount > 0, true);
-                    assertEquals(readyCallback2.callCount > 0, false);
-                    assertEquals(disconnectedCallback1.callCount > 0, false);
-                    assertEquals(disconnectedCallback2.callCount > 0, false);
+                    assertEquals(readyCallback1.calls.length > 0, true);
+                    assertEquals(readyCallback2.calls.length > 0, false);
+                    assertEquals(disconnectedCallback1.calls.length > 0, false);
+                    assertEquals(disconnectedCallback2.calls.length > 0, false);
     
                     await client2.initialize();
-                    assertEquals(readyCallback2.callCount > 0, true);
-                    assertEquals(disconnectedCallback1.callCount > 0, false);
-                    assertEquals(disconnectedCallback2.callCount > 0, false);
+                    assertEquals(readyCallback2.calls.length > 0, true);
+                    assertEquals(disconnectedCallback1.calls.length > 0, false);
+                    assertEquals(disconnectedCallback2.calls.length > 0, false);
     
                     // wait for takeoverTimeoutMs to kick in
                     await helper.sleep(5200);
-                    assertEquals(disconnectedCallback1.callCount > 0, false);
-                    assertEquals(disconnectedCallback2.callCount > 0, true);
+                    assertEquals(disconnectedCallback1.calls.length > 0, false);
+                    assertEquals(disconnectedCallback2.calls.length > 0, true);
                     assertEquals(disconnectedCallback2.calls[0].args[0], WAState.CONFLICT);
     
                     await client1.destroy();

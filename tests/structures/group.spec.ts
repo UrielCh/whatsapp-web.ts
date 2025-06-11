@@ -1,9 +1,10 @@
-import { describe, it, beforeAll, afterAll, beforeEach, afterEach } from "https://deno.land/std@0.207.0/testing/bdd.ts";
-import { assertEquals, assertExists, assertMatch, assertRejects, assertThrows, assertNotEquals, assert, assertGreaterOrEqual } from "https://deno.land/std@0.207.0/assert/mod.ts";
+/// <reference lib="deno.ns" />
+import { describe, it, beforeAll, afterAll, beforeEach, afterEach } from "@std/testing/bdd";
+import { assertEquals, assertExists, assertMatch, assertRejects, assertThrows, assertNotEquals, assert, assertGreaterOrEqual } from "@std/assert";
 
 import * as helper from '../helper.js';
-import { Client } from '../../index.js';
-import GroupChat from "../../src/structures/GroupChat.ts";
+import type { Client } from '../../index.js';
+import type GroupChat from "../../src/structures/GroupChat.ts";
 
 const remoteId = helper.remoteId;
 

@@ -1,10 +1,11 @@
-import { describe, it, beforeAll, afterAll, beforeEach, afterEach } from "https://deno.land/std@0.207.0/testing/bdd.ts";
-import { assertEquals, assertExists, assertMatch, assertRejects, assertThrows, assertNotEquals, assert, assertInstanceOf, assertArrayIncludes } from "https://deno.land/std@0.207.0/assert/mod.ts";
-import { spy, stub } from "https://deno.land/std@0.207.0/testing/mock.ts";
+/// <reference lib="deno.ns" />
+import { describe, it, beforeAll, afterAll, beforeEach, afterEach } from "@std/testing/bdd";
+import { assertEquals, assertExists, assertMatch, assertRejects, assertThrows, assertNotEquals, assert, assertGreaterOrEqual, assertInstanceOf } from "@std/assert";
+import { assertSpyCalls, spy } from "jsr:@std/testing/mock";
 
 import * as helper from '../helper.js';
 import { Contact, Chat } from '../../src/structures/index.js';
-import { Client, Message } from '../../index.js';
+import type { Client, Message } from '../../index.js';
 
 const remoteId = helper.remoteId;
 
@@ -136,7 +137,7 @@ describe.skip('Message', function () {
             const reloadedMessage = await message!.reload();
             assertEquals(reloadedMessage, null, "Message should be null after reload if deleted for everyone");
 
-            assert(callback.callCount >= 1, "Revoke callback should have been called at least once");
+            assert(callback.calls.length >= 1, "Revoke callback should have been called at least once");
             const [ revokeMsg, originalMsg ] = callback.calls[0].args; // Assuming it's the first call
 
             assertEquals(revokeMsg.id._serialized, originalMsg.id._serialized);
