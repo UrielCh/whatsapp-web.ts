@@ -40,6 +40,7 @@
     "@types/chai": "^5.2.2",
     "@types/chai-as-promised": "^8.0.2",
     "@types/mocha": "^10.0.10",
+    "@types/node": "^24.0.0",
     "@types/node-fetch": "^2.5.12",
     "@types/sinon": "^17.0.4",
     "chai": "^4.3.4",

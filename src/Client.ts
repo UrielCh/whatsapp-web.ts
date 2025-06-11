@@ -504,7 +504,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
 
             // Register qr events
             let qrRetries = 0;
-            await exposeFunctionIfAbsent(this.pupPage, 'onQRChangedEvent', async (qr) => {
+            await exposeFunctionIfAbsent(this.pupPage, 'onQRChangedEvent', async (qr: string) => {
                 /**
                 * Emitted when a QR code is received
                 * @event Client#qr
@@ -520,9 +520,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
                 }
             });
 
-
             await this.evaluate(async () => {
-                debugger;
                 const registrationInfo = await window.AuthStore.RegistrationUtils.waSignalStore.getRegistrationInfo();
                 const noiseKeyPair = await window.AuthStore.RegistrationUtils.waNoiseInfo.get();
                 const staticKeyB64 = window.AuthStore.Base64Tools.encodeB64(noiseKeyPair.staticKeyPair.pubKey);
@@ -535,6 +533,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
                 window.AuthStore.Conn.on('change:ref', (_, ref) => { window.onQRChangedEvent(getQR(ref)); }); // future QR changes
             });
         }
+        
         /**
          * @param {"OPENING" | "UNPAIRED_IDLE" | string} state WAState
          */
@@ -599,6 +598,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
             this.emit(Events.READY);
             this.authStrategy.afterAuthReady();
         });
+
         let lastPercent = null;
         await exposeFunctionIfAbsent(this.pupPage, 'onOfflineProgressUpdateEvent', async (percent: number) => {
             if (lastPercent !== percent) {
