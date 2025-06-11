@@ -37,8 +37,9 @@ export const LoadUtils = () => {
 
         let mediaOptions: any = {};
         if (options.media) {
-            mediaOptions = await window.WWebJS.processMediaData(
-                options.media, {
+            mediaOptions =  options.sendMediaAsSticker && !isChannel
+                ? await window.WWebJS.processStickerData(options.media)
+                : await window.WWebJS.processMediaData(options.media, {
                     forceSticker: options.sendMediaAsSticker,
                     forceGif: options.sendVideoAsGif,
                     forceVoice: options.sendAudioAsVoice,
@@ -376,6 +377,38 @@ export const LoadUtils = () => {
             data
         };
     };
+
+    window.WWebJS.processStickerData = async (mediaInfo: { data: string; mimetype: string; filename: string }) => {
+        if (!window.Store || !window.Store.UploadUtils || !window.Store.UploadUtils.encryptAndUpload) {
+            throw new Error('window.Store.UploadUtils is not defined');
+        }
+        if (mediaInfo.mimetype !== 'image/webp') throw new Error('Invalid media type');
+
+        const file = window.WWebJS.mediaInfoToFile(mediaInfo);
+        const filehash = await window.WWebJS.getFileHash(file);
+        const mediaKey = await window.WWebJS.generateHash(32);
+
+        const controller = new AbortController();
+        const uploadedInfo = await window.Store.UploadUtils.encryptAndUpload({
+            blob: file,
+            type: 'sticker',
+            signal: controller.signal,
+            mediaKey
+        });
+
+        const stickerInfo = {
+            ...uploadedInfo,
+            clientUrl: uploadedInfo.url,
+            deprecatedMms3Url: uploadedInfo.url,
+            uploadhash: uploadedInfo.encFilehash,
+            size: file.size,
+            type: 'sticker',
+            filehash
+        };
+
+        return stickerInfo;
+    };
+
 
     window.WWebJS.processMediaData = async (mediaInfo: { data: string; mimetype: string; filename: string }, { forceSticker, forceGif, forceVoice, forceDocument, forceMediaHd, sendToChannel }) => {
         if (!window.WWebJS || !window.WWebJS.mediaInfoToFile || !window.Store || !window.Store.OpaqueData || !window.Store.OpaqueData.createFromData || !window.Store.MediaPrep || !window.Store.MediaPrep.prepRawMedia || !window.Store.MediaObject || !window.Store.MediaObject.getOrCreateMediaObject || !window.Store.MediaTypes || !window.Store.MediaTypes.msgToMediaType || !window.WWebJS.generateWaveform || !window.Store.MediaUpload || !window.Store.MediaUpload.uploadMedia || !window.Store.MediaUpload.uploadUnencryptedMedia || !window.Store.SendChannelMessage || !window.Store.SendChannelMessage.getRandomFilehash) {

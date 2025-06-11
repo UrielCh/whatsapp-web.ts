@@ -8,7 +8,7 @@ import { Buffer } from 'node:buffer';
 import ffmpeg from 'fluent-ffmpeg';
 import webp from 'node-webpmux';
 import { MessageMedia } from '../structures';
-import puppeteer from 'puppeteer';
+import type puppeteer from 'puppeteer';
 
 const has = (o: object, k: string) => Object.prototype.hasOwnProperty.call(o, k);
 
@@ -21,10 +21,10 @@ class Util {
     }
 
     static generateHash(length: number) {
-        var result = '';
-        var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        var charactersLength = characters.length;
-        for (var i = 0; i < length; i++) {
+        let result = '';
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        const charactersLength = characters.length;
+        for (let i = 0; i < length; i++) {
             result += characters.charAt(Math.floor(Math.random() * charactersLength));
         }
         return result;
@@ -64,7 +64,7 @@ class Util {
             return media;
         }
 
-        return pupPage.evaluate((media: MessageMedia) => {
+        return await pupPage.evaluate((media: MessageMedia) => {
             if (!window.WWebJS || !window.WWebJS.toStickerData)
                 throw new Error('window.WWebJS.toStickerData is not defined');
             return window.WWebJS.toStickerData(media);
@@ -77,7 +77,7 @@ class Util {
      * 
      * @returns {Promise<MessageMedia>} media in webp format
      */
-    static async formatVideoToWebpSticker(media) {
+    static async formatVideoToWebpSticker(media: MessageMedia): Promise<MessageMedia> {
         if (!media.mimetype.includes('video'))
             throw new Error('media is not a video');
 
@@ -128,11 +128,7 @@ class Util {
         const data = await fs.readFile(tempFile, 'base64');
         await fs.unlink(tempFile);
 
-        return {
-            mimetype: 'image/webp',
-            data: data,
-            filename: media.filename,
-        };
+        return new MessageMedia('image/webp', data, media.filename);
     }
 
     /**

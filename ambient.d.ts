@@ -15,7 +15,9 @@ declare global {
      * Injected by src/util/Injected/Store.js
      */
     Store: {
-      UploadUtils?: any;
+      UploadUtils?: {
+        encryptAndUpload: (args: any) => Promise<any> | any;
+      };
       MDBackend?: any;
       CryptoLib?: any;
       ChatGetters: {
@@ -333,7 +335,7 @@ declare global {
         mediaInfo: { mimetype: string; data: string; [key: string]: any },
         opts: { forceSticker?: boolean; forceGif?: boolean; forceVoice?: boolean; forceDocument?: boolean; forceMediaHd?: boolean; sendToChannel?: boolean }
       ) => Promise<any>;
-
+      processStickerData?: (mediaInfo: { mimetype: string; data: string; [key: string]: any }) => Promise<{ mimetype: string; data: string }>;
     };
     AuthStore?: {
       AppState?: { state?: string, on?: Function, off?: Function };
