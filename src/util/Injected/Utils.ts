@@ -884,8 +884,8 @@ export const LoadUtils = () => {
         if (!window.Store || !window.Store.Conn || !window.Store.Conn.wid || !window.Store.QueryProduct || !window.Store.QueryProduct.queryProduct) {
             throw new Error('window.Store.Conn.wid or window.Store.QueryProduct.queryProduct is not defined');
         }
-        let sellerId = window.Store.Conn.wid;
-        let product = await window.Store.QueryProduct.queryProduct(sellerId, productId);
+        const sellerId = window.Store.Conn.wid;
+        const product = await window.Store.QueryProduct.queryProduct(sellerId, productId);
         if (product && product.data) {
             return product.data;
         }

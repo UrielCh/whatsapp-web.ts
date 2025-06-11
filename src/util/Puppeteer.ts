@@ -1,4 +1,4 @@
-import puppeteer from 'puppeteer';
+import type { Page } from 'puppeteer';
 
 /**
  * Expose a function to the page if it does not exist
@@ -12,14 +12,16 @@ import puppeteer from 'puppeteer';
  * @param {string} name
  * @param {Function} fn
  */
-async function exposeFunctionIfAbsent(page: puppeteer.Page, name: string, fn: Function) {
-    const exist = await page.evaluate((name) => {
-        return !!window[name];
-    }, name);
-    if (exist) {
-        return;
-    }
+async function exposeFunctionIfAbsent(page: Page, name: string, fn: Function): Promise<void> {
+    // const exist = await page.evaluate((name: string) => { return !!window[name]; }, name);
+    const exist = await page.evaluate((name: string) => !!window[name], name);
+    if (exist) return;
     await page.exposeFunction(name, fn);
+    const check2 = await page.evaluate((name: string) => !!window[name], name);
+    if (check2)
+        console.log("✅ exposeFunctionIfAbsent is now exposed: ", name);
+    else
+        console.log("❌ exposeFunctionIfAbsent failed to expose: ", name);
 }
 
 export {exposeFunctionIfAbsent};

@@ -1,6 +1,30 @@
 import type { UnsubscribeOptions } from "./src/Client.ts";
+import type { CallData } from "./src/structures/Call.ts";
 import type Contact from "./src/structures/Contact.ts";
 import type MessageMedia from "./src/structures/MessageMedia.ts";
+
+export interface SerializedCnx {
+    clientToken: undefined,
+    connected: undefined,
+    id: "1" | string,
+    is24h: undefined,
+    isResponse: undefined,
+    lc: undefined,
+    lg: undefined,
+    locales: undefined,
+    phone: undefined,
+    platform: "android",
+    protoVersion: undefined,
+    pushname: string; // "Whatsapp name"
+    ref: string; // base-64 string (len: 102)
+    refId: undefined,
+    refTTL: 60000,
+    secret: undefined,
+    serverToken: undefined,
+    smbTos: 0,
+    tos: undefined,
+    wid: undefined
+}
 
 // global.d.ts or src/types/whatsapp.d.ts
 declare global {
@@ -70,7 +94,7 @@ declare global {
         platform?: string;
         on?: Function;
         ref?: string;
-        serialize?: () => any;
+        serialize?: () => SerializedCnx;
         canSetMyPushname?: () => boolean;
         battery?: number;
         plugged?: boolean;
@@ -245,7 +269,10 @@ declare global {
       BotProfiles?: any;
       ContactCollection?: any;
       DeviceList?: any;
-      NumberInfo?: any;
+      NumberInfo?: {
+        findCC: (numberId: string) => string;
+        formattedPhoneNumber: (numberId: string) => string;
+      };
       ForwardUtils?: any;
       VCard?: any;
       StickerTools?: any;
@@ -341,28 +368,7 @@ declare global {
       AppState?: { state?: string, on?: Function, off?: Function };
       Cmd?: { on?: Function };
       Conn?: {
-        serialize?: () => {
-          clientToken: undefined,
-          connected: undefined,
-          id: "1",
-          is24h: undefined,
-          isResponse: undefined,
-          lc: undefined,
-          lg: undefined,
-          locales: undefined,
-          phone: undefined,
-          platform: "android",
-          protoVersion: undefined,
-          pushname: string; // "Whatsapp name"
-          ref: string; // base-64 string (len: 102)
-          refId: undefined,
-          refTTL: 60000,
-          secret: undefined,
-          serverToken: undefined,
-          smbTos: 0,
-          tos: undefined,
-          wid: undefined
-        },
+        serialize?: () => SerializedCnx,
         ref?: string,
         on?: Function,
       };
@@ -386,7 +392,7 @@ declare global {
     onEditMessageEvent?: (msg: any, newBody: any, prevBody: any) => void;
     onAppStateChangedEvent?: (state: string) => void;
     onBatteryStateChangedEvent?: (state: any) => void;
-    onIncomingCall?: (call: any) => void;
+    onIncomingCall?: (call: CallData) => void;
     onRemoveChatEvent?: (chat: any) => void;
     onArchiveChatEvent?: (chat: any, currState: any, prevState: any) => void;
     onAddMessageEvent?: (msg: any) => void;

@@ -12,7 +12,7 @@ const client = new Client({
 // client initialize does not finish at ready now.
 client.initialize();
 
-client.on('loading_screen', (percent, message) => {
+client.on('loading_screen', (percent: number, message: "WhatsApp") => {
     console.log(`LOADING SCREEN ${percent}% message:${message}`);
 });
 
