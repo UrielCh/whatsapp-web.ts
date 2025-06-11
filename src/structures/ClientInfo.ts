@@ -1,6 +1,6 @@
-import Client from "../Client.ts";
+import type Client from "../Client.ts";
 import Base from './Base.js';
-import { ContactId } from './Contact.js';
+import type { ContactId } from './Contact.js';
 
 /** 
  * Information about the phone this client is connected to 

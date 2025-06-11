@@ -1,5 +1,44 @@
-import Client from '../Client.js';
+import type Client from '../Client.js';
 import Base from './Base.js';
+
+export interface CallData {
+    /**
+     * Call id
+     */
+    id: string;
+    /**
+     * Who called
+     */
+    peerJid: string;
+    /**
+     * Unix timestamp for when the call was created
+     */
+    offerTime: number;
+    /**
+     * if is video
+     */
+    isVideo: boolean;
+    /**
+     * if is group
+     */
+    isGroup: boolean;
+    /**
+     * if is outgoing
+     */
+    outgoing: boolean;
+    /**
+     * if we can handle in waweb
+     */
+    canHandleLocally: boolean;
+    /**
+     * If Waweb should handle
+     */
+    webClientShouldHandle: boolean;
+    /**
+     * Object with participants
+     */
+    participants: object;
+}
 
 /**
  * Represents a Call on WhatsApp
@@ -37,13 +76,13 @@ class Call extends Base {
     /** Object with participants */
     participants: object;
 
-    constructor(client: Client, data: any) {
+    constructor(client: Client, data: CallData) {
         super(client);
 
         if (data) this._patch(data);
     }
 
-    override _patch(data: any): any {
+    override _patch(data: CallData): any {
         /**
          * Call ID
          * @type {string}

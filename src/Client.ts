@@ -1,6 +1,6 @@
 import process from 'node:process';
 import EventEmitter from 'node:events';
-import puppeteer, { type EvaluateFunc } from 'puppeteer';
+import puppeteer, { type EvaluateFunc, ProtocolError } from 'puppeteer';
 import { ModuleRaid } from './util/moduleraid.js';
 
 import Util from './util/Util.js';
@@ -28,6 +28,7 @@ import type { TransferChannelOwnershipOptions } from './structures/Channel.js';
 import type { BatteryInfo } from './structures/ClientInfo.js';
 import { hideModuleRaid } from './payloads.js';
 import fs from 'node:fs/promises';
+import { CallData } from "./structures/Call.ts";
 
 const useLog = process.env.USE_LOG === "true";
 
@@ -309,7 +310,7 @@ interface ClientEventsInterface {
     ) => void): this
     
     /** Emitted when loading screen is appearing */
-    on(event: 'loading_screen', listener: (percent: string, message: string) => void): this
+    on(event: 'loading_screen', listener: (percent: number, message: "WhatsApp") => void): this
     
     /** Emitted when the QR code is received */
     on(event: 'qr', listener: (
@@ -446,34 +447,41 @@ class Client extends EventEmitter implements ClientEventsInterface {
     public async evaluate<Params extends unknown[], Func extends EvaluateFunc<Params> = EvaluateFunc<Params>>(pageFunction: Func | string, ...args: Params): Promise<Awaited<ReturnType<Func>>> {
         const asStr = this.serializeFunctionWithArgs(pageFunction, args);
         try {
+            let lastError: Error | undefined;
             // check evaluateOnNewDocument
             await logger.log(asStr);
-            const result = await this.pupPage.evaluate(asStr);
-            return result as any;
+            let result: Awaited<ReturnType<Func>>;
+            for (let i = 0; i < 2; i++) {
+                try {
+                    result = await this.pupPage.evaluate(asStr) as Awaited<ReturnType<Func>>;
+                    lastError = undefined;
+                } catch (error) {
+                    lastError = error;
+                    //  ERROR: ProtocolError: Runtime.evaluate timed out. Increase the 'protocolTimeout' setting in launch/connect calls for a higher timeout if needed.
+                    if (error instanceof ProtocolError && error.message.includes('Runtime.evaluate timed out')) {
+                        // retry once
+                        continue;
+                    }
+                    // Let it go crash
+                    throw error;
+                }
+            }
+            if (lastError) {
+                throw lastError;
+            }
+            return result as Awaited<ReturnType<Func>>;
         } catch (error) {
             // debugger;
-            throw new Error(`Failed to evaluate function: ${asStr.substring(0, 100)}...\n ERROR: ${error}`);
+            throw new Error(`ERROR: ${error}\n\nFailed to evaluate function: ${asStr.substring(0, 500)}...\n`);
         }
     }
 
     /**
-     * Injection logic
-     * Private function
+     * Waits for the UNPAIRED state
+     * @returns {Promise<'UNPAIRED' | 'UNPAIRED_IDLE'>}
      */
-    async inject(): Promise<void> {
-        // wait for window.Debug to be defined
-        const ready = await this.pupPage.waitForFunction('window.Debug?.VERSION != undefined', {timeout: this.options.authTimeoutMs});
-
-        const version = await this.getWWebVersion();
-        const isCometOrAbove = parseInt(version.split('.')?.[1]) >= 3000;
-
-        if (isCometOrAbove) {
-            await this.evaluate(ExposeAuthStore);
-        } else {
-            await this.evaluate(ExposeLegacyAuthStore, ModuleRaid.toString());
-        }
-
-        const needAuthentication = await this.evaluate(async () => {
+    private async waitForUNPAIREDState(): Promise<typeof WAState[keyof typeof WAState]> {
+        const currentState = await this.evaluate(async () => {
             let state = window.AuthStore.AppState.state;
 
             if (state === 'OPENING' || state === 'UNLAUNCHED' || state === 'PAIRING') {
@@ -488,10 +496,39 @@ class Client extends EventEmitter implements ClientEventsInterface {
                 }); 
             }
             state = window.AuthStore.AppState.state;
-            return state == 'UNPAIRED' || state == 'UNPAIRED_IDLE';
+            return state;
         });
+        return currentState as typeof WAState[keyof typeof WAState];
+    }
 
-        if (needAuthentication) {
+    /**
+     * Exposes a function to the page if it is not already exposed
+     */
+    private exposeFunction(name: string, fn: Function): Promise<void> {
+        return exposeFunctionIfAbsent(this.pupPage, name, fn);
+    }
+
+    /**
+     * Injection logic
+     * Private function
+     */
+    async inject(): Promise<void> {
+        // wait for window.Debug to be defined
+        // await this.pupPage.waitForFunction('window.Debug?.VERSION != undefined', {timeout: this.options.authTimeoutMs});
+        // const waitHandler = await this.pupPage.waitForFunction('window.Debug?.VERSION', {timeout: this.options.authTimeoutMs});
+        // const version0 = await waitHandler.jsonValue()
+        const version = await this.getWWebVersion();
+        const isCometOrAbove = parseInt(version.split('.')?.[1] ?? '0') >= 3000;
+
+        if (isCometOrAbove) {
+            await this.evaluate(ExposeAuthStore);
+        } else {
+            await this.evaluate(ExposeLegacyAuthStore, ModuleRaid.toString());
+        }
+
+        const currentState = await this.waitForUNPAIREDState();
+
+        if (currentState === 'UNPAIRED' || currentState === 'UNPAIRED_IDLE') {
             const { failed, failureEventPayload, restart } = await this.authStrategy.onAuthenticationNeeded();
 
             if(failed) {
@@ -511,7 +548,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
 
             // Register qr events
             let qrRetries = 0;
-            await exposeFunctionIfAbsent(this.pupPage, 'onQRChangedEvent', async (qr: string) => {
+            await this.exposeFunction('onQRChangedEvent', async (qr: string) => {
                 /**
                 * Emitted when a QR code is received
                 * @event Client#qr
@@ -528,38 +565,39 @@ class Client extends EventEmitter implements ClientEventsInterface {
             });
 
             await this.evaluate(async () => {
-                const registrationInfo = await window.AuthStore.RegistrationUtils.waSignalStore.getRegistrationInfo();
-                const noiseKeyPair = await window.AuthStore.RegistrationUtils.waNoiseInfo.get();
-                const staticKeyB64 = window.AuthStore.Base64Tools.encodeB64(noiseKeyPair.staticKeyPair.pubKey);
-                const identityKeyB64 = window.AuthStore.Base64Tools.encodeB64(registrationInfo.identityKeyPair.pubKey);
-                const advSecretKey = await window.AuthStore.RegistrationUtils.getADVSecretKey();
-                const platform =  window.AuthStore.RegistrationUtils.DEVICE_PLATFORM;
-                const getQR = (ref) => ref + ',' + staticKeyB64 + ',' + identityKeyB64 + ',' + advSecretKey + ',' + platform;
+                const { AuthStore } = window;
+                const registrationInfo = await AuthStore.RegistrationUtils.waSignalStore.getRegistrationInfo();
+                const noiseKeyPair = await AuthStore.RegistrationUtils.waNoiseInfo.get();
+                const staticKeyB64 = AuthStore.Base64Tools.encodeB64(noiseKeyPair.staticKeyPair.pubKey);
+                const identityKeyB64 = AuthStore.Base64Tools.encodeB64(registrationInfo.identityKeyPair.pubKey);
+                const advSecretKey = await AuthStore.RegistrationUtils.getADVSecretKey();
+                const platform = AuthStore.RegistrationUtils.DEVICE_PLATFORM;
+                const getQR = (ref: string) => ref + ',' + staticKeyB64 + ',' + identityKeyB64 + ',' + advSecretKey + ',' + platform;
                 
-                window.onQRChangedEvent(getQR(window.AuthStore.Conn.ref)); // initial qr
-                window.AuthStore.Conn.on('change:ref', (_, ref) => { window.onQRChangedEvent(getQR(ref)); }); // future QR changes
+                window.onQRChangedEvent(getQR(AuthStore.Conn.ref)); // initial qr
+                window.AuthStore.Conn.on('change:ref', (_, ref: string) => { window.onQRChangedEvent(getQR(ref)); }); // future QR changes
             });
         }
         
         /**
-         * @param {"OPENING" | "UNPAIRED_IDLE" | string} state WAState
+         * @param {WAState[keyof typeof WAState]} state WAState
          */
-        await exposeFunctionIfAbsent(this.pupPage, 'onAuthAppStateChangedEvent', async (state: "OPENING" | "UNPAIRED_IDLE" | string) => {
+        await this.exposeFunction('onAuthAppStateChangedEvent', (state: typeof WAState[keyof typeof WAState]) => {
             if (state == 'UNPAIRED_IDLE') {
                 // refresh qr code
                 window.Store.Cmd.refreshQR();
             }
         });
 
-        await exposeFunctionIfAbsent(this.pupPage, 'onAppStateHasSyncedEvent', async () => {
+        await this.exposeFunction('onAppStateHasSyncedEvent', async () => {
             const authEventPayload = await this.authStrategy.getAuthEventPayload();
             /**
-                 * Emitted when authentication is successful
-                 * @event Client#authenticated
-                 */
+             * Emitted when authentication is successful
+             * @event Client#authenticated
+             */
             this.emit(Events.AUTHENTICATED, authEventPayload);
 
-            const injected = await this.evaluate(async () => {
+            const injected = await this.evaluate(() => {
                 return typeof window.Store !== 'undefined' && typeof window.WWebJS !== 'undefined';
             });
 
@@ -583,16 +621,13 @@ class Client extends EventEmitter implements ClientEventsInterface {
                 // Check window.Store Injection
                 await this.pupPage.waitForFunction('window.Store != undefined');
             
-                /**
-                     * Current connection information
-                     * @type {ClientInfo}
-                     */
-                this.info = new ClientInfo(this, await this.evaluate(() => {
+                const data = await this.evaluate(() => {
                     return { ...window.Store.Conn.serialize(), wid: window.Store.User.getMeUser() };
-                }));
+                });
+                this.info = new ClientInfo(this, data);
 
                 this.interface = new InterfaceController(this);
-
+                
                 //Load util functions (serializers, helper functions)
                 await this.evaluate(LoadUtils);
 
@@ -606,14 +641,14 @@ class Client extends EventEmitter implements ClientEventsInterface {
             this.authStrategy.afterAuthReady();
         });
 
-        let lastPercent = null;
-        await exposeFunctionIfAbsent(this.pupPage, 'onOfflineProgressUpdateEvent', async (percent: number) => {
+        let lastPercent = -1;
+        await this.exposeFunction('onOfflineProgressUpdateEvent', (percent: number) => {
             if (lastPercent !== percent) {
                 lastPercent = percent;
                 this.emit(Events.LOADING_SCREEN, percent, 'WhatsApp'); // Message is hardcoded as "WhatsApp" for now
             }
         });
-        await exposeFunctionIfAbsent(this.pupPage, 'onLogoutEvent', async () => {
+        await this.exposeFunction('onLogoutEvent', async () => {
             this.lastLoggedOut = true;
             await this.pupPage.waitForNavigation({waitUntil: 'load', timeout: 5000}).catch((_) => _);
         });
@@ -718,47 +753,47 @@ class Client extends EventEmitter implements ClientEventsInterface {
      * @property {boolean} reinject is this a reinject?
      */
     async attachEventListeners() {
-        await exposeFunctionIfAbsent(this.pupPage, 'onAddMessageEvent', msg => {
+        await this.exposeFunction('onAddMessageEvent', msg => {
             if (msg.type === 'gp2') {
                 const notification = new GroupNotification(this, msg);
                 if (['add', 'invite', 'linked_group_join'].includes(msg.subtype)) {
                     /**
-                         * Emitted when a user joins the chat via invite link or is added by an admin.
-                         * @event Client#group_join
-                         * @param {GroupNotification} notification GroupNotification with more information about the action
-                         */
+                     * Emitted when a user joins the chat via invite link or is added by an admin.
+                     * @event Client#group_join
+                     * @param {GroupNotification} notification GroupNotification with more information about the action
+                     */
                     this.emit(Events.GROUP_JOIN, notification);
                 } else if (msg.subtype === 'remove' || msg.subtype === 'leave') {
                     /**
-                         * Emitted when a user leaves the chat or is removed by an admin.
-                         * @event Client#group_leave
-                         * @param {GroupNotification} notification GroupNotification with more information about the action
-                         */
+                     * Emitted when a user leaves the chat or is removed by an admin.
+                     * @event Client#group_leave
+                     * @param {GroupNotification} notification GroupNotification with more information about the action
+                     */
                     this.emit(Events.GROUP_LEAVE, notification);
                 } else if (msg.subtype === 'promote' || msg.subtype === 'demote') {
                     /**
-                         * Emitted when a current user is promoted to an admin or demoted to a regular user.
-                         * @event Client#group_admin_changed
-                         * @param {GroupNotification} notification GroupNotification with more information about the action
-                         */
+                     * Emitted when a current user is promoted to an admin or demoted to a regular user.
+                     * @event Client#group_admin_changed
+                     * @param {GroupNotification} notification GroupNotification with more information about the action
+                     */
                     this.emit(Events.GROUP_ADMIN_CHANGED, notification);
                 } else if (msg.subtype === 'membership_approval_request') {
                     /**
-                         * Emitted when some user requested to join the group
-                         * that has the membership approval mode turned on
-                         * @event Client#group_membership_request
-                         * @param {GroupNotification} notification GroupNotification with more information about the action
-                         * @param {string} notification.chatId The group ID the request was made for
-                         * @param {string} notification.author The user ID that made a request
-                         * @param {number} notification.timestamp The timestamp the request was made at
-                         */
+                     * Emitted when some user requested to join the group
+                     * that has the membership approval mode turned on
+                     * @event Client#group_membership_request
+                     * @param {GroupNotification} notification GroupNotification with more information about the action
+                     * @param {string} notification.chatId The group ID the request was made for
+                     * @param {string} notification.author The user ID that made a request
+                     * @param {number} notification.timestamp The timestamp the request was made at
+                     */
                     this.emit(Events.GROUP_MEMBERSHIP_REQUEST, notification);
                 } else {
                     /**
-                         * Emitted when group settings are updated, such as subject, description or picture.
-                         * @event Client#group_update
-                         * @param {GroupNotification} notification GroupNotification with more information about the action
-                         */
+                     * Emitted when group settings are updated, such as subject, description or picture.
+                     * @event Client#group_update
+                     * @param {GroupNotification} notification GroupNotification with more information about the action
+                     */
                     this.emit(Events.GROUP_UPDATE, notification);
                 }
                 return;
@@ -767,139 +802,122 @@ class Client extends EventEmitter implements ClientEventsInterface {
             const message = new Message(this, msg);
 
             /**
-                 * Emitted when a new message is created, which may include the current user's own messages.
-                 * @event Client#message_create
-                 * @param {Message} message The message that was created
-                 */
+             * Emitted when a new message is created, which may include the current user's own messages.
+             * @event Client#message_create
+             * @param {Message} message The message that was created
+             */
             this.emit(Events.MESSAGE_CREATE, message);
 
             if (msg.id.fromMe) return;
 
             /**
-                 * Emitted when a new message is received.
-                 * @event Client#message
-                 * @param {Message} message The message that was received
-                 */
+             * Emitted when a new message is received.
+             * @event Client#message
+             * @param {Message} message The message that was received
+             */
             this.emit(Events.MESSAGE_RECEIVED, message);
         });
 
         let last_message;
 
-        await exposeFunctionIfAbsent(this.pupPage, 'onChangeMessageTypeEvent', (msg) => {
-
+        await this.exposeFunction('onChangeMessageTypeEvent', (msg) => {
             if (msg.type === 'revoked') {
                 const message = new Message(this, msg);
                 let revoked_msg;
                 if (last_message && msg.id.id === last_message.id.id) {
                     revoked_msg = new Message(this, last_message);
                 }
-
                 /**
-                     * Emitted when a message is deleted for everyone in the chat.
-                     * @event Client#message_revoke_everyone
-                     * @param {Message} message The message that was revoked, in its current state. It will not contain the original message's data.
-                     * @param {?Message} revoked_msg The message that was revoked, before it was revoked. It will contain the message's original data. 
-                     * Note that due to the way this data is captured, it may be possible that this param will be undefined.
-                     */
+                 * Emitted when a message is deleted for everyone in the chat.
+                 * @event Client#message_revoke_everyone
+                 * @param {Message} message The message that was revoked, in its current state. It will not contain the original message's data.
+                 * @param {?Message} revoked_msg The message that was revoked, before it was revoked. It will contain the message's original data. 
+                 * Note that due to the way this data is captured, it may be possible that this param will be undefined.
+                 */
                 this.emit(Events.MESSAGE_REVOKED_EVERYONE, message, revoked_msg);
             }
 
         });
 
-        await exposeFunctionIfAbsent(this.pupPage, 'onChangeMessageEvent', (msg) => {
-
+        await this.exposeFunction('onChangeMessageEvent', (msg) => {
             if (msg.type !== 'revoked') {
                 last_message = msg;
             }
-
             /**
-                 * The event notification that is received when one of
-                 * the group participants changes their phone number.
-                 */
+             * The event notification that is received when one of
+             * the group participants changes their phone number.
+             */
             const isParticipant = msg.type === 'gp2' && msg.subtype === 'modify';
-
             /**
-                 * The event notification that is received when one of
-                 * the contacts changes their phone number.
-                 */
+             * The event notification that is received when one of
+             * the contacts changes their phone number.
+             */
             const isContact = msg.type === 'notification_template' && msg.subtype === 'change_number';
-
             if (isParticipant || isContact) {
                 /** @type {GroupNotification} object does not provide enough information about this event, so a @type {Message} object is used. */
-                const message = new Message(this, msg);
-
+                const message: Message = new Message(this, msg);
                 const newId = isParticipant ? msg.recipients[0] : msg.to;
-                const oldId = isParticipant ? msg.author : msg.templateParams.find(id => id !== newId);
-
+                const oldId = isParticipant ? msg.author : msg.templateParams.find((id: string) => id !== newId);
                 /**
-                     * Emitted when a contact or a group participant changes their phone number.
-                     * @event Client#contact_changed
-                     * @param {Message} message Message with more information about the event.
-                     * @param {String} oldId The user's id (an old one) who changed their phone number
-                     * and who triggered the notification.
-                     * @param {String} newId The user's new id after the change.
-                     * @param {Boolean} isContact Indicates if a contact or a group participant changed their phone number.
-                     */
+                 * Emitted when a contact or a group participant changes their phone number.
+                 * @event Client#contact_changed
+                 * @param {Message} message Message with more information about the event.
+                 * @param {String} oldId The user's id (an old one) who changed their phone number
+                 * and who triggered the notification.
+                 * @param {String} newId The user's new id after the change.
+                 * @param {Boolean} isContact Indicates if a contact or a group participant changed their phone number.
+                 */
                 this.emit(Events.CONTACT_CHANGED, message, oldId, newId, isContact);
             }
         });
 
-        await exposeFunctionIfAbsent(this.pupPage, 'onRemoveMessageEvent', (msg) => {
-
+        await this.exposeFunction('onRemoveMessageEvent', (msg: { isNewMsg: boolean }) => {
             if (!msg.isNewMsg) return;
-
             const message = new Message(this, msg);
-
             /**
-                 * Emitted when a message is deleted by the current user.
-                 * @event Client#message_revoke_me
-                 * @param {Message} message The message that was revoked
-                 */
+             * Emitted when a message is deleted by the current user.
+             * @event Client#message_revoke_me
+             * @param {Message} message The message that was revoked
+             */
             this.emit(Events.MESSAGE_REVOKED_ME, message);
-
         });
 
-        await exposeFunctionIfAbsent(this.pupPage, 'onMessageAckEvent', (msg, ack) => {
-
+        await this.exposeFunction('onMessageAckEvent', (msg, ack) => {
             const message = new Message(this, msg);
-
             /**
-                 * Emitted when an ack event occurrs on message type.
-                 * @event Client#message_ack
-                 * @param {Message} message The message that was affected
-                 * @param {MessageAck} ack The new ACK value
-                 */
+             * Emitted when an ack event occurrs on message type.
+             * @event Client#message_ack
+             * @param {Message} message The message that was affected
+             * @param {MessageAck} ack The new ACK value
+             */
             this.emit(Events.MESSAGE_ACK, message, ack);
 
         });
 
-        await exposeFunctionIfAbsent(this.pupPage, 'onChatUnreadCountEvent', async (data) =>{
+        await this.exposeFunction('onChatUnreadCountEvent', async (data: { id: string }) =>{
             const chat = await this.getChatById(data.id);
-                
             /**
-                 * Emitted when the chat unread count changes
-                 */
+             * Emitted when the chat unread count changes
+             */
             this.emit(Events.UNREAD_COUNT, chat);
         });
 
-        await exposeFunctionIfAbsent(this.pupPage, 'onMessageMediaUploadedEvent', (msg) => {
-
+        await this.exposeFunction('onMessageMediaUploadedEvent', (msg) => {
             const message = new Message(this, msg);
-
             /**
-                 * Emitted when media has been uploaded for a message sent by the client.
-                 * @event Client#media_uploaded
-                 * @param {Message} message The message with media that was uploaded
-                 */
+             * Emitted when media has been uploaded for a message sent by the client.
+             * @event Client#media_uploaded
+             * @param {Message} message The message with media that was uploaded
+             */
             this.emit(Events.MEDIA_UPLOADED, message);
         });
 
-        await exposeFunctionIfAbsent(this.pupPage, 'onAppStateChangedEvent', async (state) => {
+        await this.exposeFunction('onAppStateChangedEvent', async (state) => {
             /**
-                 * Emitted when the connection state changes
-                 * @event Client#change_state
-                 * @param {WAState} state the new connection state
-                 */
+             * Emitted when the connection state changes
+             * @event Client#change_state
+             * @param {WAState} state the new connection state
+             */
             this.emit(Events.STATE_CHANGED, state);
 
             const ACCEPTED_STATES: typeof WAState[keyof typeof WAState][] = [WAState.CONNECTED, WAState.OPENING, WAState.PAIRING, WAState.TIMEOUT];
@@ -916,121 +934,105 @@ class Client extends EventEmitter implements ClientEventsInterface {
 
             if (!ACCEPTED_STATES.includes(state)) {
                 /**
-                     * Emitted when the client has been disconnected
-                     * @event Client#disconnected
-                     * @param {WAState|"LOGOUT"} reason reason that caused the disconnect
-                     */
+                 * Emitted when the client has been disconnected
+                 * @event Client#disconnected
+                 * @param {WAState|"LOGOUT"} reason reason that caused the disconnect
+                 */
                 await this.authStrategy.disconnect();
                 this.emit(Events.DISCONNECTED, state);
                 this.destroy();
             }
         });
 
-        await exposeFunctionIfAbsent(this.pupPage, 'onBatteryStateChangedEvent', (state) => {
+        await this.exposeFunction('onBatteryStateChangedEvent', (state) => {
             const { battery, plugged } = state;
 
             if (battery === undefined) return;
 
             /**
-                 * Emitted when the battery percentage for the attached device changes. Will not be sent if using multi-device.
-                 * @event Client#change_battery
-                 * @param {object} batteryInfo
-                 * @param {number} batteryInfo.battery - The current battery percentage
-                 * @param {boolean} batteryInfo.plugged - Indicates if the phone is plugged in (true) or not (false)
-                 * @deprecated
-                 */
+             * Emitted when the battery percentage for the attached device changes. Will not be sent if using multi-device.
+             * @event Client#change_battery
+             * @param {object} batteryInfo
+             * @param {number} batteryInfo.battery - The current battery percentage
+             * @param {boolean} batteryInfo.plugged - Indicates if the phone is plugged in (true) or not (false)
+             * @deprecated
+             */
             this.emit(Events.BATTERY_CHANGED, { battery, plugged });
         });
 
-        await exposeFunctionIfAbsent(this.pupPage, 'onIncomingCall', (call) => {
-            /**
-                 * Emitted when a call is received
-                 * @event Client#incoming_call
-                 * @param {object} call
-                 * @param {number} call.id - Call id
-                 * @param {string} call.peerJid - Who called
-                 * @param {boolean} call.isVideo - if is video
-                 * @param {boolean} call.isGroup - if is group
-                 * @param {boolean} call.canHandleLocally - if we can handle in waweb
-                 * @param {boolean} call.outgoing - if is outgoing
-                 * @param {boolean} call.webClientShouldHandle - If Waweb should handle
-                 * @param {object} call.participants - Participants
-                 */
+        await this.exposeFunction('onIncomingCall', (call: CallData) => {
             const cll = new Call(this, call);
             this.emit(Events.INCOMING_CALL, cll);
         });
 
-        await exposeFunctionIfAbsent(this.pupPage, 'onReaction', (reactions) => {
+        await this.exposeFunction('onReaction', (reactions) => {
             for (const reaction of reactions) {
                 /**
-                     * Emitted when a reaction is sent, received, updated or removed
-                     * @event Client#message_reaction
-                     * @param {object} reaction
-                     * @param {object} reaction.id - Reaction id
-                     * @param {number} reaction.orphan - Orphan
-                     * @param {?string} reaction.orphanReason - Orphan reason
-                     * @param {number} reaction.timestamp - Timestamp
-                     * @param {string} reaction.reaction - Reaction
-                     * @param {boolean} reaction.read - Read
-                     * @param {object} reaction.msgId - Parent message id
-                     * @param {string} reaction.senderId - Sender id
-                     * @param {?number} reaction.ack - Ack
-                     */
+                 * Emitted when a reaction is sent, received, updated or removed
+                 * @event Client#message_reaction
+                 * @param {object} reaction
+                 * @param {object} reaction.id - Reaction id
+                 * @param {number} reaction.orphan - Orphan
+                 * @param {?string} reaction.orphanReason - Orphan reason
+                 * @param {number} reaction.timestamp - Timestamp
+                 * @param {string} reaction.reaction - Reaction
+                 * @param {boolean} reaction.read - Read
+                 * @param {object} reaction.msgId - Parent message id
+                 * @param {string} reaction.senderId - Sender id
+                 * @param {?number} reaction.ack - Ack
+                 */
 
                 this.emit(Events.MESSAGE_REACTION, new Reaction(this, reaction));
             }
         });
 
-        await exposeFunctionIfAbsent(this.pupPage, 'onRemoveChatEvent', async (chat) => {
+        await this.exposeFunction('onRemoveChatEvent', async (chat) => {
             const _chat = await this.getChatById(chat.id);
 
             /**
-                 * Emitted when a chat is removed
-                 * @event Client#chat_removed
-                 * @param {Chat} chat
-                 */
+             * Emitted when a chat is removed
+             * @event Client#chat_removed
+             * @param {Chat} chat
+             */
             this.emit(Events.CHAT_REMOVED, _chat);
         });
             
-        await exposeFunctionIfAbsent(this.pupPage, 'onArchiveChatEvent', async (chat, currState, prevState) => {
+        await this.exposeFunction('onArchiveChatEvent', async (chat, currState, prevState) => {
             const _chat = await this.getChatById(chat.id);
-                
             /**
-                 * Emitted when a chat is archived/unarchived
-                 * @event Client#chat_archived
-                 * @param {Chat} chat
-                 * @param {boolean} currState
-                 * @param {boolean} prevState
-                 */
+             * Emitted when a chat is archived/unarchived
+             * @event Client#chat_archived
+             * @param {Chat} chat
+             * @param {boolean} currState
+             * @param {boolean} prevState
+             */
             this.emit(Events.CHAT_ARCHIVED, _chat, currState, prevState);
         });
 
-        await exposeFunctionIfAbsent(this.pupPage, 'onEditMessageEvent', (msg, newBody, prevBody) => {
-                
+        await this.exposeFunction('onEditMessageEvent', (msg, newBody, prevBody) => {
             if(msg.type === 'revoked'){
                 return;
             }
             /**
-                 * Emitted when messages are edited
-                 * @event Client#message_edit
-                 * @param {Message} message
-                 * @param {string} newBody
-                 * @param {string} prevBody
-                 */
+             * Emitted when messages are edited
+             * @event Client#message_edit
+             * @param {Message} message
+             * @param {string} newBody
+             * @param {string} prevBody
+             */
             this.emit(Events.MESSAGE_EDIT, new Message(this, msg), newBody, prevBody);
         });
             
-        await exposeFunctionIfAbsent(this.pupPage, 'onAddMessageCiphertextEvent', msg => {
-                
+        await this.exposeFunction('onAddMessageCiphertextEvent', msg => {
             /**
-                 * Emitted when messages are edited
-                 * @event Client#message_ciphertext
-                 * @param {Message} message
-                 */
+             * Emitted when messages are edited
+             * @event Client#message_ciphertext
+             * @param {Message} message
+             */
             this.emit(Events.MESSAGE_CIPHERTEXT, new Message(this, msg));
         });
 
-        await exposeFunctionIfAbsent(this.pupPage, 'onPollVoteEvent', (vote) => {
+        await this.exposeFunction('onPollVoteEvent', (vote) => {
             const _vote = new PollVote(this, vote);
             /**
              * Emitted when some poll option is selected or deselected,
@@ -1049,7 +1051,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
             window.Store.Msg.on('change:body change:caption', (msg, newBody, prevBody) => { window.onEditMessageEvent(window.WWebJS.getMessageModel(msg), newBody, prevBody); });
             window.Store.AppState.on('change:state', (_AppState, state) => { window.onAppStateChangedEvent(state); });
             window.Store.Conn.on('change:battery', (state) => { window.onBatteryStateChangedEvent(state); });
-            window.Store.Call.on('add', (call) => { window.onIncomingCall(call); });
+            window.Store.Call.on('add', (call: CallData) => { window.onIncomingCall(call); });
             window.Store.Chat.on('remove', async (chat) => { window.onRemoveChatEvent(await window.WWebJS.getChatModel(chat)); });
             window.Store.Chat.on('change:archive', async (chat, currState, prevState) => { window.onArchiveChatEvent(await window.WWebJS.getChatModel(chat), currState, prevState); });
             window.Store.Msg.on('add', (msg) => { 
@@ -1106,13 +1108,11 @@ class Client extends EventEmitter implements ClientEventsInterface {
     async initWebVersionCache() {
         const { type: webCacheType, ...webCacheOptions } = this.options.webVersionCache;
         const webCache = WebCacheFactory.createWebCache(webCacheType, webCacheOptions);
-
         const requestedVersion = this.options.webVersion;
         const versionContent = await webCache.resolve(requestedVersion);
-
         if(versionContent) {
             await this.pupPage.setRequestInterception(true);
-            this.pupPage.on('request', async (req) => {
+            this.pupPage.on('request', (req) => {
                 if(req.url() === WhatsWebURL) {
                     req.respond({
                         status: 200,
@@ -1163,12 +1163,17 @@ class Client extends EventEmitter implements ClientEventsInterface {
 
     /**
      * Returns the version of WhatsApp Web currently being run
+     * if the page is not ready, it will wait for it to be ready
+     * @param timeout timeout in milliseconds
      * @returns {Promise<string>}
      */
-    async getWWebVersion(): Promise<string> {
-        return await this.evaluate(() => {
-            return window.Debug.VERSION;
-        });
+    async getWWebVersion(timeout?: number): Promise<string> {
+        const waitHandler = await this.pupPage.waitForFunction('window.Debug?.VERSION', {timeout: timeout ?? this.options.authTimeoutMs});
+        const version = await waitHandler.jsonValue();
+        return version as string;
+        //return await this.evaluate(() => {
+        //    return window.Debug.VERSION;
+        //});
     }
 
     /**
@@ -1178,7 +1183,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
      * 
      */
     async sendSeen(chatId: string): Promise<boolean> {
-        return await this.evaluate(async (chatId) => {
+        return await this.evaluate((chatId: string) => {
             if (!window.WWebJS || !window.WWebJS.sendSeen) {
                 throw new Error('window.WWebJS.sendSeen is not defined');
             }
@@ -1214,7 +1219,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
 
         options.groupMentions && !Array.isArray(options.groupMentions) && (options.groupMentions = [options.groupMentions]);
         
-        let internalOptions = {
+        const internalOptions = {
             linkPreview: options.linkPreview === false ? undefined : true,
             sendAudioAsVoice: options.sendAudioAsVoice,
             sendVideoAsGif: options.sendVideoAsGif,
@@ -1435,7 +1440,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
      * @returns {Promise<Array<Contact>>}
      */
     async getContacts(): Promise<Contact[]> {
-        let contacts = await this.evaluate(() => {
+        const contacts = await this.evaluate(() => {
             if (!window.WWebJS || !window.WWebJS.getContacts) {
                 throw new Error('window.WWebJS.getContacts is not defined');
             }
@@ -1451,7 +1456,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
      * @returns {Promise<Contact>}
      */
     async getContactById(contactId: string): Promise<Contact> {
-        let contact = await this.evaluate(contactId => {
+        const contact = await this.evaluate(contactId => {
             if (!window.WWebJS || !window.WWebJS.getContact) {
                 throw new Error('window.WWebJS.getContact is not defined');
             }
@@ -1472,7 +1477,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
             const params = messageId.split('_');
             if (params.length !== 3 && params.length !== 4) throw new Error('Invalid serialized message id specified');
 
-            let messagesObject = await window.Store.Msg.getMessagesById([messageId]);
+            const messagesObject = await window.Store.Msg.getMessagesById([messageId]);
             if (messagesObject && messagesObject.messages.length) msg = messagesObject.messages[0];
             
             if(msg) return window.WWebJS.getMessageModel(msg);
@@ -1584,12 +1589,12 @@ class Client extends EventEmitter implements ClientEventsInterface {
     async acceptGroupV4Invite(inviteInfo: InviteV4Data): Promise<{status: number}> {
         if (!inviteInfo.inviteCode) throw 'Invalid invite code, try passing the message.inviteV4 object';
         if (inviteInfo.inviteCodeExp == 0) throw 'Expired invite code';
-        return this.evaluate(async inviteInfo => {
+        return await this.evaluate(async inviteInfo => {
             if (!window.Store || !window.Store.WidFactory || !window.Store.WidFactory.createWid || !window.Store.GroupInviteV4 || !window.Store.GroupInviteV4.joinGroupViaInviteV4) {
                 throw new Error('window.Store.WidFactory.createWid or window.Store.GroupInviteV4.joinGroupViaInviteV4 is not defined');
             }
-            let { groupId, fromId, inviteCode, inviteCodeExp } = inviteInfo;
-            let userWid = window.Store.WidFactory.createWid(fromId);
+            const { groupId, fromId, inviteCode, inviteCodeExp } = inviteInfo;
+            const userWid = window.Store.WidFactory.createWid(fromId);
             return await window.Store.GroupInviteV4.joinGroupViaInviteV4(inviteCode, String(inviteCodeExp), groupId, userWid);
         }, inviteInfo);
     }
@@ -1671,7 +1676,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
             if (!window.WWebJS || !window.WWebJS.getChat || !window.Store || !window.Store.Cmd || !window.Store.Cmd.archiveChat) {
                 throw new Error('window.WWebJS.getChat or window.Store.Cmd.archiveChat is not defined');
             }
-            let chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
+            const chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
             await window.Store.Cmd.archiveChat(chat, true);
             return true;
         }, chatId);
@@ -1686,7 +1691,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
             if (!window.WWebJS || !window.WWebJS.getChat || !window.Store || !window.Store.Cmd || !window.Store.Cmd.archiveChat) {
                 throw new Error('window.WWebJS.getChat or window.Store.Cmd.archiveChat is not defined');
             }
-            let chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
+            const chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
             await window.Store.Cmd.archiveChat(chat, false);
             return false;
         }, chatId);
@@ -1701,14 +1706,14 @@ class Client extends EventEmitter implements ClientEventsInterface {
             if (!window.WWebJS || !window.WWebJS.getChat || !window.Store || !window.Store.Chat || !window.Store.Chat.getModelsArray || !window.Store.Cmd || !window.Store.Cmd.pinChat) {
                 throw new Error('window.WWebJS.getChat or window.Store.Chat.getModelsArray or window.Store.Cmd.pinChat is not defined');
             }
-            let chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
+            const chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
             if (chat.pin) {
                 return true;
             }
             const MAX_PIN_COUNT = 3;
             const chatModels = window.Store.Chat.getModelsArray();
             if (chatModels.length > MAX_PIN_COUNT) {
-                let maxPinned = chatModels[MAX_PIN_COUNT - 1].pin;
+                const maxPinned = chatModels[MAX_PIN_COUNT - 1].pin;
                 if (maxPinned) {
                     return false;
                 }
@@ -1785,7 +1790,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
             if (!window.WWebJS || !window.WWebJS.getChat || !window.Store || !window.Store.Cmd || !window.Store.Cmd.markChatUnread) {
                 throw new Error('window.WWebJS.getChat or window.Store.Cmd.markChatUnread is not defined');
             }
-            let chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
+            const chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
             await window.Store.Cmd.markChatUnread(chat, true);
         }, chatId);
     }
@@ -1898,7 +1903,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
         if (!number.endsWith('@s.whatsapp.net')) number = number.replace('c.us', 's.whatsapp.net');
         if (!number.includes('@s.whatsapp.net')) number = `${number}@s.whatsapp.net`;
 
-        return await this.evaluate(async numberId => {
+        return await this.evaluate(numberId => {
             if (!window.Store || !window.Store.NumberInfo || !window.Store.NumberInfo.formattedPhoneNumber) {
                 throw new Error('window.Store.NumberInfo.formattedPhoneNumber is not defined');
             }
@@ -1914,7 +1919,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
     async getCountryCode(number: string): Promise<string> {
         number = number.replace(' ', '').replace('+', '').replace('@c.us', '');
 
-        return await this.evaluate(async numberId => {
+        return await this.evaluate(numberId => {
             if (!window.Store || !window.Store.NumberInfo || !window.Store.NumberInfo.findCC) {
                 throw new Error('window.Store.NumberInfo.findCC is not defined');
             }
@@ -1948,7 +1953,6 @@ class Client extends EventEmitter implements ClientEventsInterface {
             }
             const { messageTimer = 0, parentGroupId, autoSendInviteV4 = true, comment = '' } = options;
             const participantData = {}, participantWids = [], failedParticipants = [];
-            let createGroupResult, parentGroupWid;
 
             const addParticipantResultCodes = {
                 default: 'An unknown error occupied while adding a participant',
@@ -1963,8 +1967,10 @@ class Client extends EventEmitter implements ClientEventsInterface {
                 else failedParticipants.push(participant);
             }
 
+            let parentGroupWid: any;
             parentGroupId && (parentGroupWid = window.Store.WidFactory.createWid(parentGroupId));
 
+            let createGroupResult: any;
             try {
                 createGroupResult = await window.Store.GroupUtils.createGroup(
                     {
@@ -1980,7 +1986,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
                     },
                     participantWids
                 );
-            } catch (err) {
+            } catch (_err) {
                 return 'CreateGroupError: An unknown error occupied while creating a group';
             }
 
@@ -2138,7 +2144,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
                     const meContact = window.Store.ContactCollection.getMeContact();
                     meContact && (await window.Store.ChannelUtils.demoteNewsletterAdminAction(channel, meContact));
                 }
-            } catch (error) {
+            } catch (_error) {
                 return false;
             }
 
@@ -2240,7 +2246,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
      * @returns {Promise<Array<Label>>}
      */
     async getLabels(): Promise<Array<Label>> {
-        const labels = await this.evaluate(async () => {
+        const labels = await this.evaluate(() => {
             if (!window.WWebJS || !window.WWebJS.getLabels) {
                 throw new Error('window.WWebJS.getLabels is not defined');
             }
@@ -2255,7 +2261,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
      * @returns {Promise<Array<Broadcast>>}
      */
     async getBroadcasts(): Promise<Array<Broadcast>> {
-        const broadcasts = await this.evaluate(async () => {
+        const broadcasts = await this.evaluate(() => {
             if (!window.WWebJS || !window.WWebJS.getAllStatuses) {
                 throw new Error('window.WWebJS.getAllStatuses is not defined');
             }
@@ -2270,7 +2276,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
      * @returns {Promise<Label>}
      */
     async getLabelById(labelId: string): Promise<Label> {
-        const label = await this.evaluate(async (labelId) => {
+        const label = await this.evaluate((labelId) => {
             if (!window.WWebJS || !window.WWebJS.getLabel) {
                 throw new Error('window.WWebJS.getLabel is not defined');
             }
@@ -2286,7 +2292,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
      * @returns {Promise<Array<Label>>}
      */
     async getChatLabels(chatId: string): Promise<Array<Label>> {
-        const labels = await this.evaluate(async (chatId) => {
+        const labels = await this.evaluate((chatId) => {
             if (!window.WWebJS || !window.WWebJS.getChatLabels) {
                 throw new Error('window.WWebJS.getChatLabels is not defined');
             }
@@ -2302,7 +2308,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
      * @returns {Promise<Array<Chat>>}
      */
     async getChatsByLabelId(labelId: string): Promise<Array<Chat>> {
-        const chatIds = await this.evaluate(async (labelId) => {
+        const chatIds = await this.evaluate((labelId) => {
             if (!window.Store || !window.Store.Label || !window.Store.Label.get || !window.Store.Label.labelItemCollection || !window.Store.Label.labelItemCollection.getModelsArray) {
                 throw new Error('window.Store.Label.get or window.Store.Label.labelItemCollection.getModelsArray is not defined');
             }
@@ -2328,8 +2334,8 @@ class Client extends EventEmitter implements ClientEventsInterface {
             if (!window.Store || !window.Store.Blocklist || !window.Store.Blocklist.getModelsArray || !window.WWebJS || !window.WWebJS.getContact) {
                 throw new Error('window.Store.Blocklist.getModelsArray or window.WWebJS.getContact is not defined');
             }
-            let chatIds = window.Store.Blocklist.getModelsArray().map(a => a.id._serialized);
-            return Promise.all(chatIds.map(id => window.WWebJS.getContact(id)));
+            const chatIds = window.Store.Blocklist.getModelsArray().map((a: { id: { _serialized: string } }) => a.id._serialized);
+            return Promise.all(chatIds.map((id: string) => window.WWebJS.getContact(id)));
         });
 
         return blockedContacts.map(contact => ContactFactory.create(this, contact));
@@ -2374,7 +2380,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async addOrRemoveLabels(labelIds: Array<number|string>, chatIds: Array<string>): Promise<void> {
 
-        return this.evaluate(async (labelIds, chatIds) => {
+        return await this.evaluate(async (labelIds, chatIds) => {
             if (!window.Store || !window.Store.Conn || !window.Store.Conn.platform || !window.WWebJS || !window.WWebJS.getLabels || !window.Store.Chat || !window.Store.Chat.filter || !window.Store.Label || !window.Store.Label.addOrRemoveLabels) {
                 throw new Error('window.Store.Conn.platform or window.WWebJS.getLabels or window.Store.Chat.filter or window.Store.Label.addOrRemoveLabels is not defined');
             }
@@ -2384,7 +2390,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
             const labels = window.WWebJS.getLabels().filter(e => labelIds.find(l => l == e.id) !== undefined);
             const chats = window.Store.Chat.filter(e => chatIds.includes(e.id._serialized));
 
-            let actions = labels.map(label => ({id: label.id, type: 'add'}));
+            const actions = labels.map(label => ({id: label.id, type: 'add'}));
 
             chats.forEach((chat) => {
                 (chat.labels || []).forEach(n => {
