@@ -1,10 +1,11 @@
+import process from 'node:process';
 import EventEmitter from 'node:events';
-import puppeteer, { EvaluateFunc } from 'puppeteer';
+import puppeteer, { type EvaluateFunc } from 'puppeteer';
 import { ModuleRaid } from './util/moduleraid.js';
 
 import Util from './util/Util.js';
 import InterfaceController from './util/InterfaceController.js';
-import { WhatsWebURL, DefaultOptions, Events, WAState, MessageAck } from './util/Constants.js';
+import { WhatsWebURL, DefaultOptions, Events, WAState, type MessageAck } from './util/Constants.js';
 import { ExposeAuthStore } from './util/Injected/AuthStore/AuthStore.js';
 import { ExposeStore } from './util/Injected/Store.js';
 import { ExposeLegacyAuthStore } from './util/Injected/AuthStore/LegacyAuthStore.js';
@@ -13,20 +14,22 @@ import { LoadUtils } from './util/Injected/Utils.js';
 import ChatFactory from './factories/ChatFactory.js';
 import ContactFactory from './factories/ContactFactory.js';
 import WebCacheFactory from './webCache/WebCacheFactory.js';
-import { Broadcast, Buttons, Call, Channel, Chat, ClientInfo, Contact, GroupNotification, Label, List, Location, Message, MessageMedia, Poll, PollVote, Reaction } from './structures/index.js';
+import { Broadcast, Buttons, Call, type Channel, type Chat, ClientInfo, Contact, GroupNotification, Label, List, Location, Message, MessageMedia, Poll, PollVote, Reaction } from './structures/index.js';
 import NoAuth from './authStrategies/NoAuth.js';
 import { exposeFunctionIfAbsent } from './util/Puppeteer.js';
-import { ClientSession, MessageContent, type ClientOptions } from './types.js';
-import { type AuthStrategy } from './types.js';
-import { type MessageSendOptions } from './types.js';
-import { ChatId } from './structures/Chat.js';
-import { GroupMembershipRequest, MembershipRequestActionOptions, MembershipRequestActionResult } from './structures/GroupChat.js';
-import { InviteV4Data } from './structures/Message.js';
-import { ContactId } from './structures/Contact.js';
-import { TransferChannelOwnershipOptions } from './structures/Channel.js';
-import { BatteryInfo } from './structures/ClientInfo.js';
+import type { ClientSession, MessageContent, ClientOptions } from './types.js';
+import type { AuthStrategy } from './types.js';
+import type { MessageSendOptions } from './types.js';
+import type { ChatId } from './structures/Chat.js';
+import type { GroupMembershipRequest, MembershipRequestActionOptions, MembershipRequestActionResult } from './structures/GroupChat.js';
+import type { InviteV4Data } from './structures/Message.js';
+import type { ContactId } from './structures/Contact.js';
+import type { TransferChannelOwnershipOptions } from './structures/Channel.js';
+import type { BatteryInfo } from './structures/ClientInfo.js';
 import { hideModuleRaid } from './payloads.js';
 import fs from 'node:fs/promises';
+
+const useLog = process.env.USE_LOG === "true";
 
 class Logger {
     filename: string;
@@ -37,7 +40,9 @@ class Logger {
         this.lines = 0;
     }
 
-    async log(message: string) {
+    async log(message: string): Promise<void> {
+        if (!useLog)
+            return;
         if (this.lines === 0)
             await fs.appendFile(this.filename, "---------------- START SESSION ----------------\n");
         await fs.appendFile(this.filename, '\n' + message + '\n');

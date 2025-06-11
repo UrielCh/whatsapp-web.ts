@@ -1,8 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import mime from 'mime';
-import fetch from 'node-fetch';
+// import fetch from 'node-fetch';
 import { URL } from 'node:url';
+import { Buffer } from "node:buffer";
 
 /**
  * Media attached to a message
@@ -93,16 +94,23 @@ class MessageMedia {
             const name = contentDisposition ? contentDisposition.match(/((?<=filename=")(.*)(?="))/) : null;
 
             let data = '';
-            if (response.buffer) {
-                data = (await response.buffer()).toString('base64');
-            } else {
-                const bArray = new Uint8Array(await response.arrayBuffer());
-                bArray.forEach((b) => {
-                    data += String.fromCharCode(b);
-                });
-                data = btoa(data);
-            }
             
+            // Get array buffer from response
+            const arrayBuffer = await response.arrayBuffer();
+            const uint8Array = new Uint8Array(arrayBuffer);
+
+            // Check if we're in Node.js environment
+            if (typeof Buffer !== 'undefined') {
+                // Node.js - use Buffer
+                data = Buffer.from(uint8Array).toString('base64');
+            } else {
+                // Browser/Deno - use btoa with proper binary string conversion
+                let binaryString = '';
+                uint8Array.forEach((byte) => {
+                    binaryString += String.fromCharCode(byte);
+                });
+                data = btoa(binaryString);
+            }
             return { data, mime, name, size };
         }
 

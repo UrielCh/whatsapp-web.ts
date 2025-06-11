@@ -1,11 +1,11 @@
-import BaseAuthStrategy from "./authStrategies/BaseAuthStrategy.js";
-import type {PuppeteerNodeLaunchOptions, ConnectOptions} from 'puppeteer'
-import MessageMedia from "./structures/MessageMedia.js";
-import Poll from "./structures/Poll.js";
-import Contact from "./structures/Contact.js";
-import List from "./structures/List.js";
-import Buttons from "./structures/Buttons.js";
-import Location from "./structures/Location.js";
+import type BaseAuthStrategy from "./authStrategies/BaseAuthStrategy.js";
+import type {LaunchOptions, ConnectOptions} from 'puppeteer'
+import type MessageMedia from "./structures/MessageMedia.js";
+import type Poll from "./structures/Poll.js";
+import type Contact from "./structures/Contact.js";
+import type List from "./structures/List.js";
+import type Buttons from "./structures/Buttons.js";
+import type Location from "./structures/Location.js";
 
 /**
  * Base class which all authentication strategies extend
@@ -47,7 +47,7 @@ export interface ClientOptions {
      * @default 0 */
     authTimeoutMs?: number,
     /** Puppeteer launch options. View docs here: https://github.com/puppeteer/puppeteer/ */
-    puppeteer?: PuppeteerNodeLaunchOptions & ConnectOptions
+    puppeteer?: LaunchOptions & ConnectOptions
 	/** Determines how to save and restore sessions. Will use LegacySessionAuth if options.session is set. Otherwise, NoAuth will be used. */
     authStrategy?: AuthStrategy,
     /** The version of WhatsApp Web to use. Use options.webVersionCache to configure how the version is retrieved. */
