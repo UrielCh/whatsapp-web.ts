@@ -19,7 +19,7 @@ export interface MessageMediaType {
  * @param {?string} filename Document file name. Value can be null
  * @param {?number} filesize Document file size in bytes. Value can be null
  */
-class MessageMedia {
+export class MessageMedia {
     mimetype: string;
     data: string;
     filename?: string;

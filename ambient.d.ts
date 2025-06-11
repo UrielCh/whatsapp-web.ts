@@ -2,8 +2,7 @@ import type { WAState } from "@u4/whatsapp-web";
 import type { UnsubscribeOptions } from "./src/Client.ts";
 import type { CallData } from "./src/structures/Call.ts";
 import type Contact from "./src/structures/Contact.ts";
-import type MessageMedia from "./src/structures/MessageMedia.ts";
-import type { MessageMediaType } from "./src/structures/MessageMedia.ts";
+import type { MessageMedia, MessageMediaType } from "./src/structures/MessageMedia.ts";
 
 export interface SerializedCnx {
     clientToken: undefined,
