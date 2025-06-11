@@ -2,6 +2,9 @@ export const LoadUtils = () => {
     window.WWebJS = {} as any;
 
     window.WWebJS.forwardMessage = async (chatId, msgId) => {
+        if (!window.Store || !window.Store.Msg || !window.Store.Msg.get || !window.Store.Msg.getMessagesById || !window.WWebJS || !window.WWebJS.getChat || !window.compareWwebVersions || !window.Debug || !window.Debug.VERSION || !window.Store.ForwardUtils || !window.Store.ForwardUtils.forwardMessagesToChats) {
+            throw new Error('window.Store.Msg.get or window.Store.Msg.getMessagesById or window.WWebJS.getChat or window.compareWwebVersions or window.Debug.VERSION or window.Store.ForwardUtils.forwardMessagesToChats is not defined');
+        }
         const msg = window.Store.Msg.get(msgId) || (await window.Store.Msg.getMessagesById([msgId]))?.messages?.[0];
         const chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
 
@@ -13,6 +16,9 @@ export const LoadUtils = () => {
     };
 
     window.WWebJS.sendSeen = async (chatId) => {
+        if (!window.WWebJS || !window.WWebJS.getChat || !window.Store || !window.Store.SendSeen || !window.Store.SendSeen.sendSeen) {
+            throw new Error('window.WWebJS.getChat or window.Store.SendSeen.sendSeen is not defined');
+        }
         const chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
         if (chat) {
             await window.Store.SendSeen.sendSeen(chat);
@@ -22,6 +28,9 @@ export const LoadUtils = () => {
     };
 
     window.WWebJS.sendMessage = async (chat, content, options = {}) => {
+        if (!window.Store || !window.Store.ChatGetters || !window.Store.ChatGetters.getIsNewsletter || !window.WWebJS || !window.WWebJS.processMediaData || !window.Store.Msg || !window.Store.Msg.get || !window.Store.Msg.getMessagesById || !window.Store.ReplyUtils || !window.Store.WidFactory || !window.Store.WidFactory.createWid || !window.Store.QueryExist || !window.Store.Validators || !window.Store.Validators.findLink || !window.Store.LinkPreview || !window.Store.LinkPreview.getLinkPreview || !window.Store.VCard || !window.Store.VCard.vcardFromContactModel || !window.Store.VCard.parseVcard || !window.Store.VCard.vcardGetNameFromParsed || !window.Store.Conn || !window.Store.Conn.platform || !window.Store.BotSecret || !window.Store.BotSecret.genBotMsgSecretFromMsgSecret || !window.Store.BotProfiles || !window.Store.BotProfiles.BotProfileCollection || !window.Store.User || !window.Store.User.getMaybeMeLidUser || !window.Store.User.getMaybeMeUser || !window.Store.MsgKey || !window.Store.MsgKey.newId || !window.Store.EphemeralFields || !window.Store.EphemeralFields.getEphemeralFields || !window.Store.SendChannelMessage || !window.Store.SendChannelMessage.msgDataFromMsgModel || !window.Store.SendChannelMessage.addNewsletterMsgsRecords || !window.Store.SendChannelMessage.sendNewsletterMessageJob || !window.Store.SendChannelMessage.updateNewsletterMsgRecord || !window.Store.SendMessage || !window.Store.SendMessage.addAndSendMsgToChat) {
+            throw new Error('One or more properties or methods on window.Store or window.WWebJS are not defined for sendMessage');
+        }
         const isChannel = window.Store.ChatGetters.getIsNewsletter(chat);
 
         let mediaOptions: any = {};
@@ -303,6 +312,9 @@ export const LoadUtils = () => {
     };
 	
     window.WWebJS.editMessage = async (msg, content, options = {}) => {
+        if (!window.Store || !window.Store.WidFactory || !window.Store.WidFactory.createWid || !window.Store.QueryExist || !window.Store.Validators || !window.Store.Validators.findLink || !window.Store.LinkPreview || !window.Store.LinkPreview.getLinkPreview || !window.Store.EditMessage || !window.Store.EditMessage.sendMessageEdit || !window.Store.Msg || !window.Store.Msg.get) {
+            throw new Error('One or more properties or methods on window.Store are not defined for editMessage');
+        }
         const extraOptions = options.extraOptions || {};
         delete options.extraOptions;
         
@@ -347,6 +359,9 @@ export const LoadUtils = () => {
     };
 
     window.WWebJS.toStickerData = async (mediaInfo: { data: string; mimetype: string; filename: string }) => {
+        if (!window.WWebJS || !window.WWebJS.mediaInfoToFile || !window.Store || !window.Store.StickerTools || !window.Store.StickerTools.toWebpSticker || !window.WWebJS.arrayBufferToBase64) {
+            throw new Error('window.WWebJS.mediaInfoToFile or window.Store.StickerTools.toWebpSticker or window.WWebJS.arrayBufferToBase64 is not defined');
+        }
         if (mediaInfo.mimetype == 'image/webp') return mediaInfo;
 
         const file = window.WWebJS.mediaInfoToFile(mediaInfo);
@@ -361,6 +376,9 @@ export const LoadUtils = () => {
     };
 
     window.WWebJS.processMediaData = async (mediaInfo: { data: string; mimetype: string; filename: string }, { forceSticker, forceGif, forceVoice, forceDocument, forceMediaHd, sendToChannel }) => {
+        if (!window.WWebJS || !window.WWebJS.mediaInfoToFile || !window.Store || !window.Store.OpaqueData || !window.Store.OpaqueData.createFromData || !window.Store.MediaPrep || !window.Store.MediaPrep.prepRawMedia || !window.Store.MediaObject || !window.Store.MediaObject.getOrCreateMediaObject || !window.Store.MediaTypes || !window.Store.MediaTypes.msgToMediaType || !window.WWebJS.generateWaveform || !window.Store.MediaUpload || !window.Store.MediaUpload.uploadMedia || !window.Store.MediaUpload.uploadUnencryptedMedia || !window.Store.SendChannelMessage || !window.Store.SendChannelMessage.getRandomFilehash) {
+            throw new Error('One or more properties or methods on window.Store or window.WWebJS are not defined for processMediaData');
+        }
         const file = window.WWebJS.mediaInfoToFile(mediaInfo);
         const opaqueData = await window.Store.OpaqueData.createFromData(file, file.type);
         const mediaParams: any = {
@@ -435,6 +453,9 @@ export const LoadUtils = () => {
     };
 
     window.WWebJS.getMessageModel = (message) => {
+        if (!window.Store || !window.Store.Validators || !window.Store.Validators.findLinks) {
+            throw new Error('window.Store.Validators.findLinks is not defined');
+        }
         const msg = message.serialize();
 
         msg.isEphemeral = message.isEphemeral;
@@ -464,6 +485,9 @@ export const LoadUtils = () => {
     };
 
     window.WWebJS.getPollVoteModel = async (vote) => {
+        if (!window.Store || !window.Store.Msg || !window.Store.Msg.get || !window.Store.Msg.getMessagesById || !window.WWebJS || !window.WWebJS.getMessageModel) {
+            throw new Error('window.Store.Msg.get or window.Store.Msg.getMessagesById or window.WWebJS.getMessageModel is not defined');
+        }
         const _vote = vote.serialize();
         if (!vote.parentMsgKey) return null;
         const msg =
@@ -473,6 +497,9 @@ export const LoadUtils = () => {
     };
 
     window.WWebJS.getChat = async (chatId, { getAsModel = true } = {}) => {
+        if (!window.Store || !window.Store.WidFactory || !window.Store.WidFactory.createWid || !window.Store.NewsletterCollection || !window.Store.NewsletterCollection.get || !window.Store.ChannelUtils || !window.Store.ChannelUtils.loadNewsletterPreviewChat || !window.Store.NewsletterCollection.find || !window.Store.Chat || !window.Store.Chat.get || !window.Store.Chat.find || !window.WWebJS || !window.WWebJS.getChatModel) {
+            throw new Error('One or more properties or methods on window.Store or window.WWebJS are not defined for getChat');
+        }
         const isChannel = /@\w*newsletter\b/.test(chatId);
         const chatWid = window.Store.WidFactory.createWid(chatId);
         let chat;
@@ -497,6 +524,9 @@ export const LoadUtils = () => {
     };
 
     window.WWebJS.getChannelMetadata = async (inviteCode) => {
+        if (!window.Store || !window.Store.ChannelUtils || !window.Store.ChannelUtils.queryNewsletterMetadataByInviteCode || !window.Store.ChannelUtils.getRoleByIdentifier) {
+            throw new Error('window.Store.ChannelUtils.queryNewsletterMetadataByInviteCode or window.Store.ChannelUtils.getRoleByIdentifier is not defined');
+        }
         const response =
             await window.Store.ChannelUtils.queryNewsletterMetadataByInviteCode(
                 inviteCode,
@@ -526,18 +556,27 @@ export const LoadUtils = () => {
     };
 
     window.WWebJS.getChats = async () => {
+        if (!window.Store || !window.Store.Chat || !window.Store.Chat.getModelsArray || !window.WWebJS || !window.WWebJS.getChatModel) {
+            throw new Error('window.Store.Chat.getModelsArray or window.WWebJS.getChatModel is not defined');
+        }
         const chats = window.Store.Chat.getModelsArray();
         const chatPromises = chats.map(chat => window.WWebJS.getChatModel(chat));
         return await Promise.all(chatPromises);
     };
 
     window.WWebJS.getChannels = async () => {
+        if (!window.Store || !window.Store.NewsletterCollection || !window.Store.NewsletterCollection.getModelsArray || !window.WWebJS || !window.WWebJS.getChatModel) {
+            throw new Error('window.Store.NewsletterCollection.getModelsArray or window.WWebJS.getChatModel is not defined');
+        }
         const channels = window.Store.NewsletterCollection.getModelsArray();
         const channelPromises = channels?.map((channel) => window.WWebJS.getChatModel(channel, { isChannel: true }));
         return await Promise.all(channelPromises);
     };
 
     window.WWebJS.getChatModel = async (chat, { isChannel = false } = {}) => {
+        if (!window.Store || !window.Store.ChatGetters || !window.Store.ChatGetters.getIsNewsletter || !window.Store.WidFactory || !window.Store.WidFactory.createWid || !window.Store.GroupMetadata || !window.Store.GroupMetadata.update || !window.Store.NewsletterMetadataCollection || !window.Store.NewsletterMetadataCollection.update || !window.Store.Msg || !window.Store.Msg.get || !window.Store.Msg.getMessagesById || !window.WWebJS || !window.WWebJS.getMessageModel) {
+            throw new Error('One or more properties or methods on window.Store or window.WWebJS are not defined for getChatModel');
+        }
         if (!chat) return null;
 
         const model = chat.serialize();
@@ -582,6 +621,9 @@ export const LoadUtils = () => {
     };
 
     window.WWebJS.getContactModel = contact => {
+        if (!window.Store || !window.Store.ContactMethods || !window.Store.ContactMethods.getIsMe || !window.Store.ContactMethods.getIsUser || !window.Store.ContactMethods.getIsGroup || !window.Store.ContactMethods.getIsWAContact || !window.Store.ContactMethods.getIsMyContact || !window.Store.ContactMethods.getUserid || !window.Store.ContactMethods.getIsEnterprise || !window.Store.ContactMethods.getVerifiedName || !window.Store.ContactMethods.getVerifiedLevel || !window.Store.ContactMethods.getStatusMute || !window.Store.ContactMethods.getName || !window.Store.ContactMethods.getShortName || !window.Store.ContactMethods.getPushname) {
+            throw new Error('One or more properties or methods on window.Store.ContactMethods are not defined for getContactModel');
+        }
         let res = contact.serialize();
         res.isBusiness = contact.isBusiness === undefined ? false : contact.isBusiness;
 
@@ -608,6 +650,9 @@ export const LoadUtils = () => {
     };
 
     window.WWebJS.getContact = async contactId => {
+        if (!window.Store || !window.Store.WidFactory || !window.Store.WidFactory.createWid || !window.Store.Contact || !window.Store.Contact.find || !window.Store.BusinessProfile || !window.Store.BusinessProfile.fetchBizProfile || !window.WWebJS || !window.WWebJS.getContactModel) {
+            throw new Error('window.Store.WidFactory.createWid or window.Store.Contact.find or window.Store.BusinessProfile.fetchBizProfile or window.WWebJS.getContactModel is not defined');
+        }
         const wid = window.Store.WidFactory.createWid(contactId);
         let contact = await window.Store.Contact.find(wid);
         if (contact.id._serialized.endsWith('@lid')) {
@@ -619,6 +664,9 @@ export const LoadUtils = () => {
     };
 
     window.WWebJS.getContacts = () => {
+        if (!window.Store || !window.Store.Contact || !window.Store.Contact.getModelsArray || !window.WWebJS || !window.WWebJS.getContactModel) {
+            throw new Error('window.Store.Contact.getModelsArray or window.WWebJS.getContactModel is not defined');
+        }
         const contacts = window.Store.Contact.getModelsArray();
         return contacts.map(contact => window.WWebJS.getContactModel(contact));
     };
@@ -712,6 +760,9 @@ export const LoadUtils = () => {
     };
 
     window.WWebJS.sendClearChat = async (chatId) => {
+        if (!window.WWebJS || !window.WWebJS.getChat || !window.Store || !window.Store.SendClear || !window.Store.SendClear.sendClear) {
+            throw new Error('window.WWebJS.getChat or window.Store.SendClear.sendClear is not defined');
+        }
         let chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
         if (chat !== undefined) {
             await window.Store.SendClear.sendClear(chat, false);
@@ -721,6 +772,9 @@ export const LoadUtils = () => {
     };
 
     window.WWebJS.sendDeleteChat = async (chatId) => {
+        if (!window.WWebJS || !window.WWebJS.getChat || !window.Store || !window.Store.SendDelete || !window.Store.SendDelete.sendDelete) {
+            throw new Error('window.WWebJS.getChat or window.Store.SendDelete.sendDelete is not defined');
+        }
         let chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
         if (chat !== undefined) {
             await window.Store.SendDelete.sendDelete(chat);
@@ -730,6 +784,9 @@ export const LoadUtils = () => {
     };
 
     window.WWebJS.sendChatstate = async (state, chatId) => {
+        if (!window.Store || !window.Store.WidFactory || !window.Store.WidFactory.createWid || !window.Store.ChatState || !window.Store.ChatState.sendChatStateComposing || !window.Store.ChatState.sendChatStateRecording || !window.Store.ChatState.sendChatStatePaused) {
+            throw new Error('One or more properties or methods on window.Store are not defined for sendChatstate');
+        }
         chatId = window.Store.WidFactory.createWid(chatId);
 
         switch (state) {
@@ -757,26 +814,41 @@ export const LoadUtils = () => {
     };
 
     window.WWebJS.getLabels = () => {
+        if (!window.Store || !window.Store.Label || !window.Store.Label.getModelsArray || !window.WWebJS || !window.WWebJS.getLabelModel) {
+            throw new Error('window.Store.Label.getModelsArray or window.WWebJS.getLabelModel is not defined');
+        }
         const labels = window.Store.Label.getModelsArray();
         return labels.map(label => window.WWebJS.getLabelModel(label));
     };
 
     window.WWebJS.getLabel = (labelId) => {
+        if (!window.Store || !window.Store.Label || !window.Store.Label.get || !window.WWebJS || !window.WWebJS.getLabelModel) {
+            throw new Error('window.Store.Label.get or window.WWebJS.getLabelModel is not defined');
+        }
         const label = window.Store.Label.get(labelId);
         return window.WWebJS.getLabelModel(label);
     };
 
     window.WWebJS.getChatLabels = async (chatId) => {
+        if (!window.WWebJS || !window.WWebJS.getChat || !window.WWebJS.getLabel) {
+            throw new Error('window.WWebJS.getChat or window.WWebJS.getLabel is not defined');
+        }
         const chat = await window.WWebJS.getChat(chatId);
         return (chat.labels || []).map(id => window.WWebJS.getLabel(id));
     };
 
     window.WWebJS.getOrderDetail = async (orderId, token, chatId) => {
+        if (!window.Store || !window.Store.WidFactory || !window.Store.WidFactory.createWid || !window.Store.QueryOrder || !window.Store.QueryOrder.queryOrder) {
+            throw new Error('window.Store.WidFactory.createWid or window.Store.QueryOrder.queryOrder is not defined');
+        }
         const chatWid = window.Store.WidFactory.createWid(chatId);
         return window.Store.QueryOrder.queryOrder(chatWid, orderId, 80, 80, token);
     };
 
     window.WWebJS.getProductMetadata = async (productId) => {
+        if (!window.Store || !window.Store.Conn || !window.Store.Conn.wid || !window.Store.QueryProduct || !window.Store.QueryProduct.queryProduct) {
+            throw new Error('window.Store.Conn.wid or window.Store.QueryProduct.queryProduct is not defined');
+        }
         let sellerId = window.Store.Conn.wid;
         let product = await window.Store.QueryProduct.queryProduct(sellerId, productId);
         if (product && product.data) {
@@ -787,6 +859,9 @@ export const LoadUtils = () => {
     };
 
     window.WWebJS.rejectCall = async (peerJid, id) => {
+        if (!window.Store || !window.Store.User || !window.Store.User.getMaybeMeUser || !window.Store.SocketWap || !window.Store.SocketWap.wap || !window.Store.SocketWap.generateId || !window.Store.SocketWap.USER_JID || !window.Store.Socket || !window.Store.Socket.deprecatedCastStanza) {
+            throw new Error('One or more properties or methods on window.Store are not defined for rejectCall');
+        }
         peerJid = peerJid.split('@')[0] + '@s.whatsapp.net';
         let userId = window.Store.User.getMaybeMeUser().user + '@s.whatsapp.net';
         const stanza = window.Store.SocketWap.wap('call', {
@@ -842,6 +917,9 @@ export const LoadUtils = () => {
     };
 
     window.WWebJS.setPicture = async (chatId, media) => {
+        if (!window.WWebJS || !window.WWebJS.cropAndResizeImage || !window.Store || !window.Store.WidFactory || !window.Store.WidFactory.createWid || !window.Store.ProfilePicThumb || !window.Store.ProfilePicThumb.get || !window.Store.ProfilePicThumb.find || !window.Store.GroupUtils || !window.Store.GroupUtils.sendSetPicture) {
+            throw new Error('One or more properties or methods on window.Store or window.WWebJS are not defined for setPicture');
+        }
         const thumbnail = await window.WWebJS.cropAndResizeImage(media, { asDataUrl: true, mimetype: 'image/jpeg', size: 96 });
         const profilePic = await window.WWebJS.cropAndResizeImage(media, { asDataUrl: true, mimetype: 'image/jpeg', size: 640 });
 
@@ -859,6 +937,9 @@ export const LoadUtils = () => {
     };
 
     window.WWebJS.deletePicture = async (chatid) => {
+        if (!window.Store || !window.Store.WidFactory || !window.Store.WidFactory.createWid || !window.Store.ProfilePicThumb || !window.Store.ProfilePicThumb.get || !window.Store.GroupUtils || !window.Store.GroupUtils.requestDeletePicture) {
+            throw new Error('One or more properties or methods on window.Store are not defined for deletePicture');
+        }
         const chatWid = window.Store.WidFactory.createWid(chatid);
         try {
             const collection = window.Store.ProfilePicThumb.get(chatid);
@@ -873,6 +954,9 @@ export const LoadUtils = () => {
     };
     
     window.WWebJS.getProfilePicThumbToBase64 = async (chatWid) => {
+        if (!window.Store || !window.Store.ProfilePicThumb || !window.Store.ProfilePicThumb.find) {
+            throw new Error('window.Store.ProfilePicThumb.find is not defined');
+        }
         const profilePicCollection = await window.Store.ProfilePicThumb.find(chatWid);
 
         const _readImageAsBase64 = (imageBlob) => {
@@ -907,6 +991,9 @@ export const LoadUtils = () => {
     };
 
     window.WWebJS.getAddParticipantsRpcResult = async (groupMetadata, groupWid, participantWid) => {
+        if (!window.Store || !window.Store.LidUtils || !window.Store.LidUtils.getCurrentLid || !window.Store.WidToJid || !window.Store.WidToJid.widToGroupJid || !window.Store.WidToJid.widToUserJid || !window.compareWwebVersions || !window.Debug || !window.Debug.VERSION || !window.Store.GroupParticipants || !window.Store.GroupParticipants.sendAddParticipantsRPC) {
+            throw new Error('One or more properties or methods on window.Store or window.Debug are not defined for getAddParticipantsRpcResult');
+        }
         const participantLidArgs = groupMetadata?.isLidAddressingMode
             ? {
                 phoneNumber: participantWid,
@@ -972,6 +1059,9 @@ export const LoadUtils = () => {
     };
 
     window.WWebJS.membershipRequestAction = async (groupId, action, requesterIds, sleep) => {
+        if (!window.Store || !window.Store.WidFactory || !window.Store.WidFactory.createWid || !window.Store.Chat || !window.Store.Chat.find || !window.Store.GroupQueryAndUpdate || !window.Store.WidToJid || !window.Store.WidToJid.widToUserJid || !window.Store.WidToJid.widToGroupJid || !window.Store.MembershipRequestUtils || !window.Store.MembershipRequestUtils.sendMembershipRequestsActionRPC || !window.Store.JidToWid || !window.Store.JidToWid.userJidToUserWid) {
+            throw new Error('One or more properties or methods on window.Store are not defined for membershipRequestAction');
+        }
         const groupWid = window.Store.WidFactory.createWid(groupId);
         const group = await window.Store.Chat.find(groupWid);
         const toApprove = action === 'Approve';
@@ -1067,6 +1157,9 @@ export const LoadUtils = () => {
     };
 
     window.WWebJS.subscribeToUnsubscribeFromChannel = async (channelId, action, options = {}) => {
+        if (!window.WWebJS || !window.WWebJS.getChat || !window.Store || !window.Store.ChannelUtils || !window.Store.ChannelUtils.subscribeToNewsletterAction || !window.Store.ChannelUtils.unsubscribeFromNewsletterAction) {
+            throw new Error('window.WWebJS.getChat or window.Store.ChannelUtils.subscribeToNewsletterAction or window.Store.ChannelUtils.unsubscribeFromNewsletterAction is not defined');
+        }
         const channel = await window.WWebJS.getChat(channelId, { getAsModel: false });
 
         if (!channel || channel.newsletterMetadata.membershipType === 'owner') return false;
@@ -1086,6 +1179,9 @@ export const LoadUtils = () => {
     };
 
     window.WWebJS.pinUnpinMsgAction = async (msgId, action, duration) => {
+        if (!window.Store || !window.Store.Msg || !window.Store.Msg.get || !window.Store.Msg.getMessagesById || !window.Store.pinUnpinMsg) {
+            throw new Error('window.Store.Msg.get or window.Store.Msg.getMessagesById or window.Store.pinUnpinMsg is not defined');
+        }
         const message = window.Store.Msg.get(msgId) || (await window.Store.Msg.getMessagesById([msgId]))?.messages?.[0];
         if (!message) return false;
         const response = await window.Store.pinUnpinMsg(message, action, duration);
@@ -1099,6 +1195,9 @@ export const LoadUtils = () => {
     };
 
     window.WWebJS.getAllStatuses = () => {
+        if (!window.Store || !window.Store.Status || !window.Store.Status.getModelsArray || !window.WWebJS || !window.WWebJS.getStatusModel) {
+            throw new Error('window.Store.Status.getModelsArray or window.WWebJS.getStatusModel is not defined');
+        }
         const statuses = window.Store.Status.getModelsArray();
         return statuses.map(status => window.WWebJS.getStatusModel(status));
     };

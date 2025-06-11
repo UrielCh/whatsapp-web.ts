@@ -1172,6 +1172,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async sendSeen(chatId: string): Promise<boolean> {
         return await this.evaluate(async (chatId) => {
+            if (!window.WWebJS || !window.WWebJS.sendSeen) {
+                throw new Error('window.WWebJS.sendSeen is not defined');
+            }
             return window.WWebJS.sendSeen(chatId);
         }, chatId);
     }
@@ -1266,6 +1269,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
         }
 
         const sentMsg = await this.evaluate(async (chatId, content, options, sendSeen) => {
+            if (!window.WWebJS || !window.WWebJS.getChat || !window.WWebJS.sendSeen || !window.WWebJS.sendMessage || !window.WWebJS.getMessageModel) {
+                throw new Error('window.WWebJS.getChat or window.WWebJS.sendSeen or window.WWebJS.sendMessage or window.WWebJS.getMessageModel is not defined');
+            }
             const chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
 
             if (!chat) return null;
@@ -1299,6 +1305,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async sendChannelAdminInvite(chatId: string, channelId: string, options: { comment?: string } = {}) {
         const response = await this.evaluate(async (chatId, channelId, options) => {
+            if (!window.Store || !window.Store.WidFactory || !window.Store.WidFactory.createWid || !window.Store.Chat || !window.Store.Chat.get || !window.Store.Chat.find || !window.Store.SendChannelMessage || !window.Store.SendChannelMessage.sendNewsletterAdminInviteMessage || !window.WWebJS || !window.WWebJS.getProfilePicThumbToBase64) {
+                throw new Error('window.Store.WidFactory.createWid or window.Store.Chat.get or window.Store.Chat.find or window.Store.SendChannelMessage.sendNewsletterAdminInviteMessage or window.WWebJS.getProfilePicThumbToBase64 is not defined');
+            }
             const channelWid = window.Store.WidFactory.createWid(channelId);
             const chatWid = window.Store.WidFactory.createWid(chatId);
             const chat = window.Store.Chat.get(chatWid) || (await window.Store.Chat.find(chatWid));
@@ -1332,6 +1341,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async searchMessages(query: string, options: { page?: number, limit?: number, chatId?: string } = {}): Promise<Message[]> {
         const messages = await this.evaluate(async (query, page, count, remote) => {
+            if (!window.Store || !window.Store.Msg || !window.Store.Msg.search || !window.WWebJS || !window.WWebJS.getMessageModel) {
+                throw new Error('window.Store.Msg.search or window.WWebJS.getMessageModel is not defined');
+            }
             const { messages } = await window.Store.Msg.search(query, page, count, remote);
             return messages.map(msg => window.WWebJS.getMessageModel(msg));
         }, query, options.page, options.limit, options.chatId);
@@ -1345,6 +1357,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async getChats(): Promise<Chat[]> {
         const chats = await this.evaluate(async () => {
+            if (!window.WWebJS || !window.WWebJS.getChats) {
+                throw new Error('window.WWebJS.getChats is not defined');
+            }
             return await window.WWebJS.getChats();
         });
 
@@ -1357,6 +1372,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async getChannels(): Promise<Channel[]> {
         const channels = await this.evaluate(async () => {
+            if (!window.WWebJS || !window.WWebJS.getChannels) {
+                throw new Error('window.WWebJS.getChannels is not defined');
+            }
             return await window.WWebJS.getChannels();
         });
 
@@ -1370,6 +1388,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async getChatById(chatId: string): Promise<Chat> {
         const chat = await this.evaluate(async chatId => {
+            if (!window.WWebJS || !window.WWebJS.getChat) {
+                throw new Error('window.WWebJS.getChat is not defined');
+            }
             return await window.WWebJS.getChat(chatId);
         }, chatId);
         return chat
@@ -1384,6 +1405,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async getChannelByInviteCode(inviteCode: string): Promise<Channel> {
         const channel = await this.evaluate(async (inviteCode) => {
+            if (!window.WWebJS || !window.WWebJS.getChannelMetadata || !window.WWebJS.getChat) {
+                throw new Error('window.WWebJS.getChannelMetadata or window.WWebJS.getChat is not defined');
+            }
             let channelMetadata;
             try {
                 channelMetadata = await window.WWebJS.getChannelMetadata(inviteCode);
@@ -1405,6 +1429,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async getContacts(): Promise<Contact[]> {
         let contacts = await this.evaluate(() => {
+            if (!window.WWebJS || !window.WWebJS.getContacts) {
+                throw new Error('window.WWebJS.getContacts is not defined');
+            }
             return window.WWebJS.getContacts();
         });
 
@@ -1418,6 +1445,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async getContactById(contactId: string): Promise<Contact> {
         let contact = await this.evaluate(contactId => {
+            if (!window.WWebJS || !window.WWebJS.getContact) {
+                throw new Error('window.WWebJS.getContact is not defined');
+            }
             return window.WWebJS.getContact(contactId);
         }, contactId);
 
@@ -1426,6 +1456,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
     
     async getMessageById(messageId: string): Promise<Message> {
         const msg = await this.evaluate(async messageId => {
+            if (!window.Store || !window.Store.Msg || !window.Store.Msg.get || !window.WWebJS || !window.WWebJS.getMessageModel || !window.Store.Msg.getMessagesById) {
+                throw new Error('window.Store.Msg.get or window.WWebJS.getMessageModel or window.Store.Msg.getMessagesById is not defined');
+            }
             let msg = window.Store.Msg.get(messageId);
             if(msg) return window.WWebJS.getMessageModel(msg);
 
@@ -1449,6 +1482,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async getInviteInfo(inviteCode: string): Promise<{id: {_serialized: string}, participants: string[]}> {
         return await this.evaluate(inviteCode => {
+            if (!window.Store || !window.Store.GroupInvite || !window.Store.GroupInvite.queryGroupInvite) {
+                throw new Error('window.Store.GroupInvite.queryGroupInvite is not defined');
+            }
             return window.Store.GroupInvite.queryGroupInvite(inviteCode);
         }, inviteCode);
     }
@@ -1460,6 +1496,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async acceptInvite(inviteCode: string): Promise<string> {
         const res = await this.evaluate(async inviteCode => {
+            if (!window.Store || !window.Store.GroupInvite || !window.Store.GroupInvite.joinGroupViaInvite) {
+                throw new Error('window.Store.GroupInvite.joinGroupViaInvite is not defined');
+            }
             return await window.Store.GroupInvite.joinGroupViaInvite(inviteCode);
         }, inviteCode);
 
@@ -1473,6 +1512,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async acceptChannelAdminInvite(channelId: string): Promise<boolean> {
         return await this.evaluate(async (channelId) => {
+            if (!window.Store || !window.Store.ChannelUtils || !window.Store.ChannelUtils.acceptNewsletterAdminInvite) {
+                throw new Error('window.Store.ChannelUtils.acceptNewsletterAdminInvite is not defined');
+            }
             try {
                 await window.Store.ChannelUtils.acceptNewsletterAdminInvite(channelId);
                 return true;
@@ -1491,6 +1533,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async revokeChannelAdminInvite(channelId: string, userId: string): Promise<boolean> {
         return await this.evaluate(async (channelId, userId) => {
+            if (!window.Store || !window.Store.WidFactory || !window.Store.WidFactory.createWid || !window.Store.ChannelUtils || !window.Store.ChannelUtils.revokeNewsletterAdminInvite) {
+                throw new Error('window.Store.WidFactory.createWid or window.Store.ChannelUtils.revokeNewsletterAdminInvite is not defined');
+            }
             try {
                 const userWid = window.Store.WidFactory.createWid(userId);
                 await window.Store.ChannelUtils.revokeNewsletterAdminInvite(channelId, userWid);
@@ -1510,6 +1555,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async demoteChannelAdmin(channelId: string, userId: string): Promise<boolean> {
         return await this.evaluate(async (channelId, userId) => {
+            if (!window.Store || !window.Store.WidFactory || !window.Store.WidFactory.createWid || !window.Store.ChannelUtils || !window.Store.ChannelUtils.demoteNewsletterAdmin) {
+                throw new Error('window.Store.WidFactory.createWid or window.Store.ChannelUtils.demoteNewsletterAdmin is not defined');
+            }
             try {
                 const userWid = window.Store.WidFactory.createWid(userId);
                 await window.Store.ChannelUtils.demoteNewsletterAdmin(channelId, userWid);
@@ -1530,6 +1578,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
         if (!inviteInfo.inviteCode) throw 'Invalid invite code, try passing the message.inviteV4 object';
         if (inviteInfo.inviteCodeExp == 0) throw 'Expired invite code';
         return this.evaluate(async inviteInfo => {
+            if (!window.Store || !window.Store.WidFactory || !window.Store.WidFactory.createWid || !window.Store.GroupInviteV4 || !window.Store.GroupInviteV4.joinGroupViaInviteV4) {
+                throw new Error('window.Store.WidFactory.createWid or window.Store.GroupInviteV4.joinGroupViaInviteV4 is not defined');
+            }
             let { groupId, fromId, inviteCode, inviteCodeExp } = inviteInfo;
             let userWid = window.Store.WidFactory.createWid(fromId);
             return await window.Store.GroupInviteV4.joinGroupViaInviteV4(inviteCode, String(inviteCodeExp), groupId, userWid);
@@ -1542,6 +1593,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async setStatus(status: string): Promise<void> {
         await this.evaluate(async status => {
+            if (!window.Store || !window.Store.StatusUtils || !window.Store.StatusUtils.setMyStatus) {
+                throw new Error('window.Store.StatusUtils.setMyStatus is not defined');
+            }
             return await window.Store.StatusUtils.setMyStatus(status);
         }, status);
     }
@@ -1554,6 +1608,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async setDisplayName(displayName: string): Promise<boolean> {
         const couldSet = await this.evaluate(async displayName => {
+            if (!window.Store || !window.Store.Conn || !window.Store.Conn.canSetMyPushname || !window.Store.Settings || !window.Store.Settings.setPushname) {
+                throw new Error('window.Store.Conn.canSetMyPushname or window.Store.Settings.setPushname is not defined');
+            }
             if(!window.Store.Conn.canSetMyPushname()) return false;
             await window.Store.Settings.setPushname(displayName);
             return true;
@@ -1568,7 +1625,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async getState(): Promise<typeof WAState[keyof typeof WAState]> {
         const result = await this.evaluate(() => {
-            if(!window.Store) return null;
+            if(!window.Store || !window.Store.AppState || !window.Store.AppState.state) return null;
             return window.Store.AppState.state;
         });
         return result as typeof WAState[keyof typeof WAState];
@@ -1579,6 +1636,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async sendPresenceAvailable(): Promise<void> {
         return await this.evaluate(() => {
+            if (!window.Store || !window.Store.PresenceUtils || !window.Store.PresenceUtils.sendPresenceAvailable) {
+                throw new Error('window.Store.PresenceUtils.sendPresenceAvailable is not defined');
+            }
             return window.Store.PresenceUtils.sendPresenceAvailable();
         });
     }
@@ -1588,6 +1648,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async sendPresenceUnavailable(): Promise<void> {
         return await this.evaluate(() => {
+            if (!window.Store || !window.Store.PresenceUtils || !window.Store.PresenceUtils.sendPresenceUnavailable) {
+                throw new Error('window.Store.PresenceUtils.sendPresenceUnavailable is not defined');
+            }
             return window.Store.PresenceUtils.sendPresenceUnavailable();
         });
     }
@@ -1598,6 +1661,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async archiveChat(chatId: string): Promise<boolean> {
         return await this.evaluate(async chatId => {
+            if (!window.WWebJS || !window.WWebJS.getChat || !window.Store || !window.Store.Cmd || !window.Store.Cmd.archiveChat) {
+                throw new Error('window.WWebJS.getChat or window.Store.Cmd.archiveChat is not defined');
+            }
             let chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
             await window.Store.Cmd.archiveChat(chat, true);
             return true;
@@ -1610,6 +1676,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async unarchiveChat(chatId: string): Promise<boolean> {
         return await this.evaluate(async chatId => {
+            if (!window.WWebJS || !window.WWebJS.getChat || !window.Store || !window.Store.Cmd || !window.Store.Cmd.archiveChat) {
+                throw new Error('window.WWebJS.getChat or window.Store.Cmd.archiveChat is not defined');
+            }
             let chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
             await window.Store.Cmd.archiveChat(chat, false);
             return false;
@@ -1622,6 +1691,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async pinChat(chatId: string): Promise<boolean> {
         return this.evaluate(async chatId => {
+            if (!window.WWebJS || !window.WWebJS.getChat || !window.Store || !window.Store.Chat || !window.Store.Chat.getModelsArray || !window.Store.Cmd || !window.Store.Cmd.pinChat) {
+                throw new Error('window.WWebJS.getChat or window.Store.Chat.getModelsArray or window.Store.Cmd.pinChat is not defined');
+            }
             let chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
             if (chat.pin) {
                 return true;
@@ -1645,6 +1717,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async unpinChat(chatId: string): Promise<boolean> {
         return this.evaluate(async chatId => {
+            if (!window.WWebJS || !window.WWebJS.getChat || !window.Store || !window.Store.Cmd || !window.Store.Cmd.pinChat) {
+                throw new Error('window.WWebJS.getChat or window.Store.Cmd.pinChat is not defined');
+            }
             let chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
             if (!chat.pin) {
                 return false;
@@ -1683,6 +1758,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async _muteUnmuteChat (chatId: string, action: string, unmuteDateTs?: number): Promise<{isMuted: boolean, muteExpiration: number}> {
         return this.evaluate(async (chatId, action, unmuteDateTs) => {
+            if (!window.Store || !window.Store.Chat || !window.Store.Chat.get || !window.Store.Chat.find) {
+                throw new Error('window.Store.Chat.get or window.Store.Chat.find is not defined');
+            }
             const chat = window.Store.Chat.get(chatId) ?? await window.Store.Chat.find(chatId);
             action === 'MUTE'
                 ? await chat.mute.mute({ expiration: unmuteDateTs, sendDevice: true })
@@ -1697,6 +1775,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async markChatUnread(chatId: string): Promise<void> {
         await this.evaluate(async chatId => {
+            if (!window.WWebJS || !window.WWebJS.getChat || !window.Store || !window.Store.Cmd || !window.Store.Cmd.markChatUnread) {
+                throw new Error('window.WWebJS.getChat or window.Store.Cmd.markChatUnread is not defined');
+            }
             let chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
             await window.Store.Cmd.markChatUnread(chat, true);
         }, chatId);
@@ -1709,6 +1790,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async getProfilePicUrl(contactId: string): Promise<string> {
         const profilePic = await this.evaluate(async contactId => {
+            if (!window.Store || !window.Store.WidFactory || !window.Store.WidFactory.createWid || !window.compareWwebVersions || !window.Store.ProfilePic || !window.Store.ProfilePic.profilePicFind || !window.Store.ProfilePic.requestProfilePicFromServer) {
+                throw new Error('window.Store.WidFactory.createWid or window.compareWwebVersions or window.Store.ProfilePic.profilePicFind or window.Store.ProfilePic.requestProfilePicFromServer is not defined');
+            }
             try {
                 const chatWid = window.Store.WidFactory.createWid(contactId);
                 return window.compareWwebVersions(window.Debug.VERSION, '<', '2.3000.0')
@@ -1730,6 +1814,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async getCommonGroups(contactId: string): Promise<ChatId[]> {
         const commonGroups = await this.evaluate(async (contactId) => {
+            if (!window.Store || !window.Store.Contact || !window.Store.Contact.get || !window.Store.WidFactory || !window.Store.WidFactory.createUserWid || !window.Store.Contact.getModelsArray || !window.Store.findCommonGroups) {
+                throw new Error('window.Store.Contact.get or window.Store.WidFactory.createUserWid or window.Store.Contact.getModelsArray or window.Store.findCommonGroups is not defined');
+            }
             let contact = window.Store.Contact.get(contactId);
             if (!contact) {
                 const wid = window.Store.WidFactory.createUserWid(contactId);
@@ -1758,6 +1845,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
     */
     async resetState(): Promise<void> {
         await this.evaluate(() => {
+            if (!window.Store || !window.Store.AppState || !window.Store.AppState.reconnect) {
+                throw new Error('window.Store.AppState.reconnect is not defined');
+            }
             window.Store.AppState.reconnect(); 
         });
     }
@@ -1782,6 +1872,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
         }
 
         return await this.evaluate(async number => {
+            if (!window.Store || !window.Store.WidFactory || !window.Store.WidFactory.createWid || !window.Store.QueryExist) {
+                throw new Error('window.Store.WidFactory.createWid or window.Store.QueryExist is not defined');
+            }
             const wid = window.Store.WidFactory.createWid(number);
             const result = await window.Store.QueryExist(wid);
             if (!result || result.wid === undefined) return null;
@@ -1799,6 +1892,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
         if (!number.includes('@s.whatsapp.net')) number = `${number}@s.whatsapp.net`;
 
         return await this.evaluate(async numberId => {
+            if (!window.Store || !window.Store.NumberInfo || !window.Store.NumberInfo.formattedPhoneNumber) {
+                throw new Error('window.Store.NumberInfo.formattedPhoneNumber is not defined');
+            }
             return window.Store.NumberInfo.formattedPhoneNumber(numberId);
         }, number);
     }
@@ -1812,6 +1908,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
         number = number.replace(' ', '').replace('+', '').replace('@c.us', '');
 
         return await this.evaluate(async numberId => {
+            if (!window.Store || !window.Store.NumberInfo || !window.Store.NumberInfo.findCC) {
+                throw new Error('window.Store.NumberInfo.findCC is not defined');
+            }
             return window.Store.NumberInfo.findCC(numberId);
         }, number);
     }
@@ -1837,6 +1936,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
         participants.map(p => (p instanceof Contact) ? p.id._serialized : p);
 
         return await this.evaluate(async (title, participants, options: any) => {
+            if (!window.Store || !window.Store.WidFactory || !window.Store.WidFactory.createWid || !window.Store.QueryExist || !window.Store.GroupUtils || !window.Store.GroupUtils.createGroup || !window.Store.Contact || !window.Store.Contact.gadd || !window.Store.GroupInviteV4 || !window.Store.GroupInviteV4.sendGroupInviteMessage || !window.Store.Chat || !window.Store.Chat.find || !window.WWebJS || !window.WWebJS.getProfilePicThumbToBase64 || !window.compareWwebVersions) {
+                throw new Error('window.Store.WidFactory.createWid or window.Store.QueryExist or window.Store.GroupUtils.createGroup or window.Store.Contact.gadd or window.Store.GroupInviteV4.sendGroupInviteMessage or window.Store.Chat.find or window.WWebJS.getProfilePicThumbToBase64 or window.compareWwebVersions is not defined');
+            }
             const { messageTimer = 0, parentGroupId, autoSendInviteV4 = true, comment = '' } = options;
             const participantData = {}, participantWids = [], failedParticipants = [];
             let createGroupResult, parentGroupWid;
@@ -1925,6 +2027,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async createChannel(title: string, options?: CreateChannelOptions): Promise<CreateChannelResult | string> {
         const result = await this.evaluate(async (title, options) => {
+            if (!window.Store || !window.Store.ChannelUtils || !window.Store.ChannelUtils.isNewsletterCreationEnabled || !window.WWebJS || !window.WWebJS.cropAndResizeImage || !window.Store.ChannelUtils.createNewsletterQuery || !window.Store.JidToWid || !window.Store.JidToWid.newsletterJidToWid) {
+                throw new Error('window.Store.ChannelUtils.isNewsletterCreationEnabled or window.WWebJS.cropAndResizeImage or window.Store.ChannelUtils.createNewsletterQuery or window.Store.JidToWid.newsletterJidToWid is not defined');
+            }
             let response: any;
             const { description = null, picture: pictureData = null } = options;
 
@@ -1973,6 +2078,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async subscribeToChannel(channelId: string): Promise<boolean> {
         return await this.evaluate(async (channelId) => {
+            if (!window.WWebJS || !window.WWebJS.subscribeToUnsubscribeFromChannel) {
+                throw new Error('window.WWebJS.subscribeToUnsubscribeFromChannel is not defined');
+            }
             return await window.WWebJS.subscribeToUnsubscribeFromChannel(channelId, 'Subscribe');
         }, channelId);
     }
@@ -1984,6 +2092,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async unsubscribeFromChannel(channelId: string, options?: UnsubscribeOptions): Promise<boolean> {
         return await this.evaluate(async (channelId, options) => {
+            if (!window.WWebJS || !window.WWebJS.subscribeToUnsubscribeFromChannel) {
+                throw new Error('window.WWebJS.subscribeToUnsubscribeFromChannel is not defined');
+            }
             return await window.WWebJS.subscribeToUnsubscribeFromChannel(channelId, 'Unsubscribe', options);
         }, channelId, options);
     }
@@ -2004,6 +2115,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async transferChannelOwnership(channelId: string, newOwnerId: string, options: TransferChannelOwnershipOptions = {}): Promise<boolean> {
         return await this.evaluate(async (channelId, newOwnerId, options) => {
+            if (!window.WWebJS || !window.WWebJS.getChat || !window.Store || !window.Store.Contact || !window.Store.Contact.get || !window.Store.Contact.find || !window.Store.NewsletterMetadataCollection || !window.Store.NewsletterMetadataCollection.update || !window.Store.ChannelUtils || !window.Store.ChannelUtils.changeNewsletterOwnerAction || !window.Store.ContactCollection || !window.Store.ContactCollection.getMeContact || !window.Store.ChannelUtils.demoteNewsletterAdminAction) {
+                throw new Error('window.WWebJS.getChat or window.Store.Contact.get or window.Store.Contact.find or window.Store.NewsletterMetadataCollection.update or window.Store.ChannelUtils.changeNewsletterOwnerAction or window.Store.ContactCollection.getMeContact or window.Store.ChannelUtils.demoteNewsletterAdminAction is not defined');
+            }
             const channel = await window.WWebJS.getChat(channelId, { getAsModel: false });
             const newOwner = window.Store.Contact.get(newOwnerId) || (await window.Store.Contact.find(newOwnerId));
             if (!channel.newsletterMetadata) {
@@ -2052,6 +2166,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
             view = 0,
             limit = 50
         }) => {
+            if (!window.Store || !window.Store.ChannelUtils || !window.Store.ChannelUtils.currentRegion || !window.Store.ChannelUtils.countryCodesIso || !window.Store.ChannelUtils.getNewsletterDirectoryPageSize || !window.Store.ChannelUtils.fetchNewsletterDirectories || !window.WWebJS || !window.WWebJS.getChatModel) {
+                throw new Error('window.Store.ChannelUtils.currentRegion or window.Store.ChannelUtils.countryCodesIso or window.Store.ChannelUtils.getNewsletterDirectoryPageSize or window.Store.ChannelUtils.fetchNewsletterDirectories or window.WWebJS.getChatModel is not defined');
+            }
             searchText = searchText.trim();
             const currentRegion = window.Store.ChannelUtils.currentRegion;
             if (![0, 1, 2, 3].includes(view)) view = 0;
@@ -2096,6 +2213,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async deleteChannel(channelId: string): Promise<boolean> {
         return await this.evaluate(async (channelId) => {
+            if (!window.WWebJS || !window.WWebJS.getChat || !window.Store || !window.Store.ChannelUtils || !window.Store.ChannelUtils.deleteNewsletterAction) {
+                throw new Error('window.WWebJS.getChat or window.Store.ChannelUtils.deleteNewsletterAction is not defined');
+            }
             const channel = await window.WWebJS.getChat(channelId, { getAsModel: false });
             if (!channel) return false;
             try {
@@ -2114,6 +2234,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async getLabels(): Promise<Array<Label>> {
         const labels = await this.evaluate(async () => {
+            if (!window.WWebJS || !window.WWebJS.getLabels) {
+                throw new Error('window.WWebJS.getLabels is not defined');
+            }
             return window.WWebJS.getLabels();
         });
 
@@ -2126,6 +2249,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async getBroadcasts(): Promise<Array<Broadcast>> {
         const broadcasts = await this.evaluate(async () => {
+            if (!window.WWebJS || !window.WWebJS.getAllStatuses) {
+                throw new Error('window.WWebJS.getAllStatuses is not defined');
+            }
             return window.WWebJS.getAllStatuses();
         });
         return broadcasts.map(data => new Broadcast(this, data));
@@ -2138,6 +2264,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async getLabelById(labelId: string): Promise<Label> {
         const label = await this.evaluate(async (labelId) => {
+            if (!window.WWebJS || !window.WWebJS.getLabel) {
+                throw new Error('window.WWebJS.getLabel is not defined');
+            }
             return window.WWebJS.getLabel(labelId);
         }, labelId);
 
@@ -2151,6 +2280,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async getChatLabels(chatId: string): Promise<Array<Label>> {
         const labels = await this.evaluate(async (chatId) => {
+            if (!window.WWebJS || !window.WWebJS.getChatLabels) {
+                throw new Error('window.WWebJS.getChatLabels is not defined');
+            }
             return window.WWebJS.getChatLabels(chatId);
         }, chatId);
 
@@ -2164,6 +2296,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async getChatsByLabelId(labelId: string): Promise<Array<Chat>> {
         const chatIds = await this.evaluate(async (labelId) => {
+            if (!window.Store || !window.Store.Label || !window.Store.Label.get || !window.Store.Label.labelItemCollection || !window.Store.Label.labelItemCollection.getModelsArray) {
+                throw new Error('window.Store.Label.get or window.Store.Label.labelItemCollection.getModelsArray is not defined');
+            }
             const label = window.Store.Label.get(labelId);
             const labelItems = label.labelItemCollection.getModelsArray();
             return labelItems.reduce((result, item) => {
@@ -2183,6 +2318,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async getBlockedContacts(): Promise<Array<Contact>> {
         const blockedContacts = await this.evaluate(() => {
+            if (!window.Store || !window.Store.Blocklist || !window.Store.Blocklist.getModelsArray || !window.WWebJS || !window.WWebJS.getContact) {
+                throw new Error('window.Store.Blocklist.getModelsArray or window.WWebJS.getContact is not defined');
+            }
             let chatIds = window.Store.Blocklist.getModelsArray().map(a => a.id._serialized);
             return Promise.all(chatIds.map(id => window.WWebJS.getContact(id)));
         });
@@ -2197,6 +2335,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async setProfilePicture(media: MessageMedia): Promise<boolean> {
         const success = await this.evaluate((chatid, media) => {
+            if (!window.WWebJS || !window.WWebJS.setPicture) {
+                throw new Error('window.WWebJS.setPicture is not defined');
+            }
             return window.WWebJS.setPicture(chatid, media);
         }, this.info.wid._serialized, media);
 
@@ -2209,6 +2350,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async deleteProfilePicture(): Promise<boolean> {
         const success = await this.evaluate((chatid) => {
+            if (!window.WWebJS || !window.WWebJS.deletePicture) {
+                throw new Error('window.WWebJS.deletePicture is not defined');
+            }
             return window.WWebJS.deletePicture(chatid);
         }, this.info.wid._serialized);
 
@@ -2224,6 +2368,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
     async addOrRemoveLabels(labelIds: Array<number|string>, chatIds: Array<string>): Promise<void> {
 
         return this.evaluate(async (labelIds, chatIds) => {
+            if (!window.Store || !window.Store.Conn || !window.Store.Conn.platform || !window.WWebJS || !window.WWebJS.getLabels || !window.Store.Chat || !window.Store.Chat.filter || !window.Store.Label || !window.Store.Label.addOrRemoveLabels) {
+                throw new Error('window.Store.Conn.platform or window.WWebJS.getLabels or window.Store.Chat.filter or window.Store.Label.addOrRemoveLabels is not defined');
+            }
             if (['smba', 'smbi'].indexOf(window.Store.Conn.platform) === -1) {
                 throw '[LT01] Only Whatsapp business';
             }
@@ -2261,6 +2408,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async getGroupMembershipRequests(groupId: string): Promise<Array<GroupMembershipRequest>> {
         return await this.evaluate(async (groupId) => {
+            if (!window.Store || !window.Store.WidFactory || !window.Store.WidFactory.createWid || !window.Store.MembershipRequestUtils || !window.Store.MembershipRequestUtils.getMembershipApprovalRequests) {
+                throw new Error('window.Store.WidFactory.createWid or window.Store.MembershipRequestUtils.getMembershipApprovalRequests is not defined');
+            }
             const groupWid = window.Store.WidFactory.createWid(groupId);
             return await window.Store.MembershipRequestUtils.getMembershipApprovalRequests(groupWid);
         }, groupId);
@@ -2289,6 +2439,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async approveGroupMembershipRequests(groupId: string, options: MembershipRequestActionOptions = {}): Promise<Array<MembershipRequestActionResult>> {
         return await this.evaluate(async (groupId, options) => {
+            if (!window.WWebJS || !window.WWebJS.membershipRequestAction) {
+                throw new Error('window.WWebJS.membershipRequestAction is not defined');
+            }
             const { requesterIds = null, sleep = [250, 500] } = options;
             return await window.WWebJS.membershipRequestAction(groupId, 'Approve', requesterIds as string[], sleep as [number, number]);
         }, groupId, options);
@@ -2302,6 +2455,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async rejectGroupMembershipRequests(groupId: string, options: MembershipRequestActionOptions = {}): Promise<Array<MembershipRequestActionResult>> {
         return await this.evaluate(async (groupId, options) => {
+            if (!window.WWebJS || !window.WWebJS.membershipRequestAction) {
+                throw new Error('window.WWebJS.membershipRequestAction is not defined');
+            }
             const { requesterIds = null, sleep = [250, 500] } = options;
             return await window.WWebJS.membershipRequestAction(groupId, 'Reject', requesterIds as string[], sleep as [number, number]);
         }, groupId, options);
@@ -2314,6 +2470,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async setAutoDownloadAudio(flag: boolean): Promise<void> {
         await this.evaluate(async flag => {
+            if (!window.Store || !window.Store.Settings || !window.Store.Settings.getAutoDownloadAudio || !window.Store.Settings.setAutoDownloadAudio) {
+                throw new Error('window.Store.Settings.getAutoDownloadAudio or window.Store.Settings.setAutoDownloadAudio is not defined');
+            }
             const autoDownload = window.Store.Settings.getAutoDownloadAudio();
             if (autoDownload === flag) {
                 return flag;
@@ -2329,6 +2488,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async setAutoDownloadDocuments(flag: boolean): Promise<void> {
         await this.evaluate(async flag => {
+            if (!window.Store || !window.Store.Settings || !window.Store.Settings.getAutoDownloadDocuments || !window.Store.Settings.setAutoDownloadDocuments) {
+                throw new Error('window.Store.Settings.getAutoDownloadDocuments or window.Store.Settings.setAutoDownloadDocuments is not defined');
+            }
             const autoDownload = window.Store.Settings.getAutoDownloadDocuments();
             if (autoDownload === flag) {
                 return flag;
@@ -2344,6 +2506,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async setAutoDownloadPhotos(flag: boolean): Promise<void> {
         await this.evaluate(async flag => {
+            if (!window.Store || !window.Store.Settings || !window.Store.Settings.getAutoDownloadPhotos || !window.Store.Settings.setAutoDownloadPhotos) {
+                throw new Error('window.Store.Settings.getAutoDownloadPhotos or window.Store.Settings.setAutoDownloadPhotos is not defined');
+            }
             const autoDownload = window.Store.Settings.getAutoDownloadPhotos();
             if (autoDownload === flag) {
                 return flag;
@@ -2359,6 +2524,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async setAutoDownloadVideos(flag: boolean): Promise<void> {
         await this.evaluate(async flag => {
+            if (!window.Store || !window.Store.Settings || !window.Store.Settings.getAutoDownloadVideos || !window.Store.Settings.setAutoDownloadVideos) {
+                throw new Error('window.Store.Settings.getAutoDownloadVideos or window.Store.Settings.setAutoDownloadVideos is not defined');
+            }
             const autoDownload = window.Store.Settings.getAutoDownloadVideos();
             if (autoDownload === flag) {
                 return flag;
@@ -2376,6 +2544,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async setBackgroundSync(flag: boolean): Promise<boolean> {
         const result = await this.evaluate(async flag => {
+            if (!window.Store || !window.Store.Settings || !window.Store.Settings.getGlobalOfflineNotifications || !window.Store.Settings.setGlobalOfflineNotifications) {
+                throw new Error('window.Store.Settings.getGlobalOfflineNotifications or window.Store.Settings.setGlobalOfflineNotifications is not defined');
+            }
             const backSync = window.Store.Settings.getGlobalOfflineNotifications();
             if (backSync === flag) {
                 return flag;
@@ -2395,6 +2566,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async getContactDeviceCount(userId: string): Promise<number> {
         return await this.evaluate(async (userId) => {
+            if (!window.Store || !window.Store.DeviceList || !window.Store.DeviceList.getDeviceIds || !window.Store.WidFactory || !window.Store.WidFactory.createWid) {
+                throw new Error('window.Store.DeviceList.getDeviceIds or window.Store.WidFactory.createWid is not defined');
+            }
             const devices = await window.Store.DeviceList.getDeviceIds([window.Store.WidFactory.createWid(userId)]);
             if (devices && devices.length && devices[0] != null && typeof devices[0].devices == 'object') {
                 return devices[0].devices.length;
@@ -2410,6 +2584,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async syncHistory(chatId: string): Promise<boolean> {
         return await this.evaluate(async (chatId) => {
+            if (!window.Store || !window.Store.WidFactory || !window.Store.WidFactory.createWid || !window.Store.Chat || !window.Store.Chat.get || !window.Store.Chat.find || !window.Store.HistorySync || !window.Store.HistorySync.sendPeerDataOperationRequest) {
+                throw new Error('window.Store.WidFactory.createWid or window.Store.Chat.get or window.Store.Chat.find or window.Store.HistorySync.sendPeerDataOperationRequest is not defined');
+            }
             const chatWid = window.Store.WidFactory.createWid(chatId);
             const chat = window.Store.Chat.get(chatWid) ?? (await window.Store.Chat.find(chatWid));
             if (chat?.endOfHistoryTransferType === 0) {
@@ -2433,6 +2610,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
     async saveOrEditAddressbookContact(phoneNumber: string, firstName: string, lastName: string, syncToAddressbook: boolean = false): Promise<ChatId>
     {
         return await this.evaluate(async (phoneNumber, firstName, lastName, syncToAddressbook) => {
+            if (!window.Store || !window.Store.AddressbookContactUtils || !window.Store.AddressbookContactUtils.saveContactAction) {
+                throw new Error('window.Store.AddressbookContactUtils.saveContactAction is not defined');
+            }
             return await window.Store.AddressbookContactUtils.saveContactAction(
                 phoneNumber,
                 null,
@@ -2451,6 +2631,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
     async deleteAddressbookContact(phoneNumber: string): Promise<void>
     {
         return await this.evaluate(async (phoneNumber) => {
+            if (!window.Store || !window.Store.AddressbookContactUtils || !window.Store.AddressbookContactUtils.deleteContactAction) {
+                throw new Error('window.Store.AddressbookContactUtils.deleteContactAction is not defined');
+            }
             return await window.Store.AddressbookContactUtils.deleteContactAction(phoneNumber);
         }, phoneNumber);
     }
