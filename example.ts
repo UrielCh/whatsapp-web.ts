@@ -1,4 +1,5 @@
 import { Client, Location, Poll, List, Buttons, LocalAuth } from './index.ts';
+import type Label from "./src/structures/Label.ts";
 
 const client = new Client({
     authStrategy: new LocalAuth(),
@@ -386,7 +387,7 @@ client.on('message', async msg => {
         await chat.changeLabels([0, 1]);
     } else if (msg.body === '!addlabels') {
         const chat = await msg.getChat();
-        let labels = (await chat.getLabels()).map((l) => l.id);
+        const labels = (await chat.getLabels()).map((l: Label) => l.id);
         labels.push('0');
         labels.push('1');
         await chat.changeLabels(labels);

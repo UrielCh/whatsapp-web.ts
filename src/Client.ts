@@ -487,7 +487,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
             if (state === 'OPENING' || state === 'UNLAUNCHED' || state === 'PAIRING') {
                 // wait till state changes
                 await new Promise<void>(r => {
-                    window.AuthStore.AppState.on('change:state', function waitTillInit(_AppState, state) {
+                    window.AuthStore.AppState.on('change:state', function waitTillInit(_AppState: any, state: typeof WAState[keyof typeof WAState]) {
                         if (state !== 'OPENING' && state !== 'UNLAUNCHED' && state !== 'PAIRING') {
                             window.AuthStore.AppState.off('change:state', waitTillInit);
                             r();
@@ -575,7 +575,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
                 const getQR = (ref: string) => ref + ',' + staticKeyB64 + ',' + identityKeyB64 + ',' + advSecretKey + ',' + platform;
                 
                 window.onQRChangedEvent(getQR(AuthStore.Conn.ref)); // initial qr
-                window.AuthStore.Conn.on('change:ref', (_, ref: string) => { window.onQRChangedEvent(getQR(ref)); }); // future QR changes
+                window.AuthStore.Conn.on('change:ref', (_: unknown, ref: string) => { window.onQRChangedEvent(getQR(ref)); }); // future QR changes
             });
         }
         
@@ -653,7 +653,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
             await this.pupPage.waitForNavigation({waitUntil: 'load', timeout: 5000}).catch((_) => _);
         });
         await this.evaluate(() => {
-            window.AuthStore.AppState.on('change:state', (_AppState, state) => { window.onAuthAppStateChangedEvent(state); });
+            window.AuthStore.AppState.on('change:state', (_AppState: {state: string}, state: string) => { window.onAuthAppStateChangedEvent(state); });
             window.AuthStore.AppState.on('change:hasSynced', () => { window.onAppStateHasSyncedEvent(); });
             window.AuthStore.Cmd.on('offline_progress_update', () => {
                 window.onOfflineProgressUpdateEvent(window.AuthStore.OfflineMessageHandler.getOfflineDeliveryProgress()); 
@@ -753,7 +753,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
      * @property {boolean} reinject is this a reinject?
      */
     async attachEventListeners() {
-        await this.exposeFunction('onAddMessageEvent', msg => {
+        await this.exposeFunction('onAddMessageEvent', (msg: any) => {
             if (msg.type === 'gp2') {
                 const notification = new GroupNotification(this, msg);
                 if (['add', 'invite', 'linked_group_join'].includes(msg.subtype)) {
@@ -1219,7 +1219,39 @@ class Client extends EventEmitter implements ClientEventsInterface {
 
         options.groupMentions && !Array.isArray(options.groupMentions) && (options.groupMentions = [options.groupMentions]);
         
-        const internalOptions = {
+
+        interface InternalMessageSendOptions {
+            linkPreview?: boolean;
+            sendAudioAsVoice?: boolean;
+            sendVideoAsGif?: boolean;
+            sendMediaAsSticker?: boolean;
+            sendMediaAsDocument?: boolean;
+            sendMediaAsHd?: boolean;
+            caption?: string;
+            quotedMessageId?: string;
+            parseVCards?: boolean;
+            mentionedJidList?: string[];
+            groupMentions?: {
+                /** The name of a group to mention (can be custom) */
+                subject: string,
+                /** The group ID, e.g.: 'XXXXXXXXXX@g.us' */
+                id: string
+            }[];
+            invokedBotWid?: string;
+            ignoreQuoteErrors?: boolean;
+            extraOptions?: any;
+            media?: MessageMedia;
+            isViewOnce?: boolean;
+            location?: Location;
+            poll?: Poll;
+            contactCard?: string;
+            contactCardList?: string[];
+            buttons?: Buttons;
+            list?: List;
+            attachment?: string | MessageMedia;
+        }
+
+        const internalOptions: InternalMessageSendOptions = {
             linkPreview: options.linkPreview === false ? undefined : true,
             sendAudioAsVoice: options.sendAudioAsVoice,
             sendVideoAsGif: options.sendVideoAsGif,
@@ -1234,40 +1266,44 @@ class Client extends EventEmitter implements ClientEventsInterface {
             invokedBotWid: options.invokedBotWid,
             ignoreQuoteErrors: options.ignoreQuoteErrors !== false,
             extraOptions: options.extra,
-        } as any;
+        };
 
         const sendSeen = options.sendSeen !== false;
 
+        let contentText = "";
+
         if (content instanceof MessageMedia) {
             internalOptions.media = content;
-            internalOptions.isViewOnce = options.isViewOnce,
-            content = '';
+            internalOptions.isViewOnce = options.isViewOnce;
         } else if (options.media instanceof MessageMedia) {
             internalOptions.media = options.media;
-            internalOptions.caption = content;
-            internalOptions.isViewOnce = options.isViewOnce,
-            content = '';
+            // internalOptions.caption = content;
+            internalOptions.isViewOnce = options.isViewOnce;
         } else if (content instanceof Location) {
             internalOptions.location = content;
-            content = '';
         } else if (content instanceof Poll) {
             internalOptions.poll = content;
-            content = '';
         } else if (content instanceof Contact) {
             internalOptions.contactCard = content.id._serialized;
-            content = '';
         } else if (Array.isArray(content) && content.length > 0 && content[0] instanceof Contact) {
             internalOptions.contactCardList = content.map(contact => contact.id._serialized);
-            content = '';
         } else if (content instanceof Buttons) {
             console.warn('Buttons are now deprecated. See more at https://www.youtube.com/watch?v=hv1R1rLeVVE.');
             if (content.type !== 'chat') { internalOptions.attachment = content.body; }
             internalOptions.buttons = content;
-            content = '';
         } else if (content instanceof List) {
             console.warn('Lists are now deprecated. See more at https://www.youtube.com/watch?v=hv1R1rLeVVE.');
             internalOptions.list = content;
-            content = '';
+        } else if (typeof content === 'string') {
+            contentText = content;
+        } else {
+            console.error('Unsupported message type: ' + typeof content);
+            console.warn('the Send message will probably failed');
+            contentText = content as any;
+        }
+
+        if (options.caption) {
+            internalOptions.caption = options.caption;
         }
 
         if (internalOptions.sendMediaAsSticker && internalOptions.media) {
@@ -1296,7 +1332,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
             return msg
                 ? window.WWebJS.getMessageModel(msg)
                 : undefined;
-        }, chatId, content, internalOptions, sendSeen);
+        }, chatId, contentText, internalOptions, sendSeen);
 
         return sentMsg
             ? new Message(this, sentMsg)

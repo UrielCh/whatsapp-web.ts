@@ -113,7 +113,7 @@ export interface MessageSendOptions {
         subject: string,
         /** The group ID, e.g.: 'XXXXXXXXXX@g.us' */
         id: string
-    }[]
+    }[];
     /** Send 'seen' status */
     sendSeen?: boolean
     /** Bot Wid when doing a bot mention like @Meta AI */

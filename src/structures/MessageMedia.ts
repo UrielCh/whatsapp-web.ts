@@ -5,6 +5,13 @@ import mime from 'mime';
 import { URL } from 'node:url';
 import { Buffer } from "node:buffer";
 
+export interface MessageMediaType {
+    data: string;
+    mimetype: string;
+    filename?: string;
+    filesize?: number;
+ }
+
 /**
  * Media attached to a message
  * @param {string} mimetype MIME type of the attachment
@@ -15,10 +22,10 @@ import { Buffer } from "node:buffer";
 class MessageMedia {
     mimetype: string;
     data: string;
-    filename?: string | null;
-    filesize?: number | null;
+    filename?: string;
+    filesize?: number;
 
-    constructor(mimetype: string, data: string, filename?: string | null, filesize?: number | null) {
+    constructor(mimetype: string, data: string, filename?: string, filesize?: number) {
         /**
          * MIME type of the attachment
          * @type {string}

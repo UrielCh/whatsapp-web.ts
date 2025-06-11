@@ -1,4 +1,8 @@
-import { UnsubscribeOptions } from "../../Client.ts";
+import type { UnsubscribeOptions } from "../../Client.ts";
+import type Channel from "../../structures/Channel.ts";
+import type Chat from "../../structures/Chat.ts";
+import type Contact from "../../structures/Contact.ts";
+import { MessageMediaType } from "../../structures/MessageMedia.ts";
 
 export const LoadUtils = () => {
     window.WWebJS = {} as any;
@@ -79,7 +83,7 @@ export const LoadUtils = () => {
 
         if (options.mentionedJidList) {
             options.mentionedJidList = await Promise.all(
-                options.mentionedJidList.map(async (id) => {
+                options.mentionedJidList.map(async (id: string) => {
                     const wid = window.Store.WidFactory.createWid(id);
                     if (await window.Store.QueryExist(wid)) {
                         return wid;
@@ -90,7 +94,7 @@ export const LoadUtils = () => {
         }
 
         if (options.groupMentions) {
-            options.groupMentions = options.groupMentions.map((e) => ({
+            options.groupMentions = options.groupMentions.map((e: {subject: string, id: string}) => ({
                 groupSubject: e.subject,
                 groupJid: window.Store.WidFactory.createWid(e.id)
             }));
@@ -131,7 +135,7 @@ export const LoadUtils = () => {
 
         let vcardOptions = {};
         if (options.contactCard) {
-            let contact = window.Store.Contact.get(options.contactCard);
+            const contact = window.Store.Contact.get(options.contactCard);
             vcardOptions = {
                 body: window.Store.VCard.vcardFromContactModel(contact).vcard,
                 type: 'vcard',
@@ -139,8 +143,8 @@ export const LoadUtils = () => {
             };
             delete options.contactCard;
         } else if (options.contactCardList) {
-            let contacts = options.contactCardList.map(c => window.Store.Contact.get(c));
-            let vcards = contacts.map(c => window.Store.VCard.vcardFromContactModel(c));
+            const contacts = options.contactCardList.map((c: string) => window.Store.Contact.get(c));
+            const vcards = contacts.map((c: string) => window.Store.VCard.vcardFromContactModel(c));
             vcardOptions = {
                 type: 'multi_vcard',
                 vcardList: vcards,
@@ -361,7 +365,7 @@ export const LoadUtils = () => {
         return window.Store.Msg.get(msg.id._serialized);
     };
 
-    window.WWebJS.toStickerData = async (mediaInfo: { data: string; mimetype: string; filename: string }) => {
+    window.WWebJS.toStickerData = async (mediaInfo: { data: string; mimetype: string; filename?: string; filesize?: number; }) => {
         if (!window.WWebJS || !window.WWebJS.mediaInfoToFile || !window.Store || !window.Store.StickerTools || !window.Store.StickerTools.toWebpSticker || !window.WWebJS.arrayBufferToBase64) {
             throw new Error('window.WWebJS.mediaInfoToFile or window.Store.StickerTools.toWebpSticker or window.WWebJS.arrayBufferToBase64 is not defined');
         }
@@ -378,7 +382,7 @@ export const LoadUtils = () => {
         };
     };
 
-    window.WWebJS.processStickerData = async (mediaInfo: { data: string; mimetype: string; filename: string }) => {
+    window.WWebJS.processStickerData = async (mediaInfo: MessageMediaType) => {
         if (!window.Store || !window.Store.UploadUtils || !window.Store.UploadUtils.encryptAndUpload) {
             throw new Error('window.Store.UploadUtils is not defined');
         }
@@ -410,7 +414,7 @@ export const LoadUtils = () => {
     };
 
 
-    window.WWebJS.processMediaData = async (mediaInfo: { data: string; mimetype: string; filename: string }, { forceSticker, forceGif, forceVoice, forceDocument, forceMediaHd, sendToChannel }) => {
+    window.WWebJS.processMediaData = async (mediaInfo: MessageMediaType, { forceSticker, forceGif, forceVoice, forceDocument, forceMediaHd, sendToChannel }) => {
         if (!window.WWebJS || !window.WWebJS.mediaInfoToFile || !window.Store || !window.Store.OpaqueData || !window.Store.OpaqueData.createFromData || !window.Store.MediaPrep || !window.Store.MediaPrep.prepRawMedia || !window.Store.MediaObject || !window.Store.MediaObject.getOrCreateMediaObject || !window.Store.MediaTypes || !window.Store.MediaTypes.msgToMediaType || !window.WWebJS.generateWaveform || !window.Store.MediaUpload || !window.Store.MediaUpload.uploadMedia || !window.Store.MediaUpload.uploadUnencryptedMedia || !window.Store.SendChannelMessage || !window.Store.SendChannelMessage.getRandomFilehash) {
             throw new Error('One or more properties or methods on window.Store or window.WWebJS are not defined for processMediaData');
         }
@@ -595,7 +599,7 @@ export const LoadUtils = () => {
             throw new Error('window.Store.Chat.getModelsArray or window.WWebJS.getChatModel is not defined');
         }
         const chats = window.Store.Chat.getModelsArray();
-        const chatPromises = chats.map(chat => window.WWebJS.getChatModel(chat));
+        const chatPromises = chats.map((chat: Chat) => window.WWebJS.getChatModel(chat));
         return await Promise.all(chatPromises);
     };
 
@@ -604,7 +608,7 @@ export const LoadUtils = () => {
             throw new Error('window.Store.NewsletterCollection.getModelsArray or window.WWebJS.getChatModel is not defined');
         }
         const channels = window.Store.NewsletterCollection.getModelsArray();
-        const channelPromises = channels?.map((channel) => window.WWebJS.getChatModel(channel, { isChannel: true }));
+        const channelPromises = channels?.map((channel: Channel) => window.WWebJS.getChatModel(channel, { isChannel: true }));
         return await Promise.all(channelPromises);
     };
 
@@ -628,8 +632,8 @@ export const LoadUtils = () => {
             const chatWid = window.Store.WidFactory.createWid(chat.id._serialized);
             await window.Store.GroupMetadata.update(chatWid);
             chat.groupMetadata.participants._models
-                .filter(x => x.id?._serialized?.endsWith('@lid'))
-                .forEach(x => x.contact?.phoneNumber && (x.id = x.contact.phoneNumber));
+                .filter((x: any) => x.id?._serialized?.endsWith('@lid'))
+                .forEach((x: any) => x.contact?.phoneNumber && (x.id = x.contact.phoneNumber));
             model.groupMetadata = chat.groupMetadata.serialize();
             model.isReadOnly = chat.groupMetadata.announce;
         }
@@ -703,7 +707,7 @@ export const LoadUtils = () => {
             throw new Error('window.Store.Contact.getModelsArray or window.WWebJS.getContactModel is not defined');
         }
         const contacts = window.Store.Contact.getModelsArray();
-        return contacts.map(contact => window.WWebJS.getContactModel(contact));
+        return contacts.map((contact: Contact) => window.WWebJS.getContactModel(contact));
     };
 
     window.WWebJS.mediaInfoToFile = ({ data, mimetype, filename }) => {
@@ -869,7 +873,7 @@ export const LoadUtils = () => {
             throw new Error('window.WWebJS.getChat or window.WWebJS.getLabel is not defined');
         }
         const chat = await window.WWebJS.getChat(chatId);
-        return (chat.labels || []).map(id => window.WWebJS.getLabel(id));
+        return (chat.labels || []).map((id: string) => window.WWebJS.getLabel(id));
     };
 
     window.WWebJS.getOrderDetail = async (orderId, token, chatId) => {
@@ -893,7 +897,7 @@ export const LoadUtils = () => {
         return undefined;
     };
 
-    window.WWebJS.rejectCall = async (peerJid, id) => {
+    window.WWebJS.rejectCall = async (peerJid, id): Promise<void> => {
         if (!window.Store || !window.Store.User || !window.Store.User.getMaybeMeUser || !window.Store.SocketWap || !window.Store.SocketWap.wap || !window.Store.SocketWap.generateId || !window.Store.SocketWap.USER_JID || !window.Store.Socket || !window.Store.Socket.deprecatedCastStanza) {
             throw new Error('One or more properties or methods on window.Store are not defined for rejectCall');
         }
@@ -951,7 +955,7 @@ export const LoadUtils = () => {
         });
     };
 
-    window.WWebJS.setPicture = async (chatId, media) => {
+    window.WWebJS.setPicture = async (chatId, media): Promise<boolean> => {
         if (!window.WWebJS || !window.WWebJS.cropAndResizeImage || !window.Store || !window.Store.WidFactory || !window.Store.WidFactory.createWid || !window.Store.ProfilePicThumb || !window.Store.ProfilePicThumb.get || !window.Store.ProfilePicThumb.find || !window.Store.GroupUtils || !window.Store.GroupUtils.sendSetPicture) {
             throw new Error('One or more properties or methods on window.Store or window.WWebJS are not defined for setPicture');
         }
@@ -971,14 +975,14 @@ export const LoadUtils = () => {
         }
     };
 
-    window.WWebJS.deletePicture = async (chatid) => {
+    window.WWebJS.deletePicture = async (chatid): Promise<boolean> => {
         if (!window.Store || !window.Store.WidFactory || !window.Store.WidFactory.createWid || !window.Store.ProfilePicThumb || !window.Store.ProfilePicThumb.get || !window.Store.GroupUtils || !window.Store.GroupUtils.requestDeletePicture) {
             throw new Error('One or more properties or methods on window.Store are not defined for deletePicture');
         }
         const chatWid = window.Store.WidFactory.createWid(chatid);
         try {
             const collection = window.Store.ProfilePicThumb.get(chatid);
-            if (!collection.canDelete()) return;
+            if (!collection.canDelete()) return false;
 
             const res = await window.Store.GroupUtils.requestDeletePicture(chatWid);
             return res ? res.status === 200 : false;
@@ -1102,7 +1106,7 @@ export const LoadUtils = () => {
         const toApprove = action === 'Approve';
         let membershipRequests;
         let response;
-        let result = [];
+        const result: any[] = [];
 
         await window.Store.GroupQueryAndUpdate({ id: groupId });
 
@@ -1125,9 +1129,13 @@ export const LoadUtils = () => {
 
         const groupJid = window.Store.WidToJid.widToGroupJid(groupWid);
         
-        const _getSleepTime = (sleep) => {
-            if (!Array.isArray(sleep) || (sleep.length === 2 && sleep[0] === sleep[1])) {
+        const _getSleepTime = (sleep: number[]): number => {
+            if (!Array.isArray(sleep)) {
                 return sleep;
+            }
+
+            if (sleep.length === 2 && sleep[0] === sleep[1]) {
+                return sleep[0];
             }
             if (sleep.length === 1) {
                 return sleep[0];
@@ -1223,7 +1231,7 @@ export const LoadUtils = () => {
         return response.messageSendResult === 'OK';
     };
     
-    window.WWebJS.getStatusModel = status => {
+    window.WWebJS.getStatusModel = (status: any) => {
         const res = status.serialize();
         delete res._msgs;
         return res;
@@ -1234,6 +1242,6 @@ export const LoadUtils = () => {
             throw new Error('window.Store.Status.getModelsArray or window.WWebJS.getStatusModel is not defined');
         }
         const statuses = window.Store.Status.getModelsArray();
-        return statuses.map(status => window.WWebJS.getStatusModel(status));
+        return statuses.map((status: any) => window.WWebJS.getStatusModel(status));
     };
 };

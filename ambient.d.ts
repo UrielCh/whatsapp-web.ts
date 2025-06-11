@@ -1,7 +1,9 @@
+import type { WAState } from "@u4/whatsapp-web";
 import type { UnsubscribeOptions } from "./src/Client.ts";
 import type { CallData } from "./src/structures/Call.ts";
 import type Contact from "./src/structures/Contact.ts";
 import type MessageMedia from "./src/structures/MessageMedia.ts";
+import type { MessageMediaType } from "./src/structures/MessageMedia.ts";
 
 export interface SerializedCnx {
     clientToken: undefined,
@@ -298,7 +300,7 @@ declare global {
      * Injected by src/util/Injected/Utils.js
      */
     WWebJS: {
-      mediaInfoToFile?: (mediaInfo: { data: string; mimetype: string; filename: string }) => File;
+      mediaInfoToFile?: (mediaInfo: MessageMediaType) => File;
       getProfilePicThumbToBase64?: (chatId: string) => Promise<unknown>;
       getStatusModel?: (status: any) => any;
       getAllStatuses?: () => Promise<any[]>;
@@ -357,15 +359,17 @@ declare global {
         media: { mimetype: string; data: string; [key: string]: any },
         options?: { size?: number; mimetype?: string; quality?: number; asDataUrl?: boolean; [key: string]: any }
       ) => Promise<string | { mimetype: string; data: string; [key: string]: any }>;
-      toStickerData?: (mediaInfo: { mimetype: string; data: string; [key: string]: any }) => Promise<{ mimetype: string; data: string }>;
+
+      toStickerData?: (mediaInfo: MessageMediaType) => Promise<{ mimetype: string; data: string }>;
+
       processMediaData?: (
-        mediaInfo: { mimetype: string; data: string; [key: string]: any },
+        mediaInfo: MessageMediaType,
         opts: { forceSticker?: boolean; forceGif?: boolean; forceVoice?: boolean; forceDocument?: boolean; forceMediaHd?: boolean; sendToChannel?: boolean }
       ) => Promise<any>;
-      processStickerData?: (mediaInfo: { mimetype: string; data: string; [key: string]: any }) => Promise<{ mimetype: string; data: string }>;
+      processStickerData?: (mediaInfo: MessageMediaType) => Promise<{ mimetype: string; data: string }>;
     };
     AuthStore?: {
-      AppState?: { state?: string, on?: Function, off?: Function };
+      AppState?: { state?: typeof WAState[keyof typeof WAState], on?: Function, off?: Function };
       Cmd?: { on?: Function };
       Conn?: {
         serialize?: () => SerializedCnx,

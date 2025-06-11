@@ -2,11 +2,11 @@
 
 // Exposes the internal Store to the WhatsApp Web client
 export function ExposeLegacyStore() {
-    window.Store = Object.assign({}, window.mR.findModule(m => m.default && m.default.Chat)[0].default);
+    window.Store = Object.assign({}, window.mR.findModule((module: {default?: {Chat: {default: unknown}}}) => module.default && module.default.Chat)[0].default);
     window.Store.AppState = window.mR.findModule('Socket')[0].Socket;
     window.Store.Conn = window.mR.findModule('Conn')[0].Conn;
     window.Store.BlockContact = window.mR.findModule('blockContact')[0];
-    window.Store.Call = window.mR.findModule((module) => module.default && module.default.Call)[0].default.Call;
+    window.Store.Call = window.mR.findModule((module: {default?: {Call: {default: unknown}}}) => module.default && module.default.Call)[0].default.Call;
     window.Store.Cmd = window.mR.findModule('Cmd')[0].Cmd;
     window.Store.CryptoLib = window.mR.findModule('decryptE2EMedia')[0];
     window.Store.DownloadManager = window.mR.findModule('downloadManager')[0].downloadManager;
@@ -18,8 +18,8 @@ export function ExposeLegacyStore() {
     window.Store.NumberInfo = window.mR.findModule('formattedPhoneNumber')[0];
     window.Store.MediaTypes = window.mR.findModule('msgToMediaType')[0];
     window.Store.MediaUpload = window.mR.findModule('uploadMedia')[0];
-    window.Store.MsgKey = window.mR.findModule((module) => module.default && module.default.fromString)[0].default;
-    window.Store.OpaqueData = window.mR.findModule(module => module.default && module.default.createFromData)[0].default;
+    window.Store.MsgKey = window.mR.findModule((module: {default?: {fromString: unknown}}) => module.default && module.default.fromString)[0].default;
+    window.Store.OpaqueData = window.mR.findModule((module: {default?: {createFromData: unknown}}) => module.default && module.default.createFromData)[0].default;
     window.Store.QueryProduct = window.mR.findModule('queryProduct')[0];
     window.Store.QueryOrder = window.mR.findModule('queryOrder')[0];
     window.Store.SendClear = window.mR.findModule('sendClear')[0];
@@ -29,8 +29,8 @@ export function ExposeLegacyStore() {
     window.Store.SendSeen = window.mR.findModule('sendSeen')[0];
     window.Store.User = window.mR.findModule('getMaybeMeUser')[0];
     window.Store.ContactMethods = window.mR.findModule('getUserid')[0];
-    window.Store.UploadUtils = window.mR.findModule((module) => (module.default && module.default.encryptAndUpload) ? module.default : null)[0].default;
-    window.Store.UserConstructor = window.mR.findModule((module) => (module.default && module.default.prototype && module.default.prototype.isServer && module.default.prototype.isUser) ? module.default : null)[0].default;
+    window.Store.UploadUtils = window.mR.findModule((module: {default?: {encryptAndUpload: unknown}}) => (module.default && module.default.encryptAndUpload) ? module.default : null)[0].default;
+    window.Store.UserConstructor = window.mR.findModule((module: {default?: {prototype?: {isServer?: boolean, isUser?: boolean}}}) => (module.default && module.default.prototype && module.default.prototype.isServer && module.default.prototype.isUser) ? module.default : null)[0].default;
     window.Store.Validators = window.mR.findModule('findLinks')[0];
     window.Store.VCard = window.mR.findModule('vcardFromContactModel')[0];
     window.Store.WidFactory = window.mR.findModule('createWid')[0];

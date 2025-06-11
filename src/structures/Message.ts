@@ -4,12 +4,11 @@ import Location from './Location.ts';
 import Order from './Order.ts';
 import Payment from './Payment.ts';
 import Reaction from './Reaction.ts';
-import Contact, { ContactId } from './Contact.ts';
-import { MessageAck, MessageTypes } from '../util/Constants.ts';
-import Client from '../Client.ts';
-import { MessageContent, MessageId, MessageSendOptions } from '../types.ts';
-import Chat from './Chat.ts';
-import GroupChat from './GroupChat.ts';
+import Contact, { type ContactId } from './Contact.ts';
+import { type MessageAck, MessageTypes } from '../util/Constants.ts';
+import type Client from '../Client.ts';
+import type { MessageContent, MessageId, MessageSendOptions } from '../types.ts';
+import type Chat from './Chat.ts';
 
 export type MessageInfo = {
     delivery: Array<{id: ContactId, t: number}>,
@@ -337,7 +336,7 @@ class Message extends Base {
             }
             let description;
             if (data.loc && typeof data.loc === 'string') {
-                let splitted = data.loc.split('\n');
+                const splitted = data.loc.split('\n');
                 description = {
                     name: splitted[0],
                     address: splitted[1],
@@ -859,7 +858,7 @@ class Message extends Base {
             !Array.isArray(options.mentions) && (options.mentions = [options.mentions]);
             if (options.mentions.some((possiblyContact) => possiblyContact instanceof Contact)) {
                 console.warn('Mentions with an array of Contact are now deprecated. See more at https://github.com/pedroslopez/whatsapp-web.js/pull/2166.');
-                options.mentions = options.mentions.map((a: Contact) => a.id._serialized);
+                options.mentions = options.mentions.map((a: Contact | string) => a instanceof Contact ? a.id._serialized : a);
             }
         }
 
