@@ -664,7 +664,7 @@ class Message extends Base {
                     filesize: msg.size
                 };
             } catch (e) {
-                if(e.status && e.status === 404) return undefined;
+                if ((e as {status: number}).status && (e as {status: number}).status === 404) return undefined;
                 throw e;
             }
         }, this.id._serialized);

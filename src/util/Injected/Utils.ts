@@ -970,7 +970,7 @@ export const LoadUtils = () => {
             const res = await window.Store.GroupUtils.sendSetPicture(chatWid, thumbnail, profilePic);
             return res ? res.status === 200 : false;
         } catch (err) {
-            if (err.name === 'ServerStatusCodeError') return false;
+            if ((err as Error).name === 'ServerStatusCodeError') return false;
             throw err;
         }
     };
@@ -987,7 +987,7 @@ export const LoadUtils = () => {
             const res = await window.Store.GroupUtils.requestDeletePicture(chatWid);
             return res ? res.status === 200 : false;
         } catch (err) {
-            if(err.name === 'ServerStatusCodeError') return false;
+            if((err as Error).name === 'ServerStatusCodeError') return false;
             throw err;
         }
     };
@@ -1216,7 +1216,7 @@ export const LoadUtils = () => {
             } else return false;
             return true;
         } catch (err) {
-            if (err.name === 'ServerStatusCodeError') return false;
+            if ((err as Error).name === 'ServerStatusCodeError') return false;
             throw err;
         }
     };

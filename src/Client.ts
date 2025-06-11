@@ -456,7 +456,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
                     result = await this.pupPage.evaluate(asStr) as Awaited<ReturnType<Func>>;
                     lastError = undefined;
                 } catch (error) {
-                    lastError = error;
+                    lastError = error as Error;
                     //  ERROR: ProtocolError: Runtime.evaluate timed out. Increase the 'protocolTimeout' setting in launch/connect calls for a higher timeout if needed.
                     if (error instanceof ProtocolError && error.message.includes('Runtime.evaluate timed out')) {
                         // retry once
@@ -1460,7 +1460,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
             try {
                 channelMetadata = await window.WWebJS.getChannelMetadata(inviteCode);
             } catch (err) {
-                if (err.name === 'ServerStatusCodeError') return null;
+                if ((err as Error).name === 'ServerStatusCodeError') return null;
                 throw err;
             }
             return await window.WWebJS.getChat(channelMetadata.id);
@@ -1567,7 +1567,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
                 await window.Store.ChannelUtils.acceptNewsletterAdminInvite(channelId);
                 return true;
             } catch (err) {
-                if (err.name === 'ServerStatusCodeError') return false;
+                if ((err as Error).name === 'ServerStatusCodeError') return false;
                 throw err;
             }
         }, channelId);
@@ -1589,7 +1589,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
                 await window.Store.ChannelUtils.revokeNewsletterAdminInvite(channelId, userWid);
                 return true;
             } catch (err) {
-                if (err.name === 'ServerStatusCodeError') return false;
+                if ((err as Error).name === 'ServerStatusCodeError') return false;
                 throw err;
             }
         }, channelId, userId);
@@ -1611,7 +1611,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
                 await window.Store.ChannelUtils.demoteNewsletterAdmin(channelId, userWid);
                 return true;
             } catch (err) {
-                if (err.name === 'ServerStatusCodeError') return false;
+                if ((err as Error).name === 'ServerStatusCodeError') return false;
                 throw err;
             }
         }, channelId, userId);
@@ -1847,7 +1847,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
                     ? await window.Store.ProfilePic.profilePicFind(chatWid)
                     : await window.Store.ProfilePic.requestProfilePicFromServer(chatWid);
             } catch (err) {
-                if(err.name === 'ServerStatusCodeError') return undefined;
+                if((err as Error).name === 'ServerStatusCodeError') return undefined;
                 throw err;
             }
         }, contactId);
@@ -2103,7 +2103,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
                     picture: picture,
                 });
             } catch (err) {
-                if (err.name === 'ServerStatusCodeError') {
+                if ((err as Error).name === 'ServerStatusCodeError') {
                     return 'CreateChannelError: An error occupied while creating a channel';
                 }
                 throw err;
@@ -2271,7 +2271,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
                 await window.Store.ChannelUtils.deleteNewsletterAction(channel);
                 return true;
             } catch (err) {
-                if (err.name === 'ServerStatusCodeError') return false;
+                if ((err as Error).name === 'ServerStatusCodeError') return false;
                 throw err;
             }
         }, channelId);

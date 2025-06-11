@@ -18,7 +18,7 @@
     "unzipper": "npm:unzipper@^0.12.3"
   },
   "compilerOptions": {
-    "strict": false,
+    "strict": true,
     "noImplicitAny": false,
     "strictNullChecks": false,
     "strictFunctionTypes": true,
