@@ -5,7 +5,7 @@ import mime from 'mime';
 import { URL } from 'node:url';
 import { Buffer } from "node:buffer";
 
-export interface MessageMediaType {
+export interface MessageMediaData {
     data: string;
     mimetype: string;
     filename?: string;
@@ -19,7 +19,7 @@ export interface MessageMediaType {
  * @param {?string} filename Document file name. Value can be null
  * @param {?number} filesize Document file size in bytes. Value can be null
  */
-export class MessageMedia {
+export class MessageMedia implements MessageMediaData {
     mimetype: string;
     data: string;
     filename?: string;

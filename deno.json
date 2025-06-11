@@ -54,5 +54,10 @@
   },
   "test": {
     "include": ["tests/"]
+  },
+  "fmt": {
+    "lineWidth": 160,
+    "include": ["src/**/*", "tests/**/*"],
+    "exclude": ["node_modules", "docs"]
   }
 }

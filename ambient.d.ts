@@ -2,7 +2,7 @@ import type { WAState } from "@u4/whatsapp-web";
 import type { UnsubscribeOptions } from "./src/Client.ts";
 import type { CallData } from "./src/structures/Call.ts";
 import type Contact from "./src/structures/Contact.ts";
-import type { MessageMedia, MessageMediaType } from "./src/structures/MessageMedia.ts";
+import type { MessageMedia, MessageMediaData } from "./src/structures/MessageMedia.ts";
 
 export interface SerializedCnx {
     clientToken: undefined,
@@ -299,7 +299,7 @@ declare global {
      * Injected by src/util/Injected/Utils.js
      */
     WWebJS: {
-      mediaInfoToFile?: (mediaInfo: MessageMediaType) => File;
+      mediaInfoToFile?: (mediaInfo: MessageMediaData) => File;
       getProfilePicThumbToBase64?: (chatId: string) => Promise<unknown>;
       getStatusModel?: (status: any) => any;
       getAllStatuses?: () => Promise<any[]>;
@@ -359,13 +359,13 @@ declare global {
         options?: { size?: number; mimetype?: string; quality?: number; asDataUrl?: boolean; [key: string]: any }
       ) => Promise<string | { mimetype: string; data: string; [key: string]: any }>;
 
-      toStickerData?: (mediaInfo: MessageMediaType) => Promise<{ mimetype: string; data: string }>;
+      toStickerData?: (mediaInfo: MessageMediaData) => Promise<{ mimetype: string; data: string }>;
 
       processMediaData?: (
-        mediaInfo: MessageMediaType,
+        mediaInfo: MessageMediaData,
         opts: { forceSticker?: boolean; forceGif?: boolean; forceVoice?: boolean; forceDocument?: boolean; forceMediaHd?: boolean; sendToChannel?: boolean }
       ) => Promise<any>;
-      processStickerData?: (mediaInfo: MessageMediaType) => Promise<{ mimetype: string; data: string }>;
+      processStickerData?: (mediaInfo: MessageMediaData) => Promise<{ mimetype: string; data: string }>;
     };
     AuthStore?: {
       AppState?: { state?: typeof WAState[keyof typeof WAState], on?: Function, off?: Function };
