@@ -27,7 +27,7 @@
     "noImplicitReturns": false,
     "noImplicitThis": false,
     "noUncheckedIndexedAccess": false,
-    "lib": ["ES2022", "dom"],
+    "lib": ["ES2022", "dom", "deno.ns"],
     "types": ["./ambient.d.ts"]
   },
   "lint": {
@@ -51,6 +51,8 @@
       "node_modules",
       "package.json"
     ]
+  },
+  "test": {
+    "include": ["tests/"]
   }
-
 }

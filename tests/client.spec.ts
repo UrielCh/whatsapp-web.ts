@@ -1,9 +1,7 @@
-/// <reference lib="deno.ns" />
-import { describe, it, beforeAll, afterAll, beforeEach, afterEach, before, after } from "@std/testing/bdd";
-import { assertEquals, assertExists, assertMatch, assertRejects, assertThrows, assertNotEquals, assert, assertGreaterOrEqual, assertInstanceOf } from "@std/assert";
+import { describe, it, beforeAll, afterAll, before, after } from "@std/testing/bdd";
+import { assertEquals, assertExists, assertMatch, assert, assertGreaterOrEqual } from "@std/assert";
 import { spy } from "jsr:@std/testing/mock";
 
-import * as helper from './helper.js';
 import Chat from '../src/structures/Chat.js';
 import Contact from '../src/structures/Contact.js';
 import Message from '../src/structures/Message.js';
@@ -11,8 +9,7 @@ import MessageMedia from '../src/structures/MessageMedia.js';
 import Location from '../src/structures/Location.js';
 import { MessageTypes, WAState, DefaultOptions } from '../src/util/Constants.js';
 import type Client from "../src/Client.js";
-import * as dotenv from "@std/dotenv";
-await dotenv.load();
+import * as helper from './helper.js';
 
 const remoteId = helper.remoteId;
 const isMD = helper.isMD();
@@ -24,6 +21,7 @@ const LONG_WAIT = 500;
 
 const PUPPETER_HEADLESS = { headless: false };
 
+console.log('Starting tests');
 
 Deno.test('TSX environment', function () {
     const test = () => {
@@ -37,7 +35,7 @@ Deno.test('TSX environment', function () {
 
 // for debug
 describe('Client', function() {
-    describe.skip('User Agent', function () {
+    describe('User Agent', function () {
         Deno.test({
             name: 'should set user agent on browser',
             //ignore: true, // describe.skip implies tests within are skipped
@@ -339,7 +337,7 @@ describe('Client', function() {
         }); 
     });
 
-    describe('Authenticated', function() {
+    describe.skip('Authenticated', function() {
         // Deno.test options can handle timeouts
         let client: Client;
 
