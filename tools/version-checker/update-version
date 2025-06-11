@@ -1,7 +1,7 @@
-#!/usr/bin/env node
+#!/usr/bin/env deno --allow-env --allow-sys --allow-read --allow-write --allow-run --allow-net
 
-const fs = require('fs');
-const puppeteer = require('puppeteer');
+import fs from 'node:fs/promises';
+import puppeteer from 'puppeteer';
 
 const args = [
     '--autoplay-policy=user-gesture-required',
@@ -66,25 +66,25 @@ const getLatestVersion = async () => {
     return version;
 };
 
-const getCurrentVersion = () => {
+const getCurrentVersion = async () => {
     try {
-        const versionFile = fs.readFileSync('./.version');
+        const versionFile = await fs.readFile('./.version');
         return versionFile ? versionFile.toString().trim() : null;
     } catch(_) {
         return null;
     }
 };
 
-const updateInFile = (filePath, oldVersion, newVersion) => {
-    const originalFile = fs.readFileSync(filePath);  
+const updateInFile = async (filePath: string, oldVersion: string, newVersion: string) => {
+    const originalFile = await fs.readFile(filePath);  
     const newFile = originalFile.toString().replaceAll(oldVersion, newVersion);
 
-    fs.writeFileSync(filePath, newFile);
+    await fs.writeFile(filePath, newFile);
 };
 
-const updateVersion = async (oldVersion, newVersion) => {
+const updateVersion = async (oldVersion: string, newVersion: string) => {
     const filesToUpdate = [
-        '../../src/util/Constants.js',
+        '../../src/util/Constants.ts',
         '../../README.md',
     ];
 
@@ -92,11 +92,11 @@ const updateVersion = async (oldVersion, newVersion) => {
         updateInFile(file, oldVersion, newVersion);
     }
 
-    fs.writeFileSync('./.version', newVersion);  
+    await fs.writeFile('./.version', newVersion);  
 };
 
 (async () => {
-    const currentVersion = getCurrentVersion();
+    const currentVersion = await getCurrentVersion();
     const version = (await getLatestVersion()) ?? currentVersion;
 
     console.log(`Current version: ${currentVersion}`);

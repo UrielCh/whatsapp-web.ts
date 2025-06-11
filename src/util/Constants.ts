@@ -5,7 +5,7 @@ export const DefaultOptions = {
         headless: true,
         defaultViewport: null
     },
-    webVersion: '2.3000.1017054665',
+    webVersion: '2.3000.1023729620',
     webVersionCache: {
         type: 'local',
     },

@@ -1,9 +1,9 @@
 name: Update
 
 on:
-  schedule:
-    - cron: "0/15 * * * *"
-  workflow_dispatch:
+  #schedule:
+  #  - cron: "0/15 * * * *"
+  #workflow_dispatch:
 
 jobs:
   update:
@@ -13,17 +13,27 @@ jobs:
         working-directory: ./tools/version-checker
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Install node v16
-        uses: actions/setup-node@v2
+      - uses: actions/checkout@v4
+
+      - name: Install node v22
+        uses: actions/setup-node@v4
         with:
-          node-version: '16'
+          node-version: '22'
+
+      - name: Setup Deno v2
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
       - name: Install dependencies
         run: npm install
+
       - name: Run Updater
         run: ./update-version
+
       - name: Store WA Version
         run: echo WA_VERSION=`cat ./.version` >> $GITHUB_ENV
+
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
