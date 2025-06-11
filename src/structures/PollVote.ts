@@ -39,7 +39,7 @@ class PollVote extends Base {
         if (data) this._patch(data);
     }
 
-    _patch(data: any) {
+    override _patch(data: any): any {
         /**
          * The person who voted
          * @type {string}

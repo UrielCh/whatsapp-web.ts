@@ -1,3 +1,5 @@
+import { UnsubscribeOptions } from "../../Client.ts";
+
 export const LoadUtils = () => {
     window.WWebJS = {} as any;
 
@@ -863,7 +865,7 @@ export const LoadUtils = () => {
             throw new Error('One or more properties or methods on window.Store are not defined for rejectCall');
         }
         peerJid = peerJid.split('@')[0] + '@s.whatsapp.net';
-        let userId = window.Store.User.getMaybeMeUser().user + '@s.whatsapp.net';
+        const userId = window.Store.User.getMaybeMeUser().user + '@s.whatsapp.net';
         const stanza = window.Store.SocketWap.wap('call', {
             id: window.Store.SocketWap.generateId(),
             from: window.Store.SocketWap.USER_JID(userId),
@@ -1156,7 +1158,7 @@ export const LoadUtils = () => {
         }
     };
 
-    window.WWebJS.subscribeToUnsubscribeFromChannel = async (channelId, action, options = {}) => {
+    window.WWebJS.subscribeToUnsubscribeFromChannel = async (channelId, action, options: UnsubscribeOptions = {}) => {
         if (!window.WWebJS || !window.WWebJS.getChat || !window.Store || !window.Store.ChannelUtils || !window.Store.ChannelUtils.subscribeToNewsletterAction || !window.Store.ChannelUtils.unsubscribeFromNewsletterAction) {
             throw new Error('window.WWebJS.getChat or window.Store.ChannelUtils.subscribeToNewsletterAction or window.Store.ChannelUtils.unsubscribeFromNewsletterAction is not defined');
         }

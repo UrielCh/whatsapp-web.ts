@@ -29,29 +29,29 @@ export interface TransferChannelOwnershipOptions {
  */
 class Channel extends Base {
     /** ID that represents the channel */
-    id: {
+    id!: {
         server: string;
         user: string;
         _serialized: string;
     };
     /** Title of the channel */
-    name: string;
+    name!: string;
     /** The channel description */
-    description: string;
+    description!: string;
     /** Indicates if it is a Channel */
-    isChannel: boolean;
+    isChannel!: boolean;
     /** Indicates if it is a Group */
-    isGroup: boolean;
+    isGroup!: boolean;
     /** Indicates if the channel is readonly */
-    isReadOnly: boolean;
+    isReadOnly!: boolean;
     /** Amount of messages unread */
-    unreadCount: number;
+    unreadCount!: number;
     /** Unix timestamp for when the last activity occurred */
-    timestamp: number;
+    timestamp!: number;
     /** Indicates if the channel is muted or not */
-    isMuted: boolean;
+    isMuted!: boolean;
     /** Unix timestamp for when the mute expires */
-    muteExpiration: number;
+    muteExpiration!: number;
     /** Last message in the channel */
     lastMessage: Message | undefined;
     channelMetadata: any;
@@ -62,7 +62,7 @@ class Channel extends Base {
         if (data) this._patch(data);
     }
 
-    _patch(data: any) {
+    override _patch(data: any): any {
         this.channelMetadata = data.channelMetadata;
 
         /**
@@ -140,15 +140,20 @@ class Channel extends Base {
      * @returns {Promise<{contact: Contact, role: string}[]>} Returns an array of objects that handle the subscribed contacts and their roles in the channel
      */
     async getSubscribers(limit?: number): Promise<{contact: Contact, role: string}[]> {
-        return await this.client.pupPage.evaluate(async (channelId, limit) => {
+        return await this.client.evaluate(async (channelId, limit) => {
+            if (!window.WWebJS || !window.Store)
+                throw new Error('window.WWebJS or window.Store is not defined');
+            const getContactModel = window.WWebJS.getContactModel;
+            if (!window.WWebJS.getChat || !window.Store.ChannelSubscribers || !window.Store.ChannelSubscribers.mexFetchNewsletterSubscribers || !getContactModel)
+                throw new Error('window.WWebJS.getChat or window.Store.ChannelSubscribers or window.Store.ChannelSubscribers.mexFetchNewsletterSubscribers or window.WWebJS.getContactModel is not defined');
             const channel = await window.WWebJS.getChat(channelId, { getAsModel: false });
             if (!channel) return [];
             !limit && (limit = window.Store.ChannelUtils.getMaxSubscriberNumber());
             const response = await window.Store.ChannelSubscribers.mexFetchNewsletterSubscribers(channelId, limit);
             const contacts = window.Store.ChannelSubscribers.getSubscribersInContacts(response.subscribers);
-            return Promise.all(contacts.map((obj) => ({
+            return Promise.all(contacts.map((obj: any) => ({
                 ...obj,
-                contact: window.WWebJS.getContactModel(obj.contact)
+                contact: getContactModel(obj.contact)
             })));
         }, this.id._serialized, limit);
     }
@@ -202,7 +207,7 @@ class Channel extends Base {
             2: 0
         };
         const success = await this._setChannelMetadata(
-            { reactionCodesSetting: reactionMapper[reactionCode] },
+            { reactionCodesSetting: reactionMapper[reactionCode as keyof typeof reactionMapper] },
             { editReactionCodesSetting: true }
         );
         success && (this.channelMetadata.reactionCodesSetting = reactionCode);
@@ -249,8 +254,8 @@ class Channel extends Base {
      * @param {?MessageSendOptions} options
      * @returns {Promise<Message>} Message that was just sent
      */
-    async sendMessage(content: string|MessageMedia, options?: MessageSendOptions): Promise<Message> {
-        return this.client.sendMessage(this.id._serialized, content, options);
+    async sendMessage(content: string|MessageMedia, options?: MessageSendOptions): Promise<Message | null | undefined> {
+        return await this.client.sendMessage(this.id._serialized, content, options);
     }
 
     /**
@@ -258,7 +263,7 @@ class Channel extends Base {
      * @returns {Promise<boolean>}
      */
     async sendSeen(): Promise<boolean> {
-        return this.client.sendSeen(this.id._serialized);
+        return await this.client.sendSeen(this.id._serialized);
     }
 
     /**
@@ -273,7 +278,7 @@ class Channel extends Base {
      * @returns {Promise<boolean>} Returns true if an invitation was sent successfully, false otherwise
      */
     async sendChannelAdminInvite(chatId: string, options: { comment?: string } = {}): Promise<boolean> {
-        return this.client.sendChannelAdminInvite(chatId, this.id._serialized, options);
+        return await this.client.sendChannelAdminInvite(chatId, this.id._serialized, options);
     }
 
     /**
@@ -281,7 +286,7 @@ class Channel extends Base {
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
     async acceptChannelAdminInvite(): Promise<boolean> {
-        return this.client.acceptChannelAdminInvite(this.id._serialized);
+        return await this.client.acceptChannelAdminInvite(this.id._serialized);
     }
 
     /**
@@ -290,7 +295,7 @@ class Channel extends Base {
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
     async revokeChannelAdminInvite(userId: string): Promise<boolean> {
-        return this.client.revokeChannelAdminInvite(this.id._serialized, userId);
+        return await this.client.revokeChannelAdminInvite(this.id._serialized, userId);
     }
 
     /**
@@ -299,7 +304,7 @@ class Channel extends Base {
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
     async demoteChannelAdmin(userId: string): Promise<boolean> {
-        return this.client.demoteChannelAdmin(this.id._serialized, userId);
+        return await this.client.demoteChannelAdmin(this.id._serialized, userId);
     }
 
     /**
@@ -316,7 +321,7 @@ class Channel extends Base {
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
     async transferChannelOwnership(newOwnerId: string, options: TransferChannelOwnershipOptions = {}): Promise<boolean> {
-        return this.client.transferChannelOwnership(this.id._serialized, newOwnerId, options);
+        return await this.client.transferChannelOwnership(this.id._serialized, newOwnerId, options);
     }
 
     /**
@@ -327,8 +332,15 @@ class Channel extends Base {
      * @returns {Promise<Array<Message>>}
      */
     async fetchMessages(searchOptions: MessageSearchOptions): Promise<Message[]> {
-        let messages = await this.client.pupPage.evaluate(async (channelId, searchOptions) => {
-            const msgFilter = (m) => {
+        const messages = await this.client.evaluate(async (channelId, searchOptions: MessageSearchOptions) => {
+            if (!window.WWebJS || !window.Store) {
+                throw new Error('window.WWebJS or window.Store is not defined');
+            }
+            const getMessageModel = window.WWebJS.getMessageModel;
+            if (!window.WWebJS.getChat || !window.Store.ChannelUtils || !window.Store.ChannelUtils.deleteNewsletterAction || !getMessageModel) {
+                throw new Error('window.WWebJS.getChat or window.Store.ChannelUtils.deleteNewsletterAction or getMessageModel is not defined');
+            }
+            const msgFilter = (m: any) => {
                 if (m.isNotification || m.type === 'newsletter_notification') {
                     return false; // dont include notification messages
                 }
@@ -341,7 +353,7 @@ class Channel extends Base {
             const channel = await window.WWebJS.getChat(channelId, { getAsModel: false });
             let msgs = channel.msgs.getModelsArray().filter(msgFilter);
 
-            if (searchOptions && searchOptions.limit > 0) {
+            if (searchOptions && searchOptions.limit && searchOptions.limit > 0) {
                 while (msgs.length < searchOptions.limit) {
                     const loadedMessages = await window.Store.ConversationMsgs.loadEarlierMsgs(channel);
                     if (!loadedMessages || !loadedMessages.length) break;
@@ -349,16 +361,16 @@ class Channel extends Base {
                 }
                 
                 if (msgs.length > searchOptions.limit) {
-                    msgs.sort((a, b) => (a.t > b.t) ? 1 : -1);
+                    msgs.sort((a: any, b: any) => (a.t > b.t) ? 1 : -1);
                     msgs = msgs.splice(msgs.length - searchOptions.limit);
                 }
             }
 
-            return msgs.map(m => window.WWebJS.getMessageModel(m));
+            return msgs.map((m: any) => getMessageModel(m));
 
         }, this.id._serialized, searchOptions);
 
-        return messages.map((msg) => new Message(this.client, msg));
+        return messages.map((msg: any) => new Message(this.client, msg));
     }
 
     /**
@@ -366,7 +378,7 @@ class Channel extends Base {
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
     async deleteChannel(): Promise<boolean> {
-        return this.client.deleteChannel(this.id._serialized);
+        return await this.client.deleteChannel(this.id._serialized);
     }
 
     /**
@@ -375,8 +387,12 @@ class Channel extends Base {
      * @param {string} property The property of a channel metadata to change
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
-    async _setChannelMetadata(value, property) {
-        return await this.client.pupPage.evaluate(async (channelId, value, property) => {
+    async _setChannelMetadata(value: {picture?: string | MessageMedia, name?: string, description?: string, reactionCodesSetting?: number}, property: {editReactionCodesSetting?: boolean, editPicture?: boolean, editDescription?: boolean, editName?: boolean}): Promise<boolean> {
+        if (!value) throw new Error('value is not defined');
+        return await this.client.evaluate(async (channelId: string, value: any, property: any) => {
+            if (!window.WWebJS || !window.WWebJS.getChat || !window.Store || !window.Store.ChannelUtils || !window.Store.ChannelUtils.editNewsletterMetadataAction || !window.WWebJS.cropAndResizeImage) {
+                throw new Error('window.WWebJS.getChat or window.Store.ChannelUtils.editNewsletterMetadataAction is not defined');
+            }
             const channel = await window.WWebJS.getChat(channelId, { getAsModel: false });
             if (!channel) return false;
             if (property.editPicture) {
@@ -393,7 +409,7 @@ class Channel extends Base {
                 await window.Store.ChannelUtils.editNewsletterMetadataAction(channel, property, value);
                 return true;
             } catch (err) {
-                if (err.name === 'ServerStatusCodeError') return false;
+                if ((err as Error).name === 'ServerStatusCodeError') return false;
                 throw err;
             }
         }, this.id._serialized, value, property);
@@ -404,15 +420,18 @@ class Channel extends Base {
      * @param {string} action The action: 'MUTE' or 'UNMUTE'
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
-    async _muteUnmuteChannel(action) {
-        return await this.client.pupPage.evaluate(async (channelId, action) => {
+    async _muteUnmuteChannel(action: string): Promise<boolean> {
+        return await this.client.evaluate(async (channelId: string, action: string) => {
+            if (!window.Store || !window.Store.ChannelUtils || !window.Store.ChannelUtils.muteNewsletter || !window.Store.ChannelUtils.unmuteNewsletter) {
+                throw new Error('window.Store.ChannelUtils.muteNewsletter or window.Store.ChannelUtils.unmuteNewsletter is not defined');
+            }
             try {
                 action === 'MUTE'
                     ? await window.Store.ChannelUtils.muteNewsletter([channelId])
                     : await window.Store.ChannelUtils.unmuteNewsletter([channelId]);
                 return true;
             } catch (err) {
-                if (err.name === 'ServerStatusCodeError') return false;
+                if ((err as Error).name === 'ServerStatusCodeError') return false;
                 throw err;
             }
         }, this.id._serialized, action);

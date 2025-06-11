@@ -19,7 +19,7 @@ class Label extends Base {
         if(labelData) this._patch(labelData);
     }
 
-    _patch(labelData: {id: string, name: string, hexColor: string}){
+    override _patch(labelData: {id: string, name: string, hexColor: string}){
         /**
          * Label ID
          * @type {string}

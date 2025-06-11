@@ -18,26 +18,26 @@ import ProductMetadata from './ProductMetadata.js';
  */
 class Product extends Base {
     /** Product Id */
-    id: string;
+    id!: string;
     /** Price */
     price?: string;
     /** Product Thumbnail*/
-    thumbnailUrl: string;
+    thumbnailUrl!: string;
     /** Currency */
-    currency: string;
+    currency!: string;
     /** Product Name */
-    name: string;
+    name!: string;
     /** Product Quantity*/
-    quantity: number;
+    quantity!: number;
     data?: ProductMetadata;
     
-    constructor(client: Client, data: any) {
+    constructor(client: Client, data: {id: string, price?: string, thumbnailUrl: string, currency: string, name: string, quantity: number}) {
         super(client);
 
         if (data) this._patch(data);
     }
 
-    _patch(data) {
+    override _patch(data: {id: string, price?: string, thumbnailUrl: string, currency: string, name: string, quantity: number}): any {
         /**
          * Product ID
          * @type {string}
@@ -69,7 +69,7 @@ class Product extends Base {
          */
         this.quantity = data.quantity;
         /** Product metadata */
-        this.data = null;
+        this.data = undefined;
         return super._patch(data);
     }
 
@@ -77,7 +77,9 @@ class Product extends Base {
     /** Gets the Product metadata */
     async getData(): Promise<ProductMetadata> {
         if (this.data === null) {
-            let result = await this.client.pupPage.evaluate((productId) => {
+            const result = await this.client.evaluate((productId: string) => {
+                if (!window.WWebJS || !window.WWebJS.getProductMetadata)
+                    throw Error("window.WWebJS.getProductMetadata is not defined")
                 return window.WWebJS.getProductMetadata(productId);
             }, this.id);
             if (!result) {

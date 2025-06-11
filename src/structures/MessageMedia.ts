@@ -48,7 +48,7 @@ class MessageMedia {
      * @param {string} filePath 
      * @returns {MessageMedia}
      */
-    static fromFilePath(filePath) {
+    static fromFilePath(filePath: string): MessageMedia {
         const b64data = fs.readFileSync(filePath, {encoding: 'base64'});
         const mimetype = mime.getType(filePath); 
         const filename = path.basename(filePath);
@@ -67,21 +67,23 @@ class MessageMedia {
      * @param {number} [options.reqOptions.size=0]
      * @returns {Promise<MessageMedia>}
      */
-    static async fromUrl(url, options: {
+    static async fromUrl(url: string, options: {
         unsafeMime?: boolean;
         filename?: string;
         client?: any;// Client;
         reqOptions?: {
             size?: number;
         };
-    } = {}) {
+    } = {}): Promise<MessageMedia> {
         const pUrl = new URL(url);
         let mimetype = mime.getType(pUrl.pathname);
 
         if (!mimetype && !options.unsafeMime)
             throw new Error('Unable to determine MIME type using URL. Set unsafeMime to true to download it anyway.');
 
-        async function fetchData (url, options) {
+        async function fetchData (url: string, options: {
+            size?: number;
+        }) {
             const reqOptions = Object.assign({ headers: { accept: 'image/* video/* text/* audio/*' } }, options);
             const response = await fetch(url, reqOptions);
             const mime = response.headers.get('Content-Type');

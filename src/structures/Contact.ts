@@ -97,7 +97,7 @@ class Contact extends Base {
         if(data) this._patch(data);
     }
 
-    _patch(data) {
+    override _patch(data: any): any {
         /**
          * ID that represents the contact
          * @type {ContactId}
@@ -225,7 +225,9 @@ class Contact extends Base {
     async block(): Promise<boolean> {
         if(this.isGroup) return false;
 
-        await this.client.pupPage.evaluate(async (contactId) => {
+        await this.client.evaluate(async (contactId) => {
+            if (!window.Store || !window.Store.Contact || !window.Store.BlockContact) 
+                throw new Error('window.Store.Contact or window.Store.BlockContact is not defined');
             const contact = window.Store.Contact.get(contactId);
             await window.Store.BlockContact.blockContact({contact});
         }, this.id._serialized);
@@ -240,7 +242,9 @@ class Contact extends Base {
     async unblock(): Promise<boolean> {
         if(this.isGroup) return false;
 
-        await this.client.pupPage.evaluate(async (contactId) => {
+        await this.client.evaluate(async (contactId) => {
+            if (!window.Store || !window.Store.Contact || !window.Store.BlockContact) 
+                throw new Error('window.Store.Contact or window.Store.BlockContact is not defined');
             const contact = window.Store.Contact.get(contactId);
             await window.Store.BlockContact.unblockContact(contact);
         }, this.id._serialized);
@@ -254,7 +258,9 @@ class Contact extends Base {
      * @returns {Promise<?string>}
      */
     async getAbout(): Promise<string | null> {
-        const about = await this.client.pupPage.evaluate(async (contactId) => {
+        const about = await this.client.evaluate((contactId: string) => {
+            if (!window.Store || !window.Store.WidFactory || !window.Store.StatusUtils) 
+                throw new Error('window.Store.WidFactory or window.Store.StatusUtils is not defined');
             const wid = window.Store.WidFactory.createWid(contactId);
             return window.Store.StatusUtils.getStatus(wid);
         }, this.id._serialized);

@@ -19,7 +19,7 @@ class ProductMetadata extends Base {
         if (data) this._patch(data);
     }
 
-    _patch(data: {id: string, retailer_id?: string, name: string, description: string}) {
+    override _patch(data: {id: string, retailer_id?: string, name: string, description: string}): any {
         /** Product ID */
         this.id = data.id;
         /** Retailer ID */

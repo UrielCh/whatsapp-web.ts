@@ -1,3 +1,4 @@
+import Client from "../Client.ts";
 import Base from './Base.js';
 import { ContactId } from './Contact.js';
 
@@ -51,7 +52,7 @@ class ClientInfo extends Base {
     /** Name configured to be shown in push notifications */
     pushname: string
     
-    constructor(client, data) {
+    constructor(client: Client, data: any) {
         super(client);
 
         if (data) this._patch(data);
@@ -65,7 +66,7 @@ class ClientInfo extends Base {
      * @param {number} data.refTTL
      * @param {number} data.smbTos
      */
-    _patch(data) {
+    override _patch(data: any): any {
         /**
          * Name configured to be shown in push notifications
          * @type {string}
@@ -113,7 +114,9 @@ class ClientInfo extends Base {
      * @deprecated
      */
     async getBatteryStatus(): Promise<BatteryInfo> {
-        return await this.client.pupPage.evaluate(() => {
+        return await this.client.evaluate(() => {
+            if (!window.Store || !window.Store.Conn) 
+                throw new Error('window.Store.Conn is not defined');
             const { battery, plugged } = window.Store.Conn;
             return { battery, plugged };
         });

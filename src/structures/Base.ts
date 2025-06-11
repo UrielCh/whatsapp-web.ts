@@ -3,10 +3,10 @@
  */
 // import Contact from './Contact.js';
 
-import Client from "../Client.js";
+import type Client from "../Client.js";
 
 class Base {
-    client: Client;
+    client!: Client;
     constructor(client: Client) {
         /**
          * The client that instantiated this
@@ -15,11 +15,11 @@ class Base {
         Object.defineProperty(this, 'client', { value: client });
     }
 
-    _clone() {
+    _clone(): any {
         return Object.assign(Object.create(this), this);
     }
     
-    _patch(data: any) { return data; }
+    _patch(data: any): any { return data; }
 }
 
 export default Base;

@@ -12,12 +12,12 @@ class BaseAuthStrategy {
     }
     async beforeBrowserInitialized() {}
     async afterBrowserInitialized() {}
-    async onAuthenticationNeeded() {
-        return {
+    onAuthenticationNeeded(): Promise<{failed: boolean, restart: boolean, failureEventPayload: any}> {
+        return Promise.resolve({
             failed: false,
             restart: false,
             failureEventPayload: undefined
-        };
+        });
     }
     async getAuthEventPayload() {}
     async afterAuthReady() {}

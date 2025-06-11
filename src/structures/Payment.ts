@@ -54,7 +54,7 @@ class Payment extends Base {
         if (data) this._patch(data);
     }
 
-    _patch(data: any) {
+    override _patch(data: any): any {
         /**
          * The payment Id
          * @type {object}

@@ -43,7 +43,7 @@ class Order extends Base {
         if (data) this._patch(data);
     }
 
-    _patch(data: any) {
+    override _patch(data: any): any {
         /**
          * List of products
          * @type {Array<Product>}

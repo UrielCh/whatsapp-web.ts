@@ -80,7 +80,7 @@ class InterfaceController {
     /**
      * Get all Features
      */
-    async getFeatures() {
+    async getFeatures(): Promise<string[]> {
         return await this.pupPage.evaluate(() => {
             if(!window.Store.Features) throw new Error('This version of Whatsapp Web does not support features');
             return window.Store.Features.F;
@@ -91,8 +91,8 @@ class InterfaceController {
      * Check if Feature is enabled
      * @param {string} feature status to check
      */
-    async checkFeatureStatus(feature) {
-        return await this.pupPage.evaluate((feature) => {
+    async checkFeatureStatus(feature: string): Promise<boolean> {
+        return await this.pupPage.evaluate((feature: string) => {
             if(!window.Store.Features) throw new Error('This version of Whatsapp Web does not support features');
             return window.Store.Features.supportsFeature(feature);
         }, feature);
@@ -102,8 +102,8 @@ class InterfaceController {
      * Enable Features
      * @param {string[]} features to be enabled
      */
-    async enableFeatures(features) {
-        await this.pupPage.evaluate((features) => {
+    async enableFeatures(features: string[]): Promise<void> {
+        await this.pupPage.evaluate((features: string[]) => {
             if(!window.Store.Features) throw new Error('This version of Whatsapp Web does not support features');
             for (const feature in features) {
                 window.Store.Features.setFeature(features[feature], true);
@@ -115,8 +115,8 @@ class InterfaceController {
      * Disable Features
      * @param {string[]} features to be disabled
      */
-    async disableFeatures(features) {
-        await this.pupPage.evaluate((features) => {
+    async disableFeatures(features: string[]): Promise<void> {
+        await this.pupPage.evaluate((features: string[]) => {
             if(!window.Store.Features) throw new Error('This version of Whatsapp Web does not support features');
             for (const feature in features) {
                 window.Store.Features.setFeature(features[feature], false);

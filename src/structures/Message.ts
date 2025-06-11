@@ -196,7 +196,7 @@ class Message extends Base {
         if (data) this._patch(data);
     }
 
-    override _patch(data: any) {
+    override _patch(data: any): any {
         this._data = data;
         
         /**
@@ -471,7 +471,7 @@ class Message extends Base {
         return super._patch(data);
     }
 
-    _getChatId() {
+    _getChatId(): string {
         return this.fromMe ? this.to : this.from;
     }
 
@@ -481,7 +481,9 @@ class Message extends Base {
      * @returns {Promise<Message>}
      */
     async reload(): Promise<Message | null> {
-        const newData = await this.client.pupPage.evaluate(async (msgId) => {
+        const newData = await this.client.evaluate(async (msgId: string) => {
+            if (!window.Store || !window.Store.Msg || !window.Store.Msg.get || !window.Store.Msg.getMessagesById || !window.WWebJS.getMessageModel)
+                throw new Error('window.Store.Msg or window.Store.Msg.get or window.Store.Msg.getMessagesById or window.WWebJS.getMessageModel is not defined');
             const msg = window.Store.Msg.get(msgId) || (await window.Store.Msg.getMessagesById([msgId]))?.messages?.[0];
             if (!msg) return null;
             return window.WWebJS.getMessageModel(msg);
@@ -497,7 +499,7 @@ class Message extends Base {
      * Returns message in a raw format
      * @type {Object}
      */
-    get rawData() {
+    get rawData(): any {
         return this._data;
     }
     
@@ -540,7 +542,9 @@ class Message extends Base {
     async getQuotedMessage(): Promise<Message | undefined> {
         if (!this.hasQuotedMsg) return undefined;
 
-        const quotedMsg = await this.client.pupPage.evaluate(async (msgId) => {
+        const quotedMsg = await this.client.evaluate(async (msgId: string) => {
+            if (!window.Store || !window.Store.Msg || !window.Store.Msg.get || !window.Store.Msg.getMessagesById || !window.WWebJS.getMessageModel)
+                throw new Error('window.Store.Msg or window.Store.Msg.get or window.Store.Msg.getMessagesById or window.WWebJS.getMessageModel is not defined');
             const msg = window.Store.Msg.get(msgId) || (await window.Store.Msg.getMessagesById([msgId]))?.messages?.[0];
             const quotedMsg = window.Store.QuotedMsg.getQuotedMsgObj(msg);
             return window.WWebJS.getMessageModel(quotedMsg);
@@ -569,7 +573,7 @@ class Message extends Base {
             quotedMessageId: this.id._serialized
         };
 
-        return this.client.sendMessage(chatId, content, options);
+        return await this.client.sendMessage(chatId, content, options);
     }
 
     /**
@@ -578,8 +582,10 @@ class Message extends Base {
      * @return {Promise}
      */
     async react(reaction: string): Promise<void> {
-        await this.client.pupPage.evaluate(async (messageId, reaction) => {
+        await this.client.evaluate(async (messageId: string, reaction: string) => {
             if (!messageId) return null;
+            if (!window.Store || !window.Store.Msg || !window.Store.Msg.get || !window.Store.Msg.getMessagesById || !window.WWebJS.getMessageModel)
+                throw new Error('window.Store.Msg or window.Store.Msg.get or window.Store.Msg.getMessagesById or window.WWebJS.getMessageModel is not defined');
             const msg =
                 window.Store.Msg.get(messageId) || (await window.Store.Msg.getMessagesById([messageId]))?.messages?.[0];
             if(!msg) return null;
@@ -604,7 +610,8 @@ class Message extends Base {
     async forward(chat: string | Chat): Promise<void> {
         const chatId = typeof chat === 'string' ? chat : chat.id._serialized;
 
-        await this.client.pupPage.evaluate(async (msgId, chatId) => {
+        await this.client.evaluate((msgId: string, chatId: string) => {
+            if (!window.WWebJS || !window.WWebJS.forwardMessage) throw new Error('window.WWebJS.forwardMessage is not defined');
             return window.WWebJS.forwardMessage(chatId, msgId);
         }, this.id._serialized, chatId);
     }
@@ -618,7 +625,9 @@ class Message extends Base {
             return undefined;
         }
 
-        const result = await this.client.pupPage.evaluate(async (msgId) => {
+        const result = await this.client.evaluate(async (msgId: string) => {
+            if (!window.Store || !window.Store.Msg || !window.Store.Msg.get || !window.Store.Msg.getMessagesById || !window.WWebJS.getMessageModel)
+                throw new Error('window.Store.Msg or window.Store.Msg.get or window.Store.Msg.getMessagesById or window.WWebJS.getMessageModel is not defined');
             const msg = window.Store.Msg.get(msgId) || (await window.Store.Msg.getMessagesById([msgId]))?.messages?.[0];
             if (!msg || !msg.mediaData) {
                 return null;
@@ -671,7 +680,9 @@ class Message extends Base {
      * @param {?boolean} [clearMedia = true] If true, any associated media will also be deleted from a device.
      */
     async delete(everyone?: boolean, clearMedia: boolean = true): Promise<void> {
-        await this.client.pupPage.evaluate(async (msgId, everyone, clearMedia) => {
+        await this.client.evaluate(async (msgId: string, everyone: boolean, clearMedia: boolean) => {
+            if (!window.Store || !window.Store.Msg || !window.Store.Msg.get || !window.Store.Msg.getMessagesById || !window.WWebJS.getMessageModel)
+                throw new Error('window.Store.Msg or window.Store.Msg.get or window.Store.Msg.getMessagesById or window.WWebJS.getMessageModel is not defined');
             const msg = window.Store.Msg.get(msgId) || (await window.Store.Msg.getMessagesById([msgId]))?.messages?.[0];
             const chat = window.Store.Chat.get(msg.id.remote) || (await window.Store.Chat.find(msg.id.remote));
             
@@ -694,10 +705,12 @@ class Message extends Base {
      * Stars this message
      */
     async star(): Promise<void> {
-        await this.client.pupPage.evaluate(async (msgId) => {
+        await this.client.evaluate(async (msgId: string) => {
+            if (!window.Store || !window.Store.Msg || !window.Store.Msg.get || !window.Store.Msg.getMessagesById || !window.WWebJS.getMessageModel)
+                throw new Error('window.Store.Msg or window.Store.Msg.get or window.Store.Msg.getMessagesById or window.WWebJS.getMessageModel is not defined');
             const msg = window.Store.Msg.get(msgId) || (await window.Store.Msg.getMessagesById([msgId]))?.messages?.[0];
             if (window.Store.MsgActionChecks.canStarMsg(msg)) {
-                let chat = await window.Store.Chat.find(msg.id.remote);
+                const chat = await window.Store.Chat.find(msg.id.remote);
                 return window.Store.Cmd.sendStarMsgs(chat, [msg], false);
             }
         }, this.id._serialized);
@@ -707,7 +720,9 @@ class Message extends Base {
      * Unstars this message
      */
     async unstar(): Promise<void> {
-        await this.client.pupPage.evaluate(async (msgId) => {
+        await this.client.evaluate(async (msgId: string) => {
+            if (!window.Store || !window.Store.Msg || !window.Store.Msg.get || !window.Store.Msg.getMessagesById || !window.WWebJS.getMessageModel)
+                throw new Error('window.Store.Msg or window.Store.Msg.get or window.Store.Msg.getMessagesById or window.WWebJS.getMessageModel is not defined');
             const msg = window.Store.Msg.get(msgId) || (await window.Store.Msg.getMessagesById([msgId]))?.messages?.[0];
             if (window.Store.MsgActionChecks.canStarMsg(msg)) {
                 const chat = await window.Store.Chat.find(msg.id.remote);
@@ -722,7 +737,7 @@ class Message extends Base {
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
     async pin(duration: number): Promise<boolean> {
-        return await this.client.pupPage.evaluate(async (msgId, duration) => {
+        return await this.client.evaluate(async (msgId: string, duration: number) => {
             if (!window.WWebJS || !window.WWebJS.pinUnpinMsgAction)
                 throw Error("window.WWebJS.pinUnpinMsgAction is not defined")
             return await window.WWebJS.pinUnpinMsgAction(msgId, 1, duration);
@@ -734,7 +749,7 @@ class Message extends Base {
      * @returns {Promise<boolean>} Returns true if the operation completed successfully, false otherwise
      */
     async unpin(): Promise<boolean> {
-        return await this.client.pupPage.evaluate(async (msgId) => {
+        return await this.client.evaluate(async (msgId: string) => {
             if (!window.WWebJS || !window.WWebJS.pinUnpinMsgAction)
                 throw Error("window.WWebJS.pinUnpinMsgAction is not defined")
             return await window.WWebJS.pinUnpinMsgAction(msgId, 2);
@@ -758,7 +773,7 @@ class Message extends Base {
      * @returns {Promise<?MessageInfo>}
      */
     async getInfo(): Promise<MessageInfo | null> {
-        const info = await this.client.pupPage.evaluate(async (msgId) => {
+        const info = await this.client.evaluate(async (msgId: string) => {
             const msg = window.Store.Msg.get(msgId) || (await window.Store.Msg.getMessagesById([msgId]))?.messages?.[0];
             if (!msg || !msg.id.fromMe) return null;
 
@@ -778,7 +793,9 @@ class Message extends Base {
      */
     async getOrder(): Promise<Order> {
         if (this.type === MessageTypes.ORDER) {
-            const result = await this.client.pupPage.evaluate((orderId, token, chatId) => {
+            const result = await this.client.evaluate((orderId, token, chatId) => {
+                if (!window.WWebJS || !window.WWebJS.getOrderDetail)
+                    throw Error("window.WWebJS.getOrderDetail is not defined")
                 return window.WWebJS.getOrderDetail(orderId, token, chatId);
             }, this.orderId, this.token, this._getChatId());
             if (!result) return undefined;
@@ -792,7 +809,7 @@ class Message extends Base {
      */
     async getPayment(): Promise<Payment> {
         if (this.type === MessageTypes.PAYMENT) {
-            const msg = await this.client.pupPage.evaluate(async (msgId) => {
+            const msg = await this.client.evaluate(async (msgId: string) => {
                 const msg = window.Store.Msg.get(msgId) || (await window.Store.Msg.getMessagesById([msgId]))?.messages?.[0];
                 if(!msg) return null;
                 return msg.serialize();
@@ -812,7 +829,7 @@ class Message extends Base {
             return undefined;
         }
 
-        const reactions = await this.client.pupPage.evaluate(async (msgId) => {
+        const reactions = await this.client.evaluate(async (msgId: string) => {
             const msgReactions = await window.Store.Reactions.find(msgId);
             if (!msgReactions || !msgReactions.reactions.length) return null;
             return msgReactions.reactions.serialize();
@@ -848,21 +865,21 @@ class Message extends Base {
 
         options.groupMentions && !Array.isArray(options.groupMentions) && (options.groupMentions = [options.groupMentions]);
 
-        let internalOptions = {
+        const internalOptions = {
             linkPreview: options.linkPreview === false ? undefined : true,
             mentionedJidList: options.mentions || [],
             groupMentions: options.groupMentions,
             extraOptions: options.extra
         };
         
-        if (!this.fromMe) {
+            if (!this.fromMe) {
             return null;
         }
-        const messageEdit = await this.client.pupPage.evaluate(async (msgId, message, options) => {
+        const messageEdit = await this.client.evaluate(async (msgId: string, message: string, options: any) => {
             const msg = window.Store.Msg.get(msgId) || (await window.Store.Msg.getMessagesById([msgId]))?.messages?.[0];
             if (!msg) return null;
 
-            let canEdit = window.Store.MsgActionChecks.canEditText(msg) || window.Store.MsgActionChecks.canEditCaption(msg);
+            const canEdit = window.Store.MsgActionChecks.canEditText(msg) || window.Store.MsgActionChecks.canEditCaption(msg);
             if (canEdit) {
                 const msgEdit = await window.WWebJS.editMessage(msg, message, options);
                 return msgEdit.serialize();

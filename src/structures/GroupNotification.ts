@@ -6,6 +6,7 @@ import Contact from './Contact.js';
 import Location from './Location.js';
 import Message from './Message.js';
 import MessageMedia from './MessageMedia.js';
+import Client from '../Client.js';
 
 /**
  * Represents a GroupNotification on WhatsApp
@@ -28,13 +29,13 @@ class GroupNotification extends Base {
     /** GroupNotification type */
     type: typeof GroupNotificationTypes[keyof typeof GroupNotificationTypes];
 
-    constructor(client, data) {
+    constructor(client: Client, data: any) {
         super(client);
 
         if(data) this._patch(data);
     }
 
-    _patch(data) {
+    override _patch(data: any): any {
         /**
          * ID that represents the groupNotification
          * @type {object}
@@ -117,7 +118,7 @@ class GroupNotification extends Base {
      * @returns {Promise<Message>}
      */
     async reply(content: string | MessageMedia | Location, options: MessageSendOptions={}): Promise<Message> {
-        return this.client.sendMessage(this.chatId, content, options);
+        return await this.client.sendMessage(this.chatId, content, options);
     }
     
 }

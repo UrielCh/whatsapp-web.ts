@@ -76,7 +76,9 @@ export interface UnsubscribeOptions {
      * Otherwise it will only remove a channel from the list of channels the current user is subscribed to
      * and will set the membership type for that channel to GUEST
      */
-    deleteLocalModels?: boolean
+    deleteLocalModels?: boolean;
+
+    eventSurface?: number;
 }
 
 /** Options for searching for channels */
@@ -436,7 +438,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
         return `(${fnStr})(${argsStr})`;
     }
 
-    private async evaluate<Params extends unknown[], Func extends EvaluateFunc<Params> = EvaluateFunc<Params>>(pageFunction: Func | string, ...args: Params): Promise<Awaited<ReturnType<Func>>> {
+    public async evaluate<Params extends unknown[], Func extends EvaluateFunc<Params> = EvaluateFunc<Params>>(pageFunction: Func | string, ...args: Params): Promise<Awaited<ReturnType<Func>>> {
         const asStr = this.serializeFunctionWithArgs(pageFunction, args);
         try {
             // check evaluateOnNewDocument
@@ -444,7 +446,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
             const result = await this.pupPage.evaluate(asStr);
             return result as any;
         } catch (error) {
-            debugger;
+            // debugger;
             throw new Error(`Failed to evaluate function: ${asStr.substring(0, 100)}...\n ERROR: ${error}`);
         }
     }
@@ -453,7 +455,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
      * Injection logic
      * Private function
      */
-    async inject() {
+    async inject(): Promise<void> {
         // wait for window.Debug to be defined
         const ready = await this.pupPage.waitForFunction('window.Debug?.VERSION != undefined', {timeout: this.options.authTimeoutMs});
 
@@ -1183,7 +1185,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
      * 
      * @returns Message that was just sent
      */
-    async sendMessage(chatId: string, content: MessageContent, options: MessageSendOptions = {}) {
+    async sendMessage(chatId: string, content: MessageContent, options: MessageSendOptions = {}): Promise<Message | null | undefined> {
         const isChannel = /@\w*newsletter\b/.test(chatId);
 
         if (isChannel && [
@@ -1303,7 +1305,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
      * @param {SendChannelAdminInviteOptions} options 
      * @returns {Promise<boolean>} Returns true if an invitation was sent successfully, false otherwise
      */
-    async sendChannelAdminInvite(chatId: string, channelId: string, options: { comment?: string } = {}) {
+    async sendChannelAdminInvite(chatId: string, channelId: string, options: { comment?: string } = {}): Promise<boolean> {
         const response = await this.evaluate(async (chatId, channelId, options) => {
             if (!window.Store || !window.Store.WidFactory || !window.Store.WidFactory.createWid || !window.Store.Chat || !window.Store.Chat.get || !window.Store.Chat.find || !window.Store.SendChannelMessage || !window.Store.SendChannelMessage.sendNewsletterAdminInviteMessage || !window.WWebJS || !window.WWebJS.getProfilePicThumbToBase64) {
                 throw new Error('window.Store.WidFactory.createWid or window.Store.Chat.get or window.Store.Chat.find or window.Store.SendChannelMessage.sendNewsletterAdminInviteMessage or window.WWebJS.getProfilePicThumbToBase64 is not defined');
@@ -1386,7 +1388,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
      * @param {string} chatId 
      * @returns {Promise<Chat|Channel>}
      */
-    async getChatById(chatId: string): Promise<Chat> {
+    async getChatById(chatId: string): Promise<Chat | undefined> {
         const chat = await this.evaluate(async chatId => {
             if (!window.WWebJS || !window.WWebJS.getChat) {
                 throw new Error('window.WWebJS.getChat is not defined');
@@ -1690,7 +1692,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
      * @returns {Promise<boolean>} New pin state. Could be false if the max number of pinned chats was reached.
      */
     async pinChat(chatId: string): Promise<boolean> {
-        return this.evaluate(async chatId => {
+        return await this.evaluate(async chatId => {
             if (!window.WWebJS || !window.WWebJS.getChat || !window.Store || !window.Store.Chat || !window.Store.Chat.getModelsArray || !window.Store.Cmd || !window.Store.Cmd.pinChat) {
                 throw new Error('window.WWebJS.getChat or window.Store.Chat.getModelsArray or window.Store.Cmd.pinChat is not defined');
             }
@@ -1716,11 +1718,11 @@ class Client extends EventEmitter implements ClientEventsInterface {
      * @returns {Promise<boolean>} New pin state
      */
     async unpinChat(chatId: string): Promise<boolean> {
-        return this.evaluate(async chatId => {
+        return await this.evaluate(async chatId => {
             if (!window.WWebJS || !window.WWebJS.getChat || !window.Store || !window.Store.Cmd || !window.Store.Cmd.pinChat) {
                 throw new Error('window.WWebJS.getChat or window.Store.Cmd.pinChat is not defined');
             }
-            let chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
+            const chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
             if (!chat.pin) {
                 return false;
             }
@@ -1737,7 +1739,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     async muteChat(chatId: string, unmuteDate?: Date): Promise<{isMuted: boolean, muteExpiration: number}> {
         const unmuteDateTs = unmuteDate ? Math.floor(unmuteDate.getTime() / 1000) : -1;
-        return this._muteUnmuteChat(chatId, 'MUTE', unmuteDateTs);
+        return await this._muteUnmuteChat(chatId, 'MUTE', unmuteDateTs);
     }
 
     /**
@@ -1746,7 +1748,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
      * @returns {Promise<{isMuted: boolean, muteExpiration: number}>}
      */
     async unmuteChat(chatId: string): Promise<{isMuted: boolean, muteExpiration: number}> {
-        return this._muteUnmuteChat(chatId, 'UNMUTE');
+        return await this._muteUnmuteChat(chatId, 'UNMUTE');
     }
 
     /**
@@ -1757,7 +1759,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
      * @returns {Promise<{isMuted: boolean, muteExpiration: number}>}
      */
     async _muteUnmuteChat (chatId: string, action: string, unmuteDateTs?: number): Promise<{isMuted: boolean, muteExpiration: number}> {
-        return this.evaluate(async (chatId, action, unmuteDateTs) => {
+        return await this.evaluate(async (chatId, action, unmuteDateTs) => {
             if (!window.Store || !window.Store.Chat || !window.Store.Chat.get || !window.Store.Chat.find) {
                 throw new Error('window.Store.Chat.get or window.Store.Chat.find is not defined');
             }

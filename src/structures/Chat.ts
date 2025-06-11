@@ -3,6 +3,8 @@ import Message from './Message.js';
 import Client from '../Client.js';
 import Contact from './Contact.js';
 import Label from './Label.js';
+import MessageMedia from "./MessageMedia.ts";
+import { MessageContent, MessageSendOptions } from "../types.ts";
 
 
 export interface MessageSearchOptions {
@@ -51,27 +53,27 @@ export interface ChatId {
  */
 class Chat extends Base {
     /** Indicates if the Chat is archived */
-    archived: boolean;
+    archived?: boolean;
     /** ID that represents the chat */
-    id: ChatId;
+    id!: ChatId;
     /** Indicates if the Chat is a Group Chat */
-    isGroup: boolean;
+    isGroup?: boolean;
     /** Indicates if the Chat is readonly */
-    isReadOnly: boolean;
+    isReadOnly?: boolean;
     /** Indicates if the Chat is muted */
-    isMuted: boolean;
+    isMuted?: boolean;
     /** Unix timestamp for when the mute expires */
-    muteExpiration: number;
+    muteExpiration?: number;
     /** Title of the chat */
-    name: string;
+    name?: string;
     /** Unix timestamp for when the last activity occurred */
-    timestamp: number;
+    timestamp?: number;
     /** Amount of messages unread */
-    unreadCount: number;
+    unreadCount?: number;
     /** Last message of chat */
-    lastMessage: Message;
+    lastMessage?: Message;
     /** Indicates if the Chat is pinned */
-    pinned: boolean;
+    pinned?: boolean;
 
     constructor(client: Client, data: any) {
         super(client);
@@ -79,7 +81,7 @@ class Chat extends Base {
         if (data) this._patch(data);
     }
 
-    _patch(data: any) {
+    override _patch(data: any): any {
         /**
          * ID that represents the chat
          * @type {object}
@@ -155,24 +157,26 @@ class Chat extends Base {
      * @param {MessageSendOptions} [options] 
      * @returns {Promise<Message>} Message that was just sent
      */
-    async sendMessage(content, options) {
-        return this.client.sendMessage(this.id._serialized, content, options);
+    async sendMessage(content: MessageContent, options?: MessageSendOptions): Promise<Message | null | undefined> {
+        return await this.client.sendMessage(this.id._serialized, content, options);
     }
 
     /**
      * Sets the chat as seen
      * @returns {Promise<Boolean>} result
      */
-    async sendSeen() {
-        return this.client.sendSeen(this.id._serialized);
+    async sendSeen(): Promise<boolean> {
+        return await this.client.sendSeen(this.id._serialized);
     }
 
     /**
      * Clears all messages from the chat
      * @returns {Promise<boolean>} result
      */
-    async clearMessages() {
-        return this.client.pupPage.evaluate(chatId => {
+    async clearMessages(): Promise<boolean> {
+        return await this.client.evaluate(chatId => {
+            if (!window.WWebJS || !window.WWebJS.sendClearChat)
+                throw new Error('window.WWebJS.sendClearChat is not defined');
             return window.WWebJS.sendClearChat(chatId);
         }, this.id._serialized);
     }
@@ -181,8 +185,10 @@ class Chat extends Base {
      * Deletes the chat
      * @returns {Promise<Boolean>} result
      */
-    async delete() {
-        return this.client.pupPage.evaluate(chatId => {
+    async delete(): Promise<boolean> {
+        return await this.client.evaluate(chatId => {
+            if (!window.WWebJS || !window.WWebJS.sendDeleteChat)
+                throw new Error('window.WWebJS.sendDeleteChat is not defined');
             return window.WWebJS.sendDeleteChat(chatId);
         }, this.id._serialized);
     }
@@ -191,14 +197,14 @@ class Chat extends Base {
      * Archives this chat
      */
     async archive(): Promise<boolean> {
-        return this.client.archiveChat(this.id._serialized);
+        return await this.client.archiveChat(this.id._serialized);
     }
 
     /**
      * un-archives this chat
      */
     async unarchive(): Promise<boolean> {
-        return this.client.unarchiveChat(this.id._serialized);
+        return await this.client.unarchiveChat(this.id._serialized);
     }
 
     /**
@@ -206,7 +212,7 @@ class Chat extends Base {
      * @returns {Promise<boolean>} New pin state. Could be false if the max number of pinned chats was reached.
      */
     async pin(): Promise<boolean> {
-        return this.client.pinChat(this.id._serialized);
+        return await this.client.pinChat(this.id._serialized);
     }
 
     /**
@@ -214,7 +220,7 @@ class Chat extends Base {
      * @returns {Promise<boolean>} New pin state
      */
     async unpin(): Promise<boolean> {
-        return this.client.unpinChat(this.id._serialized);
+        return await this.client.unpinChat(this.id._serialized);
     }
 
     /**
@@ -222,7 +228,7 @@ class Chat extends Base {
      * @param {?Date} unmuteDate Date when the chat will be unmuted, don't provide a value to mute forever
      * @returns {Promise<{isMuted: boolean, muteExpiration: number}>}
      */
-    async mute(unmuteDate: Date): Promise<{isMuted: boolean, muteExpiration: number}> {
+    async mute(unmuteDate?: Date): Promise<{isMuted: boolean, muteExpiration: number}> {
         const result = await this.client.muteChat(this.id._serialized, unmuteDate);
         this.isMuted = result.isMuted;
         this.muteExpiration = result.muteExpiration;
@@ -244,7 +250,7 @@ class Chat extends Base {
      * Mark this chat as unread
      */
     async markUnread(): Promise<void> {
-        return this.client.markChatUnread(this.id._serialized);
+        return await this.client.markChatUnread(this.id._serialized);
     }
 
     /**
@@ -254,9 +260,9 @@ class Chat extends Base {
      * @param {Boolean} [searchOptions.fromMe] Return only messages from the bot number or vise versa. To get all messages, leave the option undefined.
      * @returns {Promise<Array<Message>>}
      */
-    async fetchMessages(searchOptions: MessageSearchOptions): Promise<Message[]> {
-        let messages = await this.client.pupPage.evaluate(async (chatId, searchOptions) => {
-            const msgFilter = (m) => {
+    async fetchMessages(searchOptions?: MessageSearchOptions): Promise<Message[]> {
+        const messages = await this.client.evaluate(async (chatId, searchOptions) => {
+            const msgFilter = (m: any) => {
                 if (m.isNotification) {
                     return false; // dont include notification messages
                 }
@@ -266,10 +272,22 @@ class Chat extends Base {
                 return true;
             };
 
+            if (!window.WWebJS) {
+                throw new Error('window.WWebJS is not defined');
+            }
+
+            if (!window.Store) {
+                throw new Error('window.Store is not defined');
+            }
+            const getMessageModel = window.WWebJS.getMessageModel;
+            if (!window.WWebJS.getChat || !window.Store.ConversationMsgs || !getMessageModel) {
+                throw new Error('window.WWebJS.getChat or window.Store.ConversationMsgs or window.WWebJS.getMessageModel is not defined');
+            }
+
             const chat = await window.WWebJS.getChat(chatId, { getAsModel: false });
             let msgs = chat.msgs.getModelsArray().filter(msgFilter);
 
-            if (searchOptions && searchOptions.limit > 0) {
+            if (searchOptions && searchOptions.limit && searchOptions.limit > 0) {
                 while (msgs.length < searchOptions.limit) {
                     const loadedMessages = await window.Store.ConversationMsgs.loadEarlierMsgs(chat);
                     if (!loadedMessages || !loadedMessages.length) break;
@@ -277,23 +295,26 @@ class Chat extends Base {
                 }
                 
                 if (msgs.length > searchOptions.limit) {
-                    msgs.sort((a, b) => (a.t > b.t) ? 1 : -1);
+                    msgs.sort((a: any, b: any) => (a.t > b.t) ? 1 : -1);
                     msgs = msgs.splice(msgs.length - searchOptions.limit);
                 }
             }
 
-            return msgs.map(m => window.WWebJS.getMessageModel(m));
+            return msgs.map((m: any) => getMessageModel(m));
 
         }, this.id._serialized, searchOptions);
 
-        return messages.map(m => new Message(this.client, m));
+        return messages.map((m: any) => new Message(this.client, m));
     }
 
     /**
      * Simulate typing in chat. This will last for 25 seconds.
      */
     async sendStateTyping(): Promise<boolean> {
-        return this.client.pupPage.evaluate(chatId => {
+        return await this.client.evaluate(chatId => {
+            if (!window.WWebJS || !window.WWebJS.sendChatstate) {
+                throw new Error('window.WWebJS.sendChatstate is not defined');
+            }
             window.WWebJS.sendChatstate('typing', chatId);
             return true;
         }, this.id._serialized);
@@ -303,7 +324,10 @@ class Chat extends Base {
      * Simulate recording audio in chat. This will last for 25 seconds.
      */
     async sendStateRecording(): Promise<boolean> {
-        return this.client.pupPage.evaluate(chatId => {
+        return await this.client.evaluate(chatId => {
+            if (!window.WWebJS || !window.WWebJS.sendChatstate) {
+                throw new Error('window.WWebJS.sendChatstate is not defined');
+            }
             window.WWebJS.sendChatstate('recording', chatId);
             return true;
         }, this.id._serialized);
@@ -313,7 +337,10 @@ class Chat extends Base {
      * Stops typing or recording in chat immediately.
      */
     async clearState(): Promise<boolean> {
-        return this.client.pupPage.evaluate(chatId => {
+        return await this.client.evaluate(chatId => {
+            if (!window.WWebJS || !window.WWebJS.sendChatstate) {
+                throw new Error('window.WWebJS.sendChatstate is not defined');
+            }
             window.WWebJS.sendChatstate('stop', chatId);
             return true;
         }, this.id._serialized);
@@ -332,7 +359,7 @@ class Chat extends Base {
      * @returns {Promise<Array<Label>>}
      */
     async getLabels(): Promise<Label[]> {
-        return this.client.getChatLabels(this.id._serialized);
+        return await this.client.getChatLabels(this.id._serialized);
     }
 
     /**
@@ -341,7 +368,7 @@ class Chat extends Base {
      * @returns {Promise<void>}
      */
     async changeLabels(labelIds: Array<number | string>): Promise<void> {
-        return this.client.addOrRemoveLabels(labelIds, [this.id._serialized]);
+        return await this.client.addOrRemoveLabels(labelIds, [this.id._serialized]);
     }
 
     /**
@@ -349,7 +376,7 @@ class Chat extends Base {
      * @return {Promise<boolean>} True if operation completed successfully, false otherwise.
      */
     async syncHistory(): Promise<boolean> {
-        return this.client.syncHistory(this.id._serialized);
+        return await this.client.syncHistory(this.id._serialized);
     }
 }
 

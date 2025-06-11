@@ -1,8 +1,8 @@
 /* Require Optional Dependencies */
 import fs from 'fs-extra';
-// @deno-types="npm:@types/unzipper"
+// @deno-types="npm:@types/unzipper@0.10.11"
 import unzipper from 'unzipper';
-// @deno-types="npm:@types/archiver"
+// @deno-types="npm:@types/archiver@6.0.3"
 import archiver from 'archiver';
 
 import path from 'node:path';
@@ -38,7 +38,7 @@ class RemoteAuth extends BaseAuthStrategy {
     public sessionName?: string;
     public tempDir?: string;
     public requiredDirs?: string[];
-    public backupSync?: NodeJS.Timeout;
+    public backupSync?: ReturnType<typeof setInterval>;
 
     constructor({ clientId, dataPath, store, backupSyncIntervalMs, rmMaxRetries }: {
         store: Store,
@@ -68,7 +68,7 @@ class RemoteAuth extends BaseAuthStrategy {
         this.rmMaxRetries = rmMaxRetries ?? 4;
     }
 
-    async beforeBrowserInitialized() {
+    override async beforeBrowserInitialized() {
         const puppeteerOpts = this.client.options.puppeteer;
         const sessionDirName = this.clientId ? `RemoteAuth-${this.clientId}` : 'RemoteAuth';
         const dirPath = path.join(this.dataPath, sessionDirName);
@@ -88,18 +88,19 @@ class RemoteAuth extends BaseAuthStrategy {
         };
     }
 
-    async logout() {
+    override async logout(): Promise<void> {
         await this.disconnect();
     }
 
-    async destroy() {
+    override destroy(): Promise<void> {
         clearInterval(this.backupSync);
+        return Promise.resolve();
     }
 
-    async disconnect() {
+    override async disconnect() {
         await this.deleteRemoteSession();
 
-        let pathExists = await this.isValidPath(this.userDataDir);
+        const pathExists = await this.isValidPath(this.userDataDir);
         if (pathExists) {
             await fs.promises.rm(this.userDataDir, {
                 recursive: true,
@@ -110,15 +111,15 @@ class RemoteAuth extends BaseAuthStrategy {
         clearInterval(this.backupSync);
     }
 
-    async afterAuthReady() {
+    override async afterAuthReady() {
         const sessionExists = await this.store.sessionExists({session: this.sessionName});
         if(!sessionExists) {
             await this.delay(60000); /* Initial delay sync required for session to be stable enough to recover */
             await this.storeRemoteSession({emit: true});
         }
-        var self = this;
-        this.backupSync = setInterval(async function () {
-            await self.storeRemoteSession();
+        // var self = this;
+        this.backupSync = setInterval(() => {
+            this.storeRemoteSession();
         }, this.backupSyncIntervalMs);
     }
 
@@ -162,7 +163,7 @@ class RemoteAuth extends BaseAuthStrategy {
         if (sessionExists) await this.store.delete({session: this.sessionName});
     }
 
-    async compressSession() {
+    async compressSession(): Promise<void> {
         const archive = archiver('zip');
         const stream = fs.createWriteStream(`${this.sessionName}.zip`);
 
@@ -179,7 +180,7 @@ class RemoteAuth extends BaseAuthStrategy {
         });
     }
 
-    async unCompressSession(compressedSessionPath) {
+    async unCompressSession(compressedSessionPath: string) {
         var stream = fs.createReadStream(compressedSessionPath);
         await new Promise<void>((resolve, reject) => {
             stream.pipe(unzipper.Extract({
@@ -214,7 +215,7 @@ class RemoteAuth extends BaseAuthStrategy {
         }
     }
 
-    async isValidPath(path) {
+    async isValidPath(path: string): Promise<boolean> {
         try {
             await fs.promises.access(path);
             return true;
@@ -223,7 +224,7 @@ class RemoteAuth extends BaseAuthStrategy {
         }
     }
 
-    async delay(ms: number): Promise<void> {
+    delay(ms: number): Promise<void> {
         return new Promise<void>((resolve) => setTimeout(resolve, ms));
     }
 }

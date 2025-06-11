@@ -3,14 +3,14 @@ import sinon from 'sinon';
 
 import * as helper from '../helper.js';
 import { Contact, Chat } from '../../src/structures/index.js';
-import { Client } from '../../index.js';
+import { Client, Message } from '../../index.js';
 
 const remoteId = helper.remoteId;
 
 describe.skip('Message', function () {
     let client: Client;
-    let chat;
-    let message;
+    let chat: Chat;
+    let message: Message | null | undefined;
 
     before(async function() {
         this.timeout(35000);
@@ -20,7 +20,7 @@ describe.skip('Message', function () {
         
         await client.initialize();
 
-        chat = await client.getChatById(remoteId);
+        chat = (await client.getChatById(remoteId))!;
         message = await chat.sendMessage('this is only a test');
 
         // wait for message to be sent
@@ -32,69 +32,69 @@ describe.skip('Message', function () {
     });
 
     it('can get the related chat', async function () {
-        const chat = await message.getChat();
+        const chat = await message!.getChat();
         expect(chat).to.be.instanceOf(Chat);
         expect(chat.id._serialized).to.equal(remoteId);
     });
 
     it('can get the related contact', async function () {
-        const contact = await message.getContact();
+        const contact = await message!.getContact();
         expect(contact).to.be.instanceOf(Contact);
         expect(contact.id._serialized).to.equal(client.info.wid._serialized);
     });
 
     it('can get message info', async function () {
-        const info = await message.getInfo();
+        const info = await message!.getInfo();
         expect(typeof info).to.equal('object');
-        expect(Array.isArray(info.played)).to.equal(true);
-        expect(Array.isArray(info.read)).to.equal(true);
-        expect(Array.isArray(info.delivery)).to.equal(true);
+        expect(Array.isArray(info!.played)).to.equal(true);
+        expect(Array.isArray(info!.read)).to.equal(true);
+        expect(Array.isArray(info!.delivery)).to.equal(true);
     });
 
     describe('Replies', function () {
-        let replyMsg;
+        let replyMsg: Message | null | undefined;
 
         it('can reply to a message', async function () {
-            replyMsg = await message.reply('this is my reply');
-            expect(replyMsg.hasQuotedMsg).to.equal(true);
+            replyMsg = await message!.reply('this is my reply');
+            expect(replyMsg!.hasQuotedMsg).to.equal(true);
         });
 
         it('can get the quoted message', async function () {
-            const quotedMsg = await replyMsg.getQuotedMessage();
-            expect(quotedMsg.id._serialized).to.equal(message.id._serialized);
+            const quotedMsg = await replyMsg!.getQuotedMessage();
+            expect(quotedMsg!.id._serialized).to.equal(message!.id._serialized);
         });
     });
 
     describe('Star', function () {
         it('can star a message', async function () {
-            expect(message.isStarred).to.equal(false);
-            await message.star();
+            expect(message!.isStarred).to.equal(false);
+            await message!.star();
 
             await helper.sleep(1000);
 
             // reload and check
-            await message.reload();
-            expect(message.isStarred).to.equal(true);
+            await message!.reload();
+            expect(message!.isStarred).to.equal(true);
         });
 
         it('can un-star a message', async function () {
-            expect(message.isStarred).to.equal(true);
-            await message.unstar();
+            expect(message!.isStarred).to.equal(true);
+            await message!.unstar();
 
             await helper.sleep(1000);
 
             // reload and check
-            await message.reload();
-            expect(message.isStarred).to.equal(false);
+            await message!.reload();
+            expect(message!.isStarred).to.equal(false);
         });
     });
 
     describe('Delete', function () {
         it('can delete a message for me', async function () {
-            await message.delete();
+            await message!.delete();
             
             await helper.sleep(5000);
-            expect(await message.reload()).to.equal(null);
+            expect(await message!.reload()).to.equal(null);
         });
 
         it('can delete a message for everyone', async function () {
@@ -104,10 +104,10 @@ describe.skip('Message', function () {
             const callback = sinon.spy();
             client.once('message_revoke_everyone', callback);
 
-            await message.delete(true);
+            await message!.delete(true);
             await helper.sleep(1000);
 
-            expect(await message.reload()).to.equal(null);
+            expect(await message!.reload()).to.equal(null);
             expect(callback.called).to.equal(true);
             const [ revokeMsg, originalMsg ] = callback.args[0];
             expect(revokeMsg.id._serialized).to.equal(originalMsg.id._serialized);

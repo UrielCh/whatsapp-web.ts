@@ -20,7 +20,7 @@ class LocalWebCache extends WebCache {
         this.strict = options.strict || false;
     }
 
-    async resolve(version: string): Promise<string | null> {
+    override async resolve(version: string): Promise<string | null> {
         const filePath = path.join(this.path, `${version}.html`);
         
         try {
@@ -33,7 +33,7 @@ class LocalWebCache extends WebCache {
         }
     }
 
-    async persist(indexHtml: string, version: string): Promise<void> {
+    override async persist(indexHtml: string, version: string): Promise<void> {
         // version = (version+'').replace(/[^0-9.]/g,'');
         const filePath = path.join(this.path, `${version}.html`);
         await fs.promises.mkdir(this.path, { recursive: true });

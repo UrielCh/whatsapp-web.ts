@@ -81,7 +81,7 @@ class BusinessContact extends Contact {
         coverPhoto: null | any;
     }
     
-    _patch(data: any) {
+    override _patch(data: any): any {
         /**
          * The contact's business profile
          */

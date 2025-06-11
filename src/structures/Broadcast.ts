@@ -30,7 +30,7 @@ class Broadcast extends Base {
         if (data) this._patch(data);
     }
 
-    _patch(data: any) {
+    override _patch(data: any): any {
         /**
          * ID that represents the chat
          * @type {object}

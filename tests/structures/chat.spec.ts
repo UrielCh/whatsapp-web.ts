@@ -4,12 +4,14 @@ import * as helper from '../helper.js';
 import Message from '../../src/structures/Message.js';
 import { MessageTypes } from '../../src/util/Constants.js';
 import Contact from '../../src/structures/Contact.js';
+import Client from "../../src/Client.ts";
+import { Chat } from "../../src/structures/index.ts";
 
 const remoteId = helper.remoteId;
 
 describe.skip('Chat', function () {
-    let client;
-    let chat;
+    let client: Client;
+    let chat: Chat;
 
     before(async function() {
         this.timeout(35000);
@@ -18,7 +20,7 @@ describe.skip('Chat', function () {
             options: {puppeteer: { headless: false }},
         });
         await client.initialize();
-        chat = await client.getChatById(remoteId);
+        chat = (await client.getChatById(remoteId))!;
     });
 
     after(async function () {
@@ -28,6 +30,7 @@ describe.skip('Chat', function () {
     it('can send a message to a chat', async function () {
         const msg = await chat.sendMessage('hello world');
         expect(msg).to.be.instanceOf(Message);
+        if (!msg) return;
         expect(msg.type).to.equal(MessageTypes.TEXT);
         expect(msg.fromMe).to.equal(true);
         expect(msg.body).to.equal('hello world');
@@ -37,6 +40,8 @@ describe.skip('Chat', function () {
     it('can fetch messages sent in a chat', async function () {
         await helper.sleep(1000);
         const msg = await chat.sendMessage('another message');
+        expect(msg).to.not.be.null;
+        if (!msg) return;
         await helper.sleep(500);
 
         const messages = await chat.fetchMessages();
@@ -52,6 +57,8 @@ describe.skip('Chat', function () {
     it('can use a limit when fetching messages sent in a chat', async function () {
         await helper.sleep(1000);  
         const msg = await chat.sendMessage('yet another message');
+        expect(msg).to.not.be.null;
+        if (!msg) return;
         await helper.sleep(500);
 
         const messages = await chat.fetchMessages({limit: 1});
@@ -59,6 +66,7 @@ describe.skip('Chat', function () {
 
         const fetchedMsg = messages[0];
         expect(fetchedMsg).to.be.instanceOf(Message);
+        if (!fetchedMsg) return;
         expect(fetchedMsg.type).to.equal(MessageTypes.TEXT);
         expect(fetchedMsg.id._serialized).to.equal(msg.id._serialized);
         expect(fetchedMsg.body).to.equal(msg.body);
@@ -86,7 +94,7 @@ describe.skip('Chat', function () {
             await helper.sleep(500);
 
             // refresh chat
-            chat = await client.getChatById(remoteId);
+            chat = (await client.getChatById(remoteId))!;
             expect(chat.unreadCount).to.equal(-1);
         });
 
@@ -97,7 +105,7 @@ describe.skip('Chat', function () {
             await helper.sleep(1000);
 
             // refresh chat
-            chat = await client.getChatById(remoteId);
+            chat = (await client.getChatById(remoteId))!;
             expect(chat.unreadCount).to.equal(0);
         });
     });
@@ -134,7 +142,7 @@ describe.skip('Chat', function () {
             await helper.sleep(1000);
 
             // refresh chat
-            chat = await client.getChatById(remoteId);
+            chat = (await client.getChatById(remoteId))!;
             expect(chat.pinned).to.equal(true);
         });
 
@@ -144,7 +152,7 @@ describe.skip('Chat', function () {
             await helper.sleep(1000);
 
             // refresh chat
-            chat = await client.getChatById(remoteId);
+            chat = (await client.getChatById(remoteId))!;
             expect(chat.pinned).to.equal(false);
         });
     });
@@ -156,7 +164,7 @@ describe.skip('Chat', function () {
             await helper.sleep(1000);
 
             // refresh chat
-            chat = await client.getChatById(remoteId);
+            chat = (await client.getChatById(remoteId))!;
             expect(chat.isMuted).to.equal(true);
             expect(chat.muteExpiration).to.equal(-1);
         });

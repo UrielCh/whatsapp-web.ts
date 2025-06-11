@@ -1,3 +1,7 @@
+import type { UnsubscribeOptions } from "./src/Client.ts";
+import type Contact from "./src/structures/Contact.ts";
+import type MessageMedia from "./src/structures/MessageMedia.ts";
+
 // global.d.ts or src/types/whatsapp.d.ts
 declare global {
   interface Window {
@@ -273,7 +277,6 @@ declare global {
       getContact?: (id: string) => Promise<Contact>;
       subscribeToUnsubscribeFromChannel?: (channelId: string, action: 'Subscribe' | 'Unsubscribe', options?: UnsubscribeOptions) => Promise<boolean>;
       pinUnpinMsgAction?: (msgId: string, action: number, duration?: number) => Promise<boolean>;
-      getProfilePicThumbToBase64?: (chatId: string) => Promise<string>;
       getAddParticipantsRpcResult?: (groupMetadata: any, groupWid: any, pWid: any) => Promise<any>;
       deletePicture?: (chatId: string) => Promise<boolean>;
       setPicture?: (chatId: string, media: MessageMedia) => Promise<boolean>;

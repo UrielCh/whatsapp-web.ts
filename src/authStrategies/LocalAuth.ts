@@ -32,7 +32,7 @@ class LocalAuth extends BaseAuthStrategy {
         this.rmMaxRetries = rmMaxRetries ?? 4;
     }
 
-    async beforeBrowserInitialized() {
+    override async beforeBrowserInitialized() {
         const puppeteerOpts = this.client.options.puppeteer;
         const sessionDirName = this.clientId ? `session-${this.clientId}` : 'session';
         const dirPath = path.join(this.dataPath, sessionDirName);
@@ -51,7 +51,7 @@ class LocalAuth extends BaseAuthStrategy {
         this.userDataDir = dirPath;
     }
 
-    async logout() {
+    override async logout() {
         if (this.userDataDir) {
             await fs.rm(this.userDataDir, { recursive: true, force: true, maxRetries: this.rmMaxRetries })
                 .catch((e) => {

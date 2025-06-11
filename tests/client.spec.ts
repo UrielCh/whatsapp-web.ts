@@ -381,8 +381,8 @@ describe('Client', function() {
                     'OpaqueData',
                 ];
               
-                const loadedModules = await client.pupPage.evaluate((expectedModules) => {
-                    return expectedModules.filter(m => Boolean(window.Store[m]));
+                const loadedModules = await client.evaluate((expectedModules: string[]) => {
+                    return expectedModules.filter(m => Boolean((window.Store as any)[m]));
                 }, expectedModules);
                 
                 const missingModules = [];
@@ -416,8 +416,8 @@ describe('Client', function() {
                     'sendReactionToMsg',
                 ];
               
-                const loadedModules = await client.pupPage.evaluate((expectedModules) => {
-                    return expectedModules.filter(m => Boolean(window.Store[m]));
+                const loadedModules = await client.evaluate((expectedModules: string[]) => {
+                    return expectedModules.filter(m => Boolean((window.Store as any)[m]));
                 }, expectedModules);
                 
                 const missingModules = [];
@@ -439,8 +439,8 @@ describe('Client', function() {
                     'UploadUtils',
                 ];
               
-                const loadedModules = await client.pupPage.evaluate((expectedModules) => {
-                    return expectedModules.filter(m => Boolean(window.Store[m]));
+                const loadedModules = await client.evaluate((expectedModules: string[]) => {
+                    return expectedModules.filter(m => Boolean((window.Store as any)[m]));
                 }, expectedModules);
                 
                 const missingModules = [];
@@ -457,6 +457,7 @@ describe('Client', function() {
             this.timeout(15000);
             it.skip('can send a message', async function() {
                 const msg = await client.sendMessage(remoteId, 'hello world');
+                if (!msg) return;
                 expect(msg).to.be.instanceOf(Message, "Expected message to be an instance of Message");
                 expect(msg.type).to.equal(MessageTypes.TEXT, "Expected message type to be TEXT");
                 expect(msg.fromMe).to.equal(true, "Expected message to be from me");
@@ -472,6 +473,7 @@ describe('Client', function() {
     
                 const msg = await client.sendMessage(remoteId, media, {caption: 'here\'s my media'});
                 expect(msg).to.be.instanceOf(Message, "Expected message to be an instance of Message");
+                if (!msg) return;
                 expect(msg.type).to.equal(MessageTypes.IMAGE, "Expected message type to be IMAGE");
                 expect(msg.fromMe).to.equal(true, "Expected message to be from me");
                 expect(msg.hasMedia).to.equal(true, "Expected message to have media");
@@ -484,6 +486,7 @@ describe('Client', function() {
                 // const media = await MessageMedia.fromUrl('https://www.o-immobilierdurable.fr/wp-content/uploads/2023/06/Image3-350x150.png');
                 const msg = await client.sendMessage(remoteId, media);
                 expect(msg).to.be.instanceOf(Message, "Expected message to be an instance of Message");
+                if (!msg) return;
                 expect(msg.type).to.equal(MessageTypes.IMAGE, "Expected message type to be IMAGE");
                 expect(msg.fromMe).to.equal(true, "Expected message to be from me");
                 expect(msg.hasMedia).to.equal(true, "Expected message to have media");
@@ -499,6 +502,7 @@ describe('Client', function() {
     
                 const msg = await client.sendMessage(remoteId, media, { sendMediaAsDocument: true});
                 expect(msg).to.be.instanceOf(Message, "Expected message to be an instance of Message");
+                if (!msg) return;
                 expect(msg.type).to.equal(MessageTypes.DOCUMENT, "Expected message type to be DOCUMENT");
                 expect(msg.fromMe).to.equal(true, "Expected message to be from me");
                 expect(msg.hasMedia).to.equal(true, "Expected message to have media");
@@ -514,6 +518,7 @@ describe('Client', function() {
     
                 const msg = await client.sendMessage(remoteId, media, {sendMediaAsSticker: true});
                 expect(msg).to.be.instanceOf(Message, "Expected message to be an instance of Message");
+                if (!msg) return;
                 expect(msg.type).to.equal(MessageTypes.STICKER, "Expected message type to be STICKER");
                 expect(msg.fromMe).to.equal(true, "Expected message to be from me");
                 expect(msg.hasMedia).to.equal(true, "Expected message to have media");
@@ -532,6 +537,7 @@ describe('Client', function() {
                     stickerName: 'My Sticker'
                 });
                 expect(msg).to.be.instanceOf(Message, "Expected message to be an instance of Message");
+                if (!msg) return;
                 expect(msg.type).to.equal(MessageTypes.STICKER, "Expected message type to be STICKER");
                 expect(msg.fromMe).to.equal(true, "Expected message to be from me");
                 expect(msg.hasMedia).to.equal(true, "Expected message to have media");
@@ -544,6 +550,7 @@ describe('Client', function() {
     
                 const msg = await client.sendMessage(remoteId, location);
                 expect(msg).to.be.instanceOf(Message, "Expected message to be an instance of Message");
+                if (!msg) return;
                 expect(msg.type).to.equal(MessageTypes.LOCATION, "Expected message type to be LOCATION");
                 expect(msg.fromMe).to.equal(true, "Expected message to be from me");
                 expect(msg.to).to.equal(remoteId, "Expected message to be sent to remoteId");
@@ -566,6 +573,7 @@ END:VCARD`;
     
                 const msg = await client.sendMessage(remoteId, vCard);
                 expect(msg).to.be.instanceOf(Message, "Expected message to be an instance of Message");
+                if (!msg) return;
                 expect(msg.type).to.equal(MessageTypes.CONTACT_CARD, "Expected message type to be CONTACT_CARD");
                 expect(msg.fromMe).to.equal(true, "Expected message to be from me");
                 expect(msg.to).to.equal(remoteId, "Expected message to be sent to remoteId");
@@ -586,6 +594,7 @@ END:VCARD`;
     
                 const msg = await client.sendMessage(remoteId, vCard, {parseVCards: false});
                 expect(msg).to.be.instanceOf(Message, "Expected message to be an instance of Message");
+                if (!msg) return;
                 expect(msg.type).to.equal(MessageTypes.TEXT, "Expected message type to be TEXT"); // not a contact card
                 expect(msg.fromMe).to.equal(true, "Expected message to be from me");
                 expect(msg.to).to.equal(remoteId, "Expected message to be sent to remoteId");
@@ -597,6 +606,7 @@ END:VCARD`;
     
                 const msg = await client.sendMessage(remoteId, contact);
                 expect(msg).to.be.instanceOf(Message, "Expected message to be an instance of Message");
+                if (!msg) return;
                 expect(msg.type).to.equal(MessageTypes.CONTACT_CARD, "Expected message type to be CONTACT_CARD");
                 expect(msg.fromMe).to.equal(true, "Expected message to be from me");
                 expect(msg.to).to.equal(remoteId, "Expected message to be sent to remoteId");
@@ -611,6 +621,7 @@ END:VCARD`;
     
                 const msg = await client.sendMessage(remoteId, [contact1, contact2]);
                 expect(msg).to.be.instanceOf(Message, "Expected message to be an instance of Message");
+                if (!msg) return;
                 expect(msg.type).to.equal(MessageTypes.CONTACT_CARD_MULTI, "Expected message type to be CONTACT_CARD_MULTI");
                 expect(msg.fromMe).to.equal(true, "Expected message to be from me");
                 expect(msg.to).to.equal(remoteId, "Expected message to be sent to remoteId");
@@ -624,6 +635,7 @@ END:VCARD`;
             it('can get a chat by its ID', async function () {
                 const chat = await client.getChatById(remoteId);
                 expect(chat).to.be.instanceOf(Chat, "Expected chat to be an instance of Chat");
+                if (!chat) return;
                 expect(chat.id._serialized).to.eql(remoteId, "Expected chat ID to be equal to remoteId");
                 expect(chat.isGroup).to.eql(false, "Expected chat to not be a group");
             });
@@ -631,7 +643,6 @@ END:VCARD`;
             it('can get all chats', async function () {
                 const chats = await client.getChats();
                 expect(chats.length).to.be.greaterThanOrEqual(1, "Expected chats to have length of at least 1");
-    
                 const chat = chats.find(c => c.id._serialized === remoteId);
                 expect(chat).to.exist;
                 expect(chat).to.be.instanceOf(Chat, "Expected chat to be an instance of Chat");
@@ -747,11 +758,11 @@ END:VCARD`;
         });
 
         describe('Status/About', function () {
-            let me, previousStatus;
+            let me: Contact, previousStatus: string;
 
             before(async function () {
                 me = await client.getContactById(client.info.wid._serialized);
-                previousStatus = await me.getAbout();
+                previousStatus = await me.getAbout() || '';
             });
 
             after(async function () {

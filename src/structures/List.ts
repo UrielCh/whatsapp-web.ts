@@ -57,7 +57,7 @@ class List {
      * Input: [{title:'sectionTitle',rows:[{id:'customId', title:'ListItem2', description: 'desc'},{title:'ListItem2'}]}}]
      * Returns: [{'title':'sectionTitle','rows':[{'rowId':'customId','title':'ListItem1','description':'desc'},{'rowId':'oGSRoD','title':'ListItem2','description':''}]}]
      */
-    _format(sections){
+    _format(sections: Array<any>): Array<any> {
         if(!sections.length){throw '[LT02] List without sections';}
         if(sections.length > 1 && sections.filter(s => typeof s.title == 'undefined').length > 1){throw '[LT05] You can\'t have more than one empty title.';}
         return sections.map( (section) =>{

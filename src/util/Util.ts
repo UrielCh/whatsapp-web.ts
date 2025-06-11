@@ -3,6 +3,7 @@ import Crypto from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { promises as fs } from 'node:fs';
 import { Readable } from 'node:stream';
+import { Buffer } from 'node:buffer';
 
 import ffmpeg from 'fluent-ffmpeg';
 import webp from 'node-webpmux';
@@ -36,7 +37,7 @@ class Util {
      * @returns {Object}
      * @private
      */
-    static mergeDefault(def: object, given: object) {
+    static mergeDefault(def: any, given: any) {
         if (!given) return def;
         for (const key in def) {
             if (!has(given, key) || given[key] === undefined) {
@@ -63,7 +64,9 @@ class Util {
             return media;
         }
 
-        return pupPage.evaluate((media) => {
+        return pupPage.evaluate((media: MessageMedia) => {
+            if (!window.WWebJS || !window.WWebJS.toStickerData)
+                throw new Error('window.WWebJS.toStickerData is not defined');
             return window.WWebJS.toStickerData(media);
         }, media);
     }

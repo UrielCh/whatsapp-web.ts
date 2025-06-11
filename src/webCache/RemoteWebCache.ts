@@ -19,7 +19,7 @@ class RemoteWebCache extends WebCache {
         this.strict = options.strict || false;
     }
 
-    async resolve(version) {
+    override async resolve(version: string) {
         const remotePath = this.remotePath.replace('{version}', version);
 
         try {
@@ -35,7 +35,7 @@ class RemoteWebCache extends WebCache {
         return null;         
     }
 
-    async persist() {
+    override async persist() {
         // Nothing to do here
     }
 }

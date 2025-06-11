@@ -43,7 +43,7 @@ class Call extends Base {
         if (data) this._patch(data);
     }
 
-    _patch(data: any) {
+    override _patch(data: any): any {
         /**
          * Call ID
          * @type {string}
@@ -97,7 +97,10 @@ class Call extends Base {
      * Reject the call
     */
     async reject(): Promise<void> {
-        return this.client.pupPage.evaluate((peerJid, id) => {
+        if (!this.from) throw new Error('Call.from is not defined');
+        return await this.client.evaluate((peerJid, id) => {
+            if (!window.WWebJS || !window.WWebJS.rejectCall)
+                throw new Error('window.WWebJS.rejectCall is not defined');
             return window.WWebJS.rejectCall(peerJid, id);
         }, this.from, this.id);
     }
