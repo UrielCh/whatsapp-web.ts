@@ -1,6 +1,8 @@
 /* Require Optional Dependencies */
 import fs from 'fs-extra';
+// @deno-types="npm:@types/unzipper"
 import unzipper from 'unzipper';
+// @deno-types="npm:@types/archiver"
 import archiver from 'archiver';
 
 import path from 'node:path';

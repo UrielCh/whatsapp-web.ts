@@ -1,12 +1,13 @@
 import { expect } from 'chai';
 import * as helper from '../helper.js';
 import { Client } from '../../index.js';
+import GroupChat from "../../src/structures/GroupChat.ts";
 
 const remoteId = helper.remoteId;
 
 describe.skip('Group', function() {
     let client: Client;
-    let group;
+    let group: GroupChat;
 
     before(async function() {
         this.timeout(35000);

@@ -1,0 +1,17 @@
+{
+  "nodeModulesDir": "auto",
+  "tasks": {
+    "dev": "deno run --watch index.ts"
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@1"
+  },
+  "compilerOptions": {
+    "allowJs": true
+  },
+  "lint": {
+    "rules": {
+      "exclude": ["no-sloppy-imports", "no-window"]
+    }
+  }
+}

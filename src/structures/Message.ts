@@ -90,76 +90,76 @@ export interface MessageEditOptions {
  */
 class Message extends Base {
     /** ACK status for the message */
-    ack: typeof MessageAck[keyof typeof MessageAck];
+    ack!: typeof MessageAck[keyof typeof MessageAck];
     /** If the message was sent to a group, this field will contain the user that sent the message. */
     author?: string;
     /** String that represents from which device type the message was sent */
-    deviceType: string;
+    deviceType!: string;
     /** Message content */
-    body: string;
+    body!: string;
     /** Indicates if the message was a broadcast */
-    broadcast: boolean;
+    broadcast!: boolean;
     /** Indicates if the message was a status update */
-    isStatus: boolean;
+    isStatus!: boolean;
     /** Indicates if the message is a Gif */
-    isGif: boolean;
+    isGif!: boolean;
     /** Indicates if the message will disappear after it expires */
-    isEphemeral: boolean;
+    isEphemeral!: boolean;
     /** ID for the Chat that this message was sent to, except if the message was sent by the current user */
-    from: string;
+    from!: string;
     /** Indicates if the message was sent by the current user */
-    fromMe: boolean;
+    fromMe!: boolean;
     /** Indicates if the message has media available for download */
-    hasMedia: boolean;
+    hasMedia!: boolean;
     /** Indicates if the message was sent as a reply to another message */
-    hasQuotedMsg: boolean;
+    hasQuotedMsg!: boolean;
     /** Indicates whether there are reactions to the message */
-    hasReaction: boolean;
+    hasReaction!: boolean;
     /** Indicates the duration of the message in seconds */
-    duration: string;
+    duration!: string;
     /** ID that represents the message */
-    id: MessageId;
+    id!: MessageId;
     /** Indicates if the message was forwarded */
-    isForwarded: boolean;
+    isForwarded!: boolean;
     /**
      * Indicates how many times the message was forwarded.
      * The maximum value is 127.
      */
-    forwardingScore: number;
+    forwardingScore!: number;
     /** Indicates if the message was starred */
-    isStarred: boolean;
+    isStarred!: boolean;
     /** Location information contained in the message, if the message is type "location" */
-    location: Location;
+    location!: Location;
     /** List of vCards contained in the message */
-    vCards: string[];
+    vCards!: string[];
     /** Invite v4 info */
-    inviteV4?: InviteV4Data;
+    inviteV4!: InviteV4Data;
     /** MediaKey that represents the sticker 'ID' */
     mediaKey?: string;
     /** Indicates the mentions in the message body. */
-    mentionedIds: string[];
+    mentionedIds!: string[];
     /** Indicates whether there are group mentions in the message body */
-    groupMentions: {
+    groupMentions!: {
         groupSubject: string;
         groupJid: {_serialized: string};
     }[];
     /** Unix timestamp for when the message was created */
-    timestamp: number;
+    timestamp!: number;
     /**
      * ID for who this message is for.
      * If the message is sent by the current user, it will be the Chat to which the message is being sent.
      * If the message is sent by another user, it will be the ID for the current user.
      */
-    to: string;
+    to!: string;
     /** Message type */
-    type: typeof MessageTypes[keyof typeof MessageTypes];
+    type!: typeof MessageTypes[keyof typeof MessageTypes];
     /** Links included in the message. */
-    links: Array<{
+    links!: Array<{
         link: string;
         isSuspicious: boolean;
     }>;
     /** Order ID */
-    orderId: string;
+    orderId!: string;
     /** title */
     title?: string;
     /** description*/
@@ -178,11 +178,11 @@ class Message extends Base {
     selectedButtonId?: string;
     /** Selected list row ID */
     selectedRowId?: string;
-    pollName: string;
+    pollName!: string;
     /** Avaiaible poll voting options */
-    pollOptions: string[];
+    pollOptions!: string[];
     /** False for a single choice poll, true for a multiple choice poll */
-    allowMultipleAnswers: boolean;
+    allowMultipleAnswers!: boolean;
     _data: any;
 
     pollInvalidated: any;
@@ -196,7 +196,7 @@ class Message extends Base {
         if (data) this._patch(data);
     }
 
-    _patch(data: any) {
+    override _patch(data: any) {
         this._data = data;
         
         /**
@@ -710,7 +710,7 @@ class Message extends Base {
         await this.client.pupPage.evaluate(async (msgId) => {
             const msg = window.Store.Msg.get(msgId) || (await window.Store.Msg.getMessagesById([msgId]))?.messages?.[0];
             if (window.Store.MsgActionChecks.canStarMsg(msg)) {
-                let chat = await window.Store.Chat.find(msg.id.remote);
+                const chat = await window.Store.Chat.find(msg.id.remote);
                 return window.Store.Cmd.sendUnstarMsgs(chat, [msg], false);
             }
         }, this.id._serialized);
@@ -723,6 +723,8 @@ class Message extends Base {
      */
     async pin(duration: number): Promise<boolean> {
         return await this.client.pupPage.evaluate(async (msgId, duration) => {
+            if (!window.WWebJS || !window.WWebJS.pinUnpinMsgAction)
+                throw Error("window.WWebJS.pinUnpinMsgAction is not defined")
             return await window.WWebJS.pinUnpinMsgAction(msgId, 1, duration);
         }, this.id._serialized, duration);
     }
@@ -733,6 +735,8 @@ class Message extends Base {
      */
     async unpin(): Promise<boolean> {
         return await this.client.pupPage.evaluate(async (msgId) => {
+            if (!window.WWebJS || !window.WWebJS.pinUnpinMsgAction)
+                throw Error("window.WWebJS.pinUnpinMsgAction is not defined")
             return await window.WWebJS.pinUnpinMsgAction(msgId, 2);
         }, this.id._serialized);
     }
