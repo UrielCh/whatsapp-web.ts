@@ -12,6 +12,12 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          
       - name: install puppeteer
         run: deno install --allow-scripts=npm:puppeteer@24.10.0
       - name: publish to JSR
