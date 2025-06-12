@@ -17,11 +17,11 @@ async function exposeFunctionIfAbsent(page: Page, name: string, fn: Function): P
     const exist = await page.evaluate((name: string) => !!window[name], name);
     if (exist) return;
     await page.exposeFunction(name, fn);
-    const check2 = await page.evaluate((name: string) => !!window[name], name);
-    if (check2)
-        console.log("✅ exposeFunctionIfAbsent is now exposed: ", name);
-    else
-        console.log("❌ exposeFunctionIfAbsent failed to expose: ", name);
+    //const check2 = await page.evaluate((name: string) => !!window[name], name);
+    //if (check2)
+    //    console.log("✅ exposeFunctionIfAbsent is now exposed: ", name);
+    //else
+    //    console.log("❌ exposeFunctionIfAbsent failed to expose: ", name);
 }
 
 export {exposeFunctionIfAbsent};

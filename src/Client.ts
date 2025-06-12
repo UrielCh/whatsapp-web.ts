@@ -29,6 +29,7 @@ import fs from 'node:fs/promises';
 import type{ CallData } from "./structures/Call.ts";
 
 const useLog = process.env.USE_LOG === "true";
+const useDebug = process.env.USE_DEBUG === "true";
 
 class Logger {
     filename: string;
@@ -431,12 +432,15 @@ class Client extends EventEmitter implements ClientEventsInterface {
      */
     private serializeFunctionWithArgs<Func extends (...args: any[]) => any>(fn: Func | string, args: any[]): string {
         let fnStr = typeof fn === 'string' ? fn : fn.toString();
-        // Prepend debugger; to the function body
-        if (typeof fn !== 'string') {
-            fnStr = fnStr.replace('{', '{\n    debugger;');
-        } else if (!fnStr.trim().startsWith('debugger;')) {
-            fnStr = 'debugger;\n' + fnStr;
+        if (useDebug) {
+            // Prepend debugger; to the function body
+            if (typeof fn !== 'string') {
+                fnStr = fnStr.replace('{', '{\n    debugger;');
+            } else if (!fnStr.trim().startsWith('debugger;')) {
+                fnStr = 'debugger;\n' + fnStr;
+            }
         }
+
         // Serialize arguments as JSON
         const argsStr = args.map(arg => JSON.stringify(arg)).join(', ');
         return `(${fnStr})(${argsStr})`;
@@ -470,7 +474,6 @@ class Client extends EventEmitter implements ClientEventsInterface {
             }
             return result as Awaited<ReturnType<Func>>;
         } catch (error) {
-            // debugger;
             throw new Error(`ERROR: ${error}\n\nFailed to evaluate function: ${asStr.substring(0, 500)}...\n`);
         }
     }
