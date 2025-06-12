@@ -7,6 +7,38 @@ import type List from "./structures/List.ts";
 import type Buttons from "./structures/Buttons.ts";
 import type Location from "./structures/Location.ts";
 
+export interface InternalMessageSendOptions {
+    linkPreview?: boolean;
+    sendAudioAsVoice?: boolean;
+    sendVideoAsGif?: boolean;
+    sendMediaAsSticker?: boolean;
+    sendMediaAsDocument?: boolean;
+    sendMediaAsHd?: boolean;
+    caption?: string;
+    quotedMessageId?: string;
+    parseVCards?: boolean;
+    mentionedJidList?: string[];
+    groupMentions?: any[]; //{
+    //     /** The name of a group to mention (can be custom) */
+    //     subject: string,
+    //     /** The group ID, e.g.: 'XXXXXXXXXX@g.us' */
+    //     id: string
+    // }[];
+    invokedBotWid?: string;
+    ignoreQuoteErrors?: boolean;
+    extraOptions?: any;
+    media?: MessageMedia;
+    isViewOnce?: boolean;
+    location?: Location;
+    poll?: Poll;
+    contactCard?: string;
+    contactCardList?: string[];
+    buttons?: Buttons;
+    list?: List;
+    attachment?: string | MessageMedia;
+}
+
+
 /**
  * Base class which all authentication strategies extend
  */

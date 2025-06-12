@@ -17,9 +17,7 @@ import WebCacheFactory from './webCache/WebCacheFactory.ts';
 import { Broadcast, Buttons, Call, type Channel, type Chat, ClientInfo, Contact, GroupNotification, Label, List, Location, Message, MessageMedia, Poll, PollVote, Reaction } from './structures/index.ts';
 import NoAuth from './authStrategies/NoAuth.ts';
 import { exposeFunctionIfAbsent } from './util/Puppeteer.ts';
-import type { ClientSession, MessageContent, ClientOptions } from './types.ts';
-import type { AuthStrategy } from './types.ts';
-import type { MessageSendOptions } from './types.ts';
+import type { ClientSession, MessageContent, ClientOptions, AuthStrategy, InternalMessageSendOptions, MessageSendOptions } from './types.ts';
 import type { ChatId } from './structures/Chat.ts';
 import type { GroupMembershipRequest, MembershipRequestActionOptions, MembershipRequestActionResult } from './structures/GroupChat.ts';
 import type { InviteV4Data } from './structures/Message.ts';
@@ -28,7 +26,7 @@ import type { TransferChannelOwnershipOptions } from './structures/Channel.ts';
 import type { BatteryInfo } from './structures/ClientInfo.ts';
 import { hideModuleRaid } from './payloads.ts';
 import fs from 'node:fs/promises';
-import { CallData } from "./structures/Call.ts";
+import type{ CallData } from "./structures/Call.ts";
 
 const useLog = process.env.USE_LOG === "true";
 
@@ -455,6 +453,7 @@ class Client extends EventEmitter implements ClientEventsInterface {
                 try {
                     result = await this.pupPage.evaluate(asStr) as Awaited<ReturnType<Func>>;
                     lastError = undefined;
+                    break;
                 } catch (error) {
                     lastError = error as Error;
                     //  ERROR: ProtocolError: Runtime.evaluate timed out. Increase the 'protocolTimeout' setting in launch/connect calls for a higher timeout if needed.
@@ -1219,38 +1218,6 @@ class Client extends EventEmitter implements ClientEventsInterface {
 
         options.groupMentions && !Array.isArray(options.groupMentions) && (options.groupMentions = [options.groupMentions]);
         
-
-        interface InternalMessageSendOptions {
-            linkPreview?: boolean;
-            sendAudioAsVoice?: boolean;
-            sendVideoAsGif?: boolean;
-            sendMediaAsSticker?: boolean;
-            sendMediaAsDocument?: boolean;
-            sendMediaAsHd?: boolean;
-            caption?: string;
-            quotedMessageId?: string;
-            parseVCards?: boolean;
-            mentionedJidList?: string[];
-            groupMentions?: {
-                /** The name of a group to mention (can be custom) */
-                subject: string,
-                /** The group ID, e.g.: 'XXXXXXXXXX@g.us' */
-                id: string
-            }[];
-            invokedBotWid?: string;
-            ignoreQuoteErrors?: boolean;
-            extraOptions?: any;
-            media?: MessageMedia;
-            isViewOnce?: boolean;
-            location?: Location;
-            poll?: Poll;
-            contactCard?: string;
-            contactCardList?: string[];
-            buttons?: Buttons;
-            list?: List;
-            attachment?: string | MessageMedia;
-        }
-
         const internalOptions: InternalMessageSendOptions = {
             linkPreview: options.linkPreview === false ? undefined : true,
             sendAudioAsVoice: options.sendAudioAsVoice,
@@ -1329,9 +1296,9 @@ class Client extends EventEmitter implements ClientEventsInterface {
             }
 
             const msg = await window.WWebJS.sendMessage(chat, content, options);
-            return msg
-                ? window.WWebJS.getMessageModel(msg)
-                : undefined;
+            if (!msg) return undefined;
+            const result = window.WWebJS.getMessageModel(msg);
+            return result;
         }, chatId, contentText, internalOptions, sendSeen);
 
         return sentMsg

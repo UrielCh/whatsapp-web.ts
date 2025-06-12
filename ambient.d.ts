@@ -3,6 +3,8 @@ import type { UnsubscribeOptions } from "./src/Client.ts";
 import type { CallData } from "./src/structures/Call.ts";
 import type Contact from "./src/structures/Contact.ts";
 import type { MessageMedia, MessageMediaData } from "./src/structures/MessageMedia.ts";
+// import type { InternalMessageSendOptions } from "./src/types.ts";
+import type { InternalChatShape } from "./src/InternalType.ts";
 
 export interface SerializedCnx {
     clientToken: undefined,
@@ -27,6 +29,7 @@ export interface SerializedCnx {
     wid: undefined
 }
 
+
 // global.d.ts or src/types/whatsapp.d.ts
 declare global {
   interface Window {
@@ -46,7 +49,7 @@ declare global {
       MDBackend?: any;
       CryptoLib?: any;
       ChatGetters: {
-        getIsNewsletter: (chat: any) => boolean;
+        getIsNewsletter: (chat: InternalChatShape) => boolean;
       },
       Features: {
         F: any;
@@ -101,13 +104,9 @@ declare global {
         plugged?: boolean;
       };
       User?: {
-        getMaybeMeLidUser?: () => any;
-        getMaybeMeUser?: () => any;
-        getMeUser?: () => {
-          server: "c.us",
-          user: string; // phonenumber
-          _serialized: string; // "${phonenumber}@c.us"
-        }
+        getMaybeMeLidUser?: () => {server: 'lid' | string, user: string, _serialized: string}; // `${user}@${server}`
+        getMaybeMeUser?: () => {server: "c.us" | string, user: string, _serialized: string}; // `${user}@${server}`
+        getMeUser?: () => { server: "c.us" | string, user: string; _serialized: string; } // `${user}@${server}`
       };
       Msg?: {
         on?: Function;
@@ -242,9 +241,9 @@ declare global {
       QueryOrder?: any;
       SendClear?: any;
       SendDelete?: any;
-      SendMessage?: any;
+      SendMessage?: any;// (chat: InternalChatShape, message: string, options?: InternalMessageSendOptions) => Promise<unknown>;
       EditMessage?: any;
-      SendSeen?: any;
+      SendSeen?: any;// (chat: InternalChatShape) => Promise<unknown>;
       UserConstructor?: any;
       Validators?: any;
       ProfilePic?: any;
@@ -341,7 +340,7 @@ declare global {
       getPollVoteModel?: (vote: any) => any;
       getChatModel?: (chat: any, opts?: { isChannel?: boolean }) => any;
       getContactModel?: (contact: any) => any;
-      getChat?: (chatId: string, opts?: { getAsModel?: boolean }) => Promise<any>;
+      getChat?: (chatId: string, opts?: { getAsModel?: boolean }) => Promise<any>; // InternalChatShape
       getChannelMetadata?: (inviteCode: string) => Promise<any>;
       getChats?: () => Promise<any[]>;
       getChannels?: () => Promise<any[]>;

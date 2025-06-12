@@ -1,10 +1,9 @@
 import Base from './Base.ts';
 import Message from './Message.ts';
-import Client from '../Client.ts';
-import Contact from './Contact.ts';
-import Label from './Label.ts';
-import MessageMedia from "./MessageMedia.ts";
-import { MessageContent, MessageSendOptions } from "../types.ts";
+import type Client from '../Client.ts';
+import type Contact from './Contact.ts';
+import type Label from './Label.ts';
+import type { MessageContent, MessageSendOptions } from "../types.ts";
 
 
 export interface MessageSearchOptions {

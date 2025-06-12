@@ -3,6 +3,8 @@ import type Channel from "../../structures/Channel.ts";
 import type Chat from "../../structures/Chat.ts";
 import type Contact from "../../structures/Contact.ts";
 import type { MessageMediaData } from "../../structures/MessageMedia.ts";
+import type { InternalMessageSendOptions } from "../../types.ts";
+import type { InternalChatShape } from "../../InternalType.ts";
 
 export const LoadUtils = () => {
     window.WWebJS = {} as any;
@@ -33,7 +35,7 @@ export const LoadUtils = () => {
         return false;
     };
 
-    window.WWebJS.sendMessage = async (chat, content, options = {}) => {
+    window.WWebJS.sendMessage = async (chat: any, content: any, options: InternalMessageSendOptions = {}) => {
         if (!window.Store || !window.Store.ChatGetters || !window.Store.ChatGetters.getIsNewsletter || !window.WWebJS || !window.WWebJS.processMediaData || !window.Store.Msg || !window.Store.Msg.get || !window.Store.Msg.getMessagesById || !window.Store.ReplyUtils || !window.Store.WidFactory || !window.Store.WidFactory.createWid || !window.Store.QueryExist || !window.Store.Validators || !window.Store.Validators.findLink || !window.Store.LinkPreview || !window.Store.LinkPreview.getLinkPreview || !window.Store.VCard || !window.Store.VCard.vcardFromContactModel || !window.Store.VCard.parseVcard || !window.Store.VCard.vcardGetNameFromParsed || !window.Store.Conn || !window.Store.Conn.platform || !window.Store.BotSecret || !window.Store.BotSecret.genBotMsgSecretFromMsgSecret || !window.Store.BotProfiles || !window.Store.BotProfiles.BotProfileCollection || !window.Store.User || !window.Store.User.getMaybeMeLidUser || !window.Store.User.getMaybeMeUser || !window.Store.MsgKey || !window.Store.MsgKey.newId || !window.Store.EphemeralFields || !window.Store.EphemeralFields.getEphemeralFields || !window.Store.SendChannelMessage || !window.Store.SendChannelMessage.msgDataFromMsgModel || !window.Store.SendChannelMessage.addNewsletterMsgsRecords || !window.Store.SendChannelMessage.sendNewsletterMessageJob || !window.Store.SendChannelMessage.updateNewsletterMsgRecord || !window.Store.SendMessage || !window.Store.SendMessage.addAndSendMsgToChat) {
             throw new Error('One or more properties or methods on window.Store or window.WWebJS are not defined for sendMessage');
         }
