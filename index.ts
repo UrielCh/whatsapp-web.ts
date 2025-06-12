@@ -20,6 +20,7 @@ export {default as NoAuth} from './src/authStrategies/NoAuth.ts';
 export {default as LocalAuth} from './src/authStrategies/LocalAuth.ts';
 export {default as RemoteAuth} from './src/authStrategies/RemoteAuth.ts';
 export { default as Client } from './src/Client.ts';
+export type { MessageContent } from './src/types.ts';
 
 import * as Constants from './src/util/Constants.ts';
 import pkg from './deno.json' with { type: 'json' };

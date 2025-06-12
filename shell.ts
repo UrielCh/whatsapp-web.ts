@@ -8,7 +8,7 @@
 
 import repl from 'repl';
 
-import { Client, LocalAuth } from './index.js';
+import { Client, LocalAuth } from './index.ts';
 
 const client = new Client({
     puppeteer: { headless: false }, 

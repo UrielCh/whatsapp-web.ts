@@ -36,7 +36,7 @@
     }
   },
   "name": "@u4/whatsapp-web",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "license": "Apache-2.0",
   "exports": {
     ".": "./index.ts"
@@ -45,7 +45,8 @@
     "include": [
       "./index.ts",
       "./ambient.d.ts",
-      "./src/**/*"
+      "./src/**/*",
+      "README.md"
     ],
     "exclude": [
       "node_modules",
