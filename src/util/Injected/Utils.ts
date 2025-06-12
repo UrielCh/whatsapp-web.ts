@@ -2,7 +2,7 @@ import type { UnsubscribeOptions } from "../../Client.ts";
 import type Channel from "../../structures/Channel.ts";
 import type Chat from "../../structures/Chat.ts";
 import type Contact from "../../structures/Contact.ts";
-import { MessageMediaType } from "../../structures/MessageMedia.ts";
+import type { MessageMediaData } from "../../structures/MessageMedia.ts";
 
 export const LoadUtils = () => {
     window.WWebJS = {} as any;
@@ -382,7 +382,7 @@ export const LoadUtils = () => {
         };
     };
 
-    window.WWebJS.processStickerData = async (mediaInfo: MessageMediaType) => {
+    window.WWebJS.processStickerData = async (mediaInfo: MessageMediaData) => {
         if (!window.Store || !window.Store.UploadUtils || !window.Store.UploadUtils.encryptAndUpload) {
             throw new Error('window.Store.UploadUtils is not defined');
         }
@@ -414,7 +414,7 @@ export const LoadUtils = () => {
     };
 
 
-    window.WWebJS.processMediaData = async (mediaInfo: MessageMediaType, { forceSticker, forceGif, forceVoice, forceDocument, forceMediaHd, sendToChannel }) => {
+    window.WWebJS.processMediaData = async (mediaInfo: MessageMediaData, { forceSticker, forceGif, forceVoice, forceDocument, forceMediaHd, sendToChannel }) => {
         if (!window.WWebJS || !window.WWebJS.mediaInfoToFile || !window.Store || !window.Store.OpaqueData || !window.Store.OpaqueData.createFromData || !window.Store.MediaPrep || !window.Store.MediaPrep.prepRawMedia || !window.Store.MediaObject || !window.Store.MediaObject.getOrCreateMediaObject || !window.Store.MediaTypes || !window.Store.MediaTypes.msgToMediaType || !window.WWebJS.generateWaveform || !window.Store.MediaUpload || !window.Store.MediaUpload.uploadMedia || !window.Store.MediaUpload.uploadUnencryptedMedia || !window.Store.SendChannelMessage || !window.Store.SendChannelMessage.getRandomFilehash) {
             throw new Error('One or more properties or methods on window.Store or window.WWebJS are not defined for processMediaData');
         }
